@@ -1,0 +1,27 @@
+{
+    "cli": {
+        "version": ">= 18.7.0",
+        "appVersionSource": "remote"
+    },
+    "build": {
+        "development": {
+            "developmentClient": true,
+            "distribution": "internal"
+        },
+        "preview": {
+            "distribution": "internal"
+        },
+        "review": {
+            "distribution": "internal",
+            "env": {
+                "EXPO_PUBLIC_APP_REVIEW_MODE": "1"
+            }
+        },
+        "production": {
+            "autoIncrement": true
+        }
+    },
+    "submit": {
+        "production": {}
+    }
+}

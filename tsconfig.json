@@ -1,0 +1,41 @@
+{
+    "compilerOptions": {
+        "paths": {
+            "@tinycld/app-generated/*": ["./lib/generated/*"],
+            "@tinycld/core": ["./packages/@tinycld/core/index.ts"],
+            "@tinycld/core/*": ["./packages/@tinycld/core/tinycld/core/*"],
+            "@tinycld/core/global.css": ["./packages/@tinycld/core/global.css"],
+            "@tinycld/core/Providers": [
+                "./packages/@tinycld/core/tinycld/core/components/Providers.tsx"
+            ],
+            "~/tinycld/core/*": ["./packages/@tinycld/core/tinycld/core/*"],
+            "~/*": ["./*"]
+        },
+        "strict": true,
+        "rootDir": ".",
+        "module": "Preserve",
+        "moduleResolution": "Bundler",
+        "preserveSymlinks": true,
+        "skipLibCheck": true,
+        "jsx": "react-jsx",
+        "noImplicitAny": false,
+        "types": ["node", "react"],
+        "lib": ["dom", "esnext"]
+    },
+    "exclude": [
+        "node_modules",
+        "node_modules/**/*",
+        ".expo",
+        "**/test",
+        "**/dist",
+        "**/__tests__",
+        "ideas",
+        "packages",
+        "packages/**/*"
+    ],
+    "typeAcquisition": {
+        "enable": true
+    },
+    "extends": "expo/tsconfig.base",
+    "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+}

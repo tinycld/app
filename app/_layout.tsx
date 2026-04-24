@@ -1,0 +1,99 @@
+import { configureCore } from '@tinycld/core'
+import { appConfig } from '~/lib/app-config'
+
+configureCore(appConfig)
+
+import '@tinycld/core/global.css'
+import { initSentry } from '@tinycld/core/lib/sentry'
+
+initSentry()
+
+import {
+    getResolvedAddress,
+    readCached,
+    resolveEnvAddress,
+    setResolvedAddress,
+    subscribeResolvedAddress,
+} from '@tinycld/core/lib/server-address'
+import { router, Slot, usePathname } from 'expo-router'
+import { type ComponentType, type ReactNode, useEffect, useState } from 'react'
+import { View } from 'react-native'
+
+type ProvidersComponent = ComponentType<{ children: ReactNode }>
+
+type GateState =
+    | { status: 'resolving' }
+    | { status: 'resolved'; Providers: ProvidersComponent }
+    | { status: 'unresolved' }
+
+function useServerAddressGate(pathname: string): GateState {
+    const [state, setState] = useState<GateState>(() => {
+        const env = resolveEnvAddress()
+        if (env) {
+            setResolvedAddress(env)
+            return { status: 'resolving' }
+        }
+        return { status: 'resolving' }
+    })
+
+    useEffect(() => {
+        let cancelled = false
+
+        async function resolve() {
+            if (!getResolvedAddress()) {
+                const cached = await readCached()
+                if (cached) setResolvedAddress(cached)
+            }
+
+            if (cancelled) return
+
+            if (getResolvedAddress()) {
+                const mod = await import('@tinycld/core/components/Providers')
+                if (cancelled) return
+                setState({ status: 'resolved', Providers: mod.Providers })
+            } else {
+                setState({ status: 'unresolved' })
+            }
+        }
+
+        resolve()
+        const unsubscribe = subscribeResolvedAddress(() => {
+            if (cancelled) return
+            resolve()
+        })
+        return () => {
+            cancelled = true
+            unsubscribe()
+        }
+    }, [])
+
+    useEffect(() => {
+        if (state.status !== 'unresolved') return
+        if (pathname === '/connect') return
+        const backTo = encodeURIComponent(pathname || '/')
+        router.replace(`/connect?backTo=${backTo}`)
+    }, [state.status, pathname])
+
+    return state
+}
+
+export default function Layout() {
+    const pathname = usePathname()
+    const state = useServerAddressGate(pathname)
+
+    if (state.status === 'resolving') {
+        return <View className="flex-1 bg-background" />
+    }
+
+    if (state.status === 'unresolved') {
+        if (pathname === '/connect') return <Slot />
+        return <View className="flex-1 bg-background" />
+    }
+
+    const { Providers } = state
+    return (
+        <Providers>
+            <Slot />
+        </Providers>
+    )
+}

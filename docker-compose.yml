@@ -1,0 +1,58 @@
+# TinyCld — single-container Docker Compose setup
+#
+# Quick start:
+#
+#   1. Point your domain's A record at this server's IP.
+#   2. Edit SERVE_ON_DOMAINS below (or remove it for plain HTTP on port 7090).
+#   3. Run:
+#        docker compose up -d
+#
+# Updates:   docker compose pull && docker compose up -d
+# Logs:      docker compose logs -f
+# Backup:    tar -czf tinycld-backup.tgz ./pb_data
+#
+# Data lives in ./pb_data (host bind mount) — back this up.
+
+services:
+  tinycld:
+    image: ghcr.io/tinycld/tinycld:latest
+    container_name: tinycld
+    restart: unless-stopped
+
+    # Uncomment and set to your domain(s) to enable autocert HTTPS on ports 80/443.
+    # Leave commented to serve plain HTTP on port 7090 (behind a reverse proxy, or for local testing).
+    environment:
+      # SERVE_ON_DOMAINS: "tinycld.example.com www.tinycld.example.com"
+
+      # Optional: error reporting
+      # SENTRY_DSN: ""
+
+      # Optional: mail delivery (choose one)
+      # POSTMARK_SERVER_TOKEN: ""
+      # POSTMARK_ACCOUNT_TOKEN: ""
+
+      # Optional: web push notifications
+      # VAPID_PUBLIC_KEY: ""
+      # VAPID_SUBJECT: "mailto:you@example.com"
+
+      # Prevent shells from exploding on empty values during `docker compose config`.
+      TINYCLD_PLACEHOLDER: ""
+
+    ports:
+      # 80 + 443: HTTPS via autocert when SERVE_ON_DOMAINS is set.
+      - "80:80"
+      - "443:443"
+      # 7090: plain HTTP fallback (used when SERVE_ON_DOMAINS is empty,
+      # or when running behind an external reverse proxy).
+      - "7090:7090"
+      # 993: IMAPS (implicit TLS). Comment out if you're not running the mail package.
+      - "993:993"
+      # 465: SMTPS (implicit TLS). Comment out if you're not running the mail package.
+      - "465:465"
+
+    volumes:
+      # Persistent data: PocketBase records, uploads, migrations state.
+      # Everything stateful lives here — back this directory up.
+      - ./pb_data:/app/pb_data
+      # Generated TypeScript types (pbSchema, pbZodSchema). Small, regenerated on migrations.
+      - ./types:/app/types
