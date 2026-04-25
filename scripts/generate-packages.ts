@@ -907,6 +907,13 @@ async function main() {
     }
 
     for (const packageName of pkgNames) {
+        // Core is a library, not a feature package. It doesn't have a
+        // manifest.ts and shouldn't flow through the per-package wiring.
+        // Its migrations are symlinked in via the CORE_MIGRATIONS_SOURCE
+        // pass above. Skip if a stale installed-packages.json or
+        // packages/ entry tries to feed it through this loop.
+        if (packageName === '@tinycld/core') continue
+
         const packageDir = resolvePackageDir(packageName)
         const manifest = loadManifest(packageDir)
         packagesInfo.push({ packageName, manifest, packageDir })

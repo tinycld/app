@@ -11,6 +11,7 @@
         "packages:link": "bunx tsx scripts/link-package.ts link",
         "packages:unlink": "bunx tsx scripts/link-package.ts unlink",
         "packages:install": "bunx tsx scripts/install-package.ts",
+        "postinstall": "bun run packages:generate",
         "predev": "bun run packages:generate",
         "prebuild:web": "bun run packages:generate",
         "android": "bunx expo run:android",

@@ -2,7 +2,6 @@ node_modules/
 .expo/
 dist/
 build/
-bun.lock
 tmp/
 .DS_Store
 test-results/
@@ -16,6 +15,7 @@ playwright/.cache/
 /app/a/[orgSlug]/mail/
 /app/share/[token].tsx
 /lib/generated/
+/tinycld/core/lib/generated/
 /server/package_extensions.go
 /server/bundled-packages.json
 /server/pb_migrations/

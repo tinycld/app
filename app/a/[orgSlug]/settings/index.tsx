@@ -1,5 +1,5 @@
+import { packageSettings } from '@tinycld/app-generated/package-settings'
 import { getIcon } from '@tinycld/core/components/workspace/package-icon-map'
-import { packageSettings } from '@tinycld/core/lib/generated/package-settings'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useCurrentRole } from '@tinycld/core/lib/use-current-role'
