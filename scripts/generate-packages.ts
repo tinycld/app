@@ -826,10 +826,23 @@ function updateGoMod(
 }
 
 function runGoModTidy() {
+    // Skip cleanly when go isn't installed at all (e.g. the Docker Node-only
+    // build stage). Any other failure — bad go.mod, network issue, missing
+    // dep — should surface to the developer instead of being swallowed.
+    try {
+        execSync('command -v go', { stdio: 'ignore' })
+    } catch {
+        return
+    }
+
     try {
         execSync('go mod tidy', { cwd: SERVER_DIR, stdio: 'inherit' })
-    } catch {
-        // go may not be available (e.g. Docker Node-only stage)
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        process.stderr.write(`\ngenerate-packages: go mod tidy failed: ${msg}\n`)
+        process.stderr.write(
+            'generate-packages: continuing — go.mod may be in an inconsistent state\n'
+        )
     }
 }
 

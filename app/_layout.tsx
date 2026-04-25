@@ -1,13 +1,9 @@
-import { configureCore } from '@tinycld/core'
-import { appConfig } from '~/lib/app-config'
-
-configureCore(appConfig)
-
+// configure-core MUST be the first import — it calls configureCore(appConfig)
+// at module-init time so every other module in the static-import graph sees
+// the registered config on its first read.
+import '~/lib/configure-core'
 import '@tinycld/core/global.css'
 import { initSentry } from '@tinycld/core/lib/sentry'
-
-initSentry()
-
 import {
     getResolvedAddress,
     readCached,
@@ -18,6 +14,8 @@ import {
 import { router, Slot, usePathname } from 'expo-router'
 import { type ComponentType, type ReactNode, useEffect, useState } from 'react'
 import { View } from 'react-native'
+
+initSentry()
 
 type ProvidersComponent = ComponentType<{ children: ReactNode }>
 

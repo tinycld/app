@@ -11,6 +11,9 @@ import (
 	"tinycld.org/core/coreserver"
 )
 
+// defaultHTTPAddr is the loopback address tinycld serves on in dev when no
+// --http flag is given. The local-ssl-proxy in `bun run dev` listens on 7090
+// and forwards here, so this needs to match the SSL proxy's --target port.
 const defaultHTTPAddr = "127.0.0.1:7090"
 
 // main composes the tinycld app server: load env, init Sentry, build the
@@ -23,8 +26,13 @@ const defaultHTTPAddr = "127.0.0.1:7090"
 func main() {
 	coreserver.LoadEnvFile()
 
-	// Default --http to 7090 when running `serve` without an explicit address
-	// and no domain args (autocert needs :80/:443 for Let's Encrypt).
+	// Default --http to defaultHTTPAddr when running `serve` without an
+	// explicit address and no domain args. PocketBase's autocert needs
+	// :80/:443 when domain args are present, so we don't override there.
+	// PB's own default for `serve` is 127.0.0.1:8090 — we override to 7090
+	// to match the SSL proxy in `bun run dev`. Injecting through os.Args
+	// (rather than registering a flag default) keeps PB's flag schema
+	// untouched and lets explicit `--http :8090` overrides still work.
 	if coreserver.HasSubcommand("serve") && !coreserver.HasFlag("--http") && !coreserver.HasDomainArgs() {
 		os.Args = append(os.Args, "--http", defaultHTTPAddr)
 	}
@@ -44,6 +52,7 @@ func main() {
 		PublicDir:      coreserver.DefaultPublicDir(),
 		FallbackFile:   "app.html",
 		TypesDir:       coreserver.DefaultTypesDir(),
+		BinaryName:     "tinycld",
 		HooksWatch:     true,
 		HooksPoolSize:  15,
 		Automigrate:    true,
