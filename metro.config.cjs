@@ -87,8 +87,12 @@ config.resolver.nodeModulesPaths = [
     path.join(__dirname, 'packages', '@tinycld', 'core', 'node_modules'),
 ]
 
+// global.css ships in @tinycld/core; this app pulls it through the linked
+// sibling rather than hosting its own copy. uniwind expects a path it can
+// resolve via fs (not Metro's import graph), so point at the symlinked
+// location under packages/@tinycld/core.
 module.exports = withUniwindConfig(config, {
-    cssEntryFile: './global.css',
+    cssEntryFile: './packages/@tinycld/core/global.css',
     dtsFile: './uniwind-types.d.ts',
     extraThemes: ['dark'],
 })

@@ -1,38 +1,48 @@
+# Build pipeline assumes the build context contains:
+#   - tinycld/ repo at root
+#   - packages/@tinycld/core/ — full core repo tree (a sibling, not a symlink)
+#   - packages/@tinycld/<other>/ — one entry per linked feature package
+# The deploy/build.sh script in the deploy/ sibling assembles this layout
+# from the per-repo git HEADs before running `docker build`.
+
 # Node stage: generate package wiring and build the web app
 FROM oven/bun:1.3.12-debian AS web-builder
 
 WORKDIR /app
 
-# Install core dependencies first (layer caching).
+# Install dependencies first (layer caching).
 COPY package.json bun.lock bunfig.toml ./
 RUN bun install --frozen-lockfile
 
-# Copy core sources needed for package generation + web build.
+# Copy app sources needed for package generation + web build.
 COPY scripts/ ./scripts/
 COPY server/ ./server/
 COPY tinycld.packages.ts ./
 COPY app.json tsconfig.json ./
 COPY app/ ./app/
-COPY tinycld/ ./tinycld/
+COPY lib/ ./lib/
 COPY public/ ./public/
-COPY global.css ./
 COPY react-native.config.cjs metro.config.cjs babel.config.cjs ./
 
-# Copy every bundled sibling package. The build context (assembled by
-# deploy/build.sh) should contain real directories under packages/ — one per
-# linked sibling, laid out as packages/@scope/name or packages/name.
+# Copy every bundled sibling package — including @tinycld/core itself.
+# The build context (assembled by deploy/build.sh) contains real directories
+# under packages/, one per linked sibling: packages/@scope/name or
+# packages/name. Core ships as packages/@tinycld/core/ here.
 COPY packages/ ./packages/
 
 # Generate package wiring (produces server/package_extensions.go,
-# tinycld/core/lib/generated/, app/a/ routes, and any public routes via manifest.publicRoutes).
-# The generator also updates server/go.mod replace directives based on each
-# package's on-disk location inside this build (realpath-normalized).
+# lib/generated/, app/a/[orgSlug]/<slug>/ routes, public route re-exports,
+# server/pb_migrations/ symlinks, and updates server/go.mod replace
+# directives). Output dir is overridden via TINYCLD_GENERATED_DIR; the
+# default is core's nested tinycld/core/lib/generated which doesn't exist
+# in this layout.
+ENV TINYCLD_GENERATED_DIR=./lib/generated
 RUN bun run scripts/generate-packages.ts
 
 # Resolve any migration/hook symlinks into real files. generate-packages.ts
-# symlinks package migrations into server/pb_migrations/, which is fine here
-# (packages/ is real files in this build), but later COPY steps need real
-# content, so materialize them in place.
+# symlinks package migrations into server/pb_migrations/, which is fine
+# here (packages/ is real files in this build), but later COPY steps need
+# real content, so materialize them in place.
 RUN find server/pb_migrations server/pb_hooks -type l -exec sh -c 'target=$(readlink "$1") && rm "$1" && cp "$target" "$1"' _ {} \; 2>/dev/null || true
 
 # Build web app.
@@ -54,7 +64,8 @@ WORKDIR /app
 # Bring in the full server tree from web-builder: generator has already
 # rewritten go.mod with replace directives for each bundled package and
 # emitted package_extensions.go. Copy the siblings too — the Go replace
-# directives point at ../packages/@scope/name/server/.
+# directives point at ../packages/@scope/name/server/ for siblings and
+# ../packages/@tinycld/core/server/ for core itself.
 COPY --from=web-builder /app/server/ ./server/
 COPY --from=web-builder /app/packages ./packages
 
