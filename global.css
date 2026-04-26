@@ -1,0 +1,6 @@
+/* tinycld app's CSS entry. Forwards to core's theme so the Tailwind +
+ * uniwind compiler runs from this repo's node_modules (where tailwindcss
+ * v4 lives). Importing core's CSS directly via cssEntryFile pointed at
+ * the @tinycld/core symlink makes uniwind realpath into core/, where the
+ * @-rule processor doesn't pick up our Tailwind 4 plugin. */
+@import '@tinycld/core/global.css';

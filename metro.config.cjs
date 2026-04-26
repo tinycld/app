@@ -45,10 +45,24 @@ config.watchFolders = [...(config.watchFolders ?? []), ...siblingFolders]
 // default package-exports resolution would otherwise look the symlink up via
 // node_modules walking and fail, because packages/ is not a node_modules dir.
 const originalResolveRequest = config.resolver.resolveRequest
+const APP_GENERATED_DIR = path.join(__dirname, 'lib', 'generated')
+
 config.resolver.resolveRequest = (context, moduleName, platform) => {
     if (moduleName.startsWith('zustand')) {
         const resolved = require.resolve(moduleName, { paths: [context.originModulePath] })
         return { type: 'sourceFile', filePath: resolved }
+    }
+
+    // @tinycld/app-generated/* — generator output written to lib/generated/.
+    // Mirrors tinycld's tsconfig path alias; Metro doesn't honor tsconfig
+    // paths, so we resolve here.
+    if (moduleName.startsWith('@tinycld/app-generated/')) {
+        const subpath = moduleName.slice('@tinycld/app-generated/'.length)
+        return context.resolveRequest(
+            context,
+            path.join(APP_GENERATED_DIR, subpath),
+            platform
+        )
     }
 
     const siblingName = resolveSiblingName(moduleName)
@@ -87,12 +101,14 @@ config.resolver.nodeModulesPaths = [
     path.join(__dirname, 'packages', '@tinycld', 'core', 'node_modules'),
 ]
 
-// global.css ships in @tinycld/core; this app pulls it through the linked
-// sibling rather than hosting its own copy. uniwind expects a path it can
-// resolve via fs (not Metro's import graph), so point at the symlinked
-// location under packages/@tinycld/core.
+// global.css is a thin shim at the app root that `@import`s
+// `@tinycld/core/global.css`. The shim approach keeps Tailwind's PostCSS
+// resolution anchored in this repo's node_modules — pointing uniwind
+// directly at packages/@tinycld/core/global.css realpaths into core/,
+// where the at-rule processor reaches a different tailwindcss install
+// (or none) and emits noisy "Unknown at rule" warnings for @theme/@variant.
 module.exports = withUniwindConfig(config, {
-    cssEntryFile: './packages/@tinycld/core/global.css',
+    cssEntryFile: './global.css',
     dtsFile: './uniwind-types.d.ts',
     extraThemes: ['dark'],
 })

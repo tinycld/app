@@ -22,6 +22,7 @@ COPY app.json tsconfig.json ./
 COPY app/ ./app/
 COPY lib/ ./lib/
 COPY public/ ./public/
+COPY global.css ./
 COPY react-native.config.cjs metro.config.cjs babel.config.cjs ./
 
 # Copy every bundled sibling package — including @tinycld/core itself.
