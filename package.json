@@ -18,7 +18,7 @@
         "migrate": "./server/tinycld migrate",
         "build:web": "bunx expo export --platform web",
         "dev": "run-p -r ssl:dev expo:dev pb:dev",
-        "pb:dev": "set -a; [ -f .env ] && . .env; set +a; cd server && go build -o tinycld . && cd - && exec ./server/tinycld --dev --http 0.0.0.0:7093 --typesDir ../packages/@tinycld/core/tinycld/core/types serve",
+        "pb:dev": "./bin/pb-dev",
         "ssl:dev": "local-ssl-proxy  --source 7090 --target 7093 --cert ./assets/localhost.pem --key ./assets/localhost-key.pem",
         "dev:local": "run-p -l -r expo:dev ssl:dev pb:dev",
         "expo:dev": "bunx expo start --port 7100",
