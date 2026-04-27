@@ -2,7 +2,7 @@
 // at module-init time so every other module in the static-import graph sees
 // the registered config on its first read.
 import '~/lib/configure-core'
-import '@tinycld/core/global.css'
+import '~/global.css'
 import { initSentry } from '@tinycld/core/lib/sentry'
 import {
     getResolvedAddress,

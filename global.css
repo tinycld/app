@@ -1,6 +1,7 @@
-/* tinycld app's CSS entry. Forwards to core's theme so the Tailwind +
- * uniwind compiler runs from this repo's node_modules (where tailwindcss
- * v4 lives). Importing core's CSS directly via cssEntryFile pointed at
- * the @tinycld/core symlink makes uniwind realpath into core/, where the
- * @-rule processor doesn't pick up our Tailwind 4 plugin. */
+/* tinycld app's CSS entry. The Tailwind/uniwind imports must live here
+ * (not in core/global.css) so their resolution is anchored in this repo's
+ * node_modules. Core has no node_modules of its own as a sibling, so any
+ * `@import 'tailwindcss'` inside core/ would fail to resolve. */
+@import 'tailwindcss';
+@import 'uniwind';
 @import '@tinycld/core/global.css';

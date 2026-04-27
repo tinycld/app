@@ -11,7 +11,7 @@
  *
  * Usage:
  *   import '~/lib/configure-core' // must be the first import in _layout
- *   import '@tinycld/core/global.css'
+ *   import '~/global.css'
  *   …
  */
 import { configureCore } from '@tinycld/core'
