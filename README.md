@@ -10,7 +10,6 @@ the package generator. It's the entrypoint for `bun run dev` and `docker pull ti
 ```
 ~/code/tinycld/
     tinycld/                 # @tinycld/app — this repo (bundles @tinycld/core)
-    core/                    # symlink → tinycld/packages/@tinycld/core/
     mail/                    # @tinycld/mail (feature package)
     calendar/                # @tinycld/calendar
     contacts/                # @tinycld/contacts
@@ -18,8 +17,8 @@ the package generator. It's the entrypoint for `bun run dev` and `docker pull ti
     google-takeout-import/   # @tinycld/google-takeout-import
 ```
 
-The `~/code/tinycld/core/` symlink keeps feature sibling repos' `../core/...` tsconfig
-references resolving without any sibling-side change.
+Feature sibling repos reach into core via `../tinycld/packages/@tinycld/core/...` from their
+own tsconfigs and Go go.mod replace directives.
 
 ## Quick start
 

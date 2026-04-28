@@ -873,32 +873,6 @@ async function main() {
     fs.mkdirSync(ROUTES_BASE, { recursive: true })
     fs.mkdirSync(MIGRATIONS_DIR, { recursive: true })
 
-    // Ensure ../core (parent of ROOT) is a symlink to packages/@tinycld/core/.
-    // Feature sibling repos (mail, calendar, …) live next to tinycld/ and have
-    // tsconfig paths like "@tinycld/core/*": ["../core/*"]. Their server
-    // go.mod files have replace directives like
-    // `replace tinycld.org/core => ../../core/server`. Both rely on a `core/`
-    // entry in tinycld's parent directory. Create it on every generate so a
-    // fresh clone Just Works the moment any sibling is checked out alongside.
-    // Skipped if a real directory already lives there (don't clobber whatever
-    // the user has).
-    const PARENT_DIR = path.dirname(ROOT)
-    const CORE_PARENT_LINK = path.join(PARENT_DIR, 'core')
-    const CORE_PARENT_TARGET = path.join(path.basename(ROOT), 'packages', '@tinycld', 'core')
-    try {
-        const stat = fs.lstatSync(CORE_PARENT_LINK)
-        if (stat.isSymbolicLink()) {
-            if (fs.readlinkSync(CORE_PARENT_LINK) !== CORE_PARENT_TARGET) {
-                fs.unlinkSync(CORE_PARENT_LINK)
-                fs.symlinkSync(CORE_PARENT_TARGET, CORE_PARENT_LINK)
-            }
-        }
-        // Real directory at ../core: leave it alone.
-    } catch {
-        // Doesn't exist yet — create the symlink.
-        fs.symlinkSync(CORE_PARENT_TARGET, CORE_PARENT_LINK)
-    }
-
     // Ensure node_modules/@tinycld symlinks exist so TypeScript's bundler
     // resolution can find package.json exports for linked sibling packages.
     // These may be wiped by `bun install`, so we recreate them on every generate.
