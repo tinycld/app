@@ -10,9 +10,12 @@ FROM oven/bun:1.3.12-debian AS web-builder
 
 WORKDIR /app
 
-# Install dependencies first (layer caching).
+# Install dependencies first (layer caching). --ignore-scripts skips the
+# project's `postinstall` (`bun run packages:generate`); the generator needs
+# scripts/, lib/, and packages/, none of which are staged yet. We run it
+# explicitly below once those are in place.
 COPY package.json bun.lock bunfig.toml ./
-RUN bun install --frozen-lockfile
+RUN bun install --frozen-lockfile --ignore-scripts
 
 # Copy app sources needed for package generation + web build.
 COPY scripts/ ./scripts/

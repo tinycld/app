@@ -890,10 +890,19 @@ async function main() {
             if (!entry.isSymbolicLink() && !entry.isDirectory()) continue
             const nmLink = path.join(NODE_MODULES_SCOPE, entry.name)
             const target = path.join('..', '..', 'packages', '@tinycld', entry.name)
+            // bun materializes file: deps as a real directory (full of file
+            // symlinks) at this path, so we can't assume a symlink. lstat to
+            // tell what's there and replace whatever it is with our symlink.
             try {
-                const existing = fs.readlinkSync(nmLink)
-                if (existing === target) continue
-                fs.unlinkSync(nmLink)
+                const stat = fs.lstatSync(nmLink)
+                if (stat.isSymbolicLink()) {
+                    if (fs.readlinkSync(nmLink) === target) continue
+                    fs.unlinkSync(nmLink)
+                } else if (stat.isDirectory()) {
+                    fs.rmSync(nmLink, { recursive: true, force: true })
+                } else {
+                    fs.unlinkSync(nmLink)
+                }
             } catch {
                 // doesn't exist yet
             }
