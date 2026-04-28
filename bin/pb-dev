@@ -29,5 +29,5 @@ cd - >/dev/null
 exec ./server/tinycld \
     --dev \
     --http 0.0.0.0:7093 \
-    --typesDir ../packages/@tinycld/core/tinycld/core/types \
+    --typesDir ../packages/@tinycld/core/types \
     serve "$@"

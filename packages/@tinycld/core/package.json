@@ -1,0 +1,15 @@
+{
+    "name": "@tinycld/core",
+    "version": "2.0.0-beta.1",
+    "license": "AGPL-3.0-only",
+    "main": "./index.ts",
+    "type": "module",
+    "exports": {
+        ".": "./index.ts",
+        "./lib/*": "./lib/*",
+        "./components/*": "./components/*",
+        "./ui/*": "./ui/*",
+        "./types/*": "./types/*",
+        "./Providers": "./components/Providers.tsx"
+    }
+}

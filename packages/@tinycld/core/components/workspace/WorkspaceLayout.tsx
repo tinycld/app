@@ -1,0 +1,102 @@
+import { Slot } from 'expo-router'
+import { Platform, Pressable, View } from 'react-native'
+import { NotificationDrawer } from '@tinycld/core/components/NotificationDrawer'
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { MobileLayout } from './MobileLayout'
+import { PackageProviderWrapper } from './PackageProviderWrapper'
+import { PackageRail } from './PackageRail'
+import { PackageSidebar } from './PackageSidebar'
+import { useWorkspaceLayout } from './useWorkspaceLayout'
+
+const SIDEBAR_WIDTH = 260
+const RAIL_WIDTH = 64
+const TRANSITION = 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
+
+export function WorkspaceLayout({ isReady = true }: { isReady?: boolean }) {
+    const bgColor = useThemeColor('background')
+    const overlayColor = useThemeColor('overlay-backdrop')
+    const { breakpoint, isSidebarOpen, setSidebarOpen } = useWorkspaceLayout()
+
+    if (breakpoint === 'mobile') return <MobileLayout isReady={isReady} />
+
+    const isTablet = breakpoint === 'tablet'
+    const showSidebarOverlay = isTablet && isSidebarOpen
+
+    return (
+        <View
+            className="flex-1 flex-row"
+            style={[
+                {
+                    backgroundColor: bgColor,
+                },
+                Platform.OS === 'web' ? ({ height: '100vh' } as object) : undefined,
+            ]}
+        >
+            {isReady && <PackageRail />}
+
+            {isReady && <NotificationDrawer />}
+
+            <PackageProviderWrapper>
+                {isReady &&
+                    (isTablet ? (
+                        <SidebarOverlay
+                            isVisible={showSidebarOverlay}
+                            overlayColor={overlayColor}
+                            onDismiss={() => setSidebarOpen(false)}
+                        />
+                    ) : (
+                        <PackageSidebar width={SIDEBAR_WIDTH} />
+                    ))}
+
+                <View className="flex-1" style={{ backgroundColor: bgColor, minHeight: 0 }}>
+                    <Slot />
+                </View>
+            </PackageProviderWrapper>
+        </View>
+    )
+}
+
+function SidebarOverlay({
+    isVisible,
+    overlayColor,
+    onDismiss,
+}: {
+    isVisible: boolean
+    overlayColor: string
+    onDismiss: () => void
+}) {
+    return (
+        <View
+            className="absolute top-0 left-0 right-0 bottom-0 flex-row"
+            style={{
+                zIndex: 100,
+            }}
+            pointerEvents={isVisible ? 'auto' : 'none'}
+        >
+            <Pressable
+                className="absolute top-0 left-0 right-0 bottom-0"
+                style={
+                    {
+                        backgroundColor: overlayColor,
+                        opacity: isVisible ? 1 : 0,
+                        transition: TRANSITION,
+                    } as object
+                }
+                onPress={onDismiss}
+            />
+            <View
+                style={[
+                    { marginLeft: RAIL_WIDTH, zIndex: 101, alignSelf: 'stretch' as const },
+                    Platform.OS === 'web'
+                        ? ({
+                              transform: `translateX(${isVisible ? 0 : -SIDEBAR_WIDTH}px)`,
+                              transition: TRANSITION,
+                          } as object)
+                        : undefined,
+                ]}
+            >
+                <PackageSidebar width={SIDEBAR_WIDTH} />
+            </View>
+        </View>
+    )
+}

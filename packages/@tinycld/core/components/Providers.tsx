@@ -1,0 +1,46 @@
+import '@tinycld/core/lib/crypto-polyfill'
+import { QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { CoreShortcuts } from '@tinycld/core/components/CoreShortcuts'
+import { ToastRenderer } from '@tinycld/core/components/Toast'
+import { AuthProvider } from '@tinycld/core/lib/auth'
+import { PBTSDBProvider, queryClient } from '@tinycld/core/lib/pocketbase'
+import { ShortcutHelp, ShortcutsProvider } from '@tinycld/core/lib/shortcuts'
+import { useColorTheme } from '@tinycld/core/lib/use-color-theme'
+import { useThemePreference } from '@tinycld/core/lib/use-theme-preference'
+import { GluestackUIProvider } from '@tinycld/core/ui/gluestack-ui-provider'
+
+function ThemeAwareGluestackProvider({ children }: { children: ReactNode }) {
+    const { resolved } = useThemePreference()
+    const { colorTheme } = useColorTheme()
+    return (
+        <GluestackUIProvider mode={resolved} colorTheme={colorTheme}>
+            {children}
+            <ToastRenderer />
+            <ShortcutHelp />
+            <CoreShortcuts />
+        </GluestackUIProvider>
+    )
+}
+
+export function Providers({ children }: { children: ReactNode }) {
+    return (
+        <GestureHandlerRootView className="flex-1">
+            <SafeAreaProvider>
+                <QueryClientProvider client={queryClient}>
+                    <PBTSDBProvider>
+                        <AuthProvider>
+                            <ShortcutsProvider>
+                                <ThemeAwareGluestackProvider>
+                                    {children}
+                                </ThemeAwareGluestackProvider>
+                            </ShortcutsProvider>
+                        </AuthProvider>
+                    </PBTSDBProvider>
+                </QueryClientProvider>
+            </SafeAreaProvider>
+        </GestureHandlerRootView>
+    )
+}

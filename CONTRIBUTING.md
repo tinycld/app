@@ -1,0 +1,245 @@
+# Project Guidelines
+
+## Documentation drift
+
+When you change a code-style or data-access rule in the ecosystem-root `CLAUDE.md`, update the matching task page in the `web` repo at `web/src/content/docs/tasks/<file>.md`. The two are the canonical source for their respective audiences (Claude reads CLAUDE.md during development; human contributors read the website at https://tinycld.org/docs), and they must not drift.
+
+## Overview
+This repo is `@tinycld/app` — the runnable Expo + PocketBase app. It bundles `@tinycld/core`
+directly at `packages/@tinycld/core/` (TypeScript surface under
+`packages/@tinycld/core/tinycld/core/{lib,components,ui,types}/`, Go side at
+`packages/@tinycld/core/server/`). The on-disk path `~/code/tinycld/core/` is a symlink into
+that location so feature sibling repos' `../core/...` tsconfig references keep resolving.
+
+The Go side of core is module `tinycld.org/core` exporting `coreserver` (registration
+orchestrator), plus subsystems `notify`, `push`, `mailer`, `audit`, `textextract`,
+`thumbnails`. Core's PocketBase migrations live at `packages/@tinycld/core/server/pb_migrations/`.
+The app server (`server/main.go`) is module `tinycld.org/app` and consumes core via
+`replace tinycld.org/core => ../packages/@tinycld/core/server`.
+
+Feature packages (`@tinycld/contacts`, `@tinycld/mail`, `@tinycld/calendar`, `@tinycld/drive`,
+`@tinycld/google-takeout-import`) remain in their own sibling git repos and link in via
+`tinycld/packages/@tinycld/<name>` symlinks. The package generator
+(`scripts/generate-packages.ts`) wires linked feature packages into the routes, registry, Go
+server, and PocketBase migrations.
+
+Validate changes with `bun run checks` (biome + tsc) and `bun run test:unit` (vitest). The Go
+side runs `cd server && go test ./...` plus
+`cd packages/@tinycld/core/server && go test ./...`.
+
+## Code Style & Patterns
+
+- Strive for simplicity and clarity
+- Keep JSX minimal: No complex ternary operators, map functions, or calculations inside the return statement.
+- Move logic out: All state management, event handling, and data processing must be in custom hooks (useFeatureName) or helper functions outside the main component function.
+- Co-locate, don't embed: If logic is used only in the component, define it just above the JSX, keep the JSX clean of declarations and other logic
+- Extract: If a sub-section of a function or JSX is complex, break it into separate, smaller parts.
+- Conditional visibility: Instead of hiding/showing large blocks using `{condition && <Component />}`, have the component accept an `isVisible` prop and return null when it shouldn't render.
+- Comments: Only add comments that explain "why", not "what". Avoid trivial comments like `// Delete users` before `deleteFrom('user')` or `// Create profile` before `insertInto('profile')`. If the code is self-explanatory, no comment is needed.
+- Testing: Write unit tests for new features. Only mock using helpers in tests/unit.helpers.tsx as needed, do not mock out any of our own components or actions.
+- Run quality checks after any changes:
+   - `bun run checks` (Biome lint + format check + typecheck)
+   - `bun run test:unit`
+- Embrace Type Inference: Do not over-specify types, allow TypeScript to infer types whenever possible.
+  - DO NOT USE `any` to pass type checks, even with biome ignore comments.
+- Biome enforces 4-space indentation, single quotes, ES5 trailing commas, and no superfluous semicolons.
+- Components export PascalCase React components (`CustomerList.tsx`), hooks use camelCase with a `use` prefix, and utility modules use kebab-case file names.
+- This app supports both light and dark modes. Do not use raw hex color values — use `className` with semantic Tailwind tokens (e.g., `className="text-foreground bg-background"`) or `useThemeColor('foreground')` for non-className contexts (Lucide icons, RN Pressable style props).
+- Keep hooks pure and side-effect free; call them at the top level of React components.
+- **Avoid `useState` and `useEffect`** — almost always there is a better primitive:
+  - Form fields → `useForm` + zod (see **Forms** section)
+  - Server/async data → `useLiveQuery`
+  - Mutations → `useMutation` from `@tinycld/core/lib/mutations`
+  - Derived values → use `.select()` on liveQuery expressions to return computed values
+  - Responding to prop/state changes → compute during render (not `useEffect` + `setState`)
+  - DOM refs / imperative handles → `useRef`
+  - Shared UI state (sidebar, dialogs, popovers, compose mode) → Zustand stores (see **Zustand Stores** section)
+  - Only reach for `useState` when you have genuinely local, synchronous UI state (e.g. a modal open/closed toggle, an accordion expanded state) that no other component needs. If you find yourself pairing `useState` with `useEffect` to sync or transform data, that's a signal to use a better pattern.
+- Use React Hook Form + Zod for forms — see the **Forms** section below for details.
+- Captured exceptions should captured using `captureException` which can be imported from `@tinycld/core/lib/errors`
+- Do not embed logic inside JSX. Prefer early return, assignment to variable that's inserted into JSX or other patterns to keep the code clean.
+- Do not edit types/pbSchema.ts or types/pbZodSchema.ts, they are auto-generated whenever the database is migrated and edits will not be saved
+- After developing a feature, offer to add it to the website's docs and feature sections 
+
+## Data Queries & Mutations
+- **ALWAYS use pbtsdb** for all PocketBase data queries and mutations - never use PocketBase directly in components
+- Import collections with `useStore('collection1', 'collection2')` from `pbtsdb` - it uses variadic arguments and returns a tuple array
+  - Example: `const [tagsCollection] = useStore('tags')`
+  - Example: `const [jobsCollection, addressesCollection] = useStore('jobs', 'addresses')`
+- **Always use `useOrgLiveQuery`** from `@tinycld/core/lib/pocketbase` for org-scoped data queries instead of raw `useLiveQuery`. It automatically provides `OrgScope` (`orgId`, `userOrgId`, `orgSlug`) to the query callback, disables queries until org context loads (preventing cross-org data flash), and auto-includes `orgId`/`userOrgId` in the dependency array. Only use raw `useLiveQuery` in bootstrap hooks that `useOrgLiveQuery` itself depends on (`use-org-info`, `use-current-role`, `use-current-user-org`) or for genuinely user-level (non-org) queries like theme preferences.
+  ```ts
+  const { data: items } = useOrgLiveQuery((query, { orgId }) =>
+      query.from({ item: itemsCollection }).where(({ item }) => eq(item.org, orgId))
+  )
+  ```
+- Use TanStack DB operators (`eq`, `and`, `or`, `gt`, `lt`, etc.) from `@tanstack/db` for type-safe filtering
+- Query syntax: `.from()`, `.where()`, `.orderBy()`, `.join()`, `.select()` - follows TanStack DB patterns
+- **Prefer inline queries** — write `useStore` + `useOrgLiveQuery` directly in the screen component rather than wrapping them in custom hooks. This keeps the data flow visible where it's used. Only extract a shared hook when the exact same query is needed in 3+ screens.
+- **Mutations** — use `useMutation` from `@tinycld/core/lib/mutations` (not directly from `@tanstack/react-query`). It supports generator-based mutation functions that automatically await pbtsdb `Transaction` objects:
+  ```ts
+  const create = useMutation({
+      mutationFn: function* (data) {
+          yield contactsCollection.insert({ id: newRecordId(), ...data })
+      },
+      onSuccess: () => router.back(),
+      onError: handleMutationErrorsWithForm({ setError, getValues }),
+  })
+  ```
+- For multi-step mutations, yield each Transaction sequentially, or yield an array for parallel execution
+- Use `performMutations` from `@tinycld/core/lib/mutations` when you need to await Transactions inside an async function
+- All collections are configured in `lib/pocketbase.ts` with expand relations
+- Reference documentation:
+   - Expo Router: https://docs.expo.dev/router/introduction/
+   - pbtsdb: https://github.com/nathanstitt/pbtsdb/blob/main/llms.txt
+   - TanStack DB: https://tanstack.com/db/latest/docs/overview
+
+## Zustand Stores (UI State)
+- Use Zustand stores for **shared UI state** — sidebar open/closed, dialog targets, compose mode, popover state, visible calendar IDs, active sections. Do NOT use Zustand for server data (use `useLiveQuery`), form state (use `useForm`), mutations (use `useMutation`), or URL state (use Expo Router params).
+- Import `create` and persistence helpers from `@tinycld/core/lib/store`:
+  ```ts
+  import { create, persist, asyncStorage } from '@tinycld/core/lib/store'
+  ```
+- Store files live in `lib/stores/` (core) or `packages/<pkg>/stores/` (package-scoped).
+- Existing core stores: `workspace-store.ts` (sidebar, drawer, active package), `auth-store.ts` (user session). Theme preference is stored in PocketBase via `useThemePreference()` from `lib/use-theme-preference.ts`, not in a Zustand store.
+- Existing package stores (inside each sibling repo): `mail/stores/` (compose, thread list), `drive/stores/` (UI dialogs, search), `calendar/stores/` (popover, visible calendars).
+- Use `persist` middleware with `partialize` when only some fields need AsyncStorage persistence:
+  ```ts
+  export const useMyStore = create<MyState>()(
+      persist(
+          (set) => ({
+              persisted: true,
+              transient: false,
+              toggle: () => set((s) => ({ persisted: !s.persisted })),
+          }),
+          {
+              name: 'tinycld_my_store',
+              storage: asyncStorage,
+              partialize: (s) => ({ persisted: s.persisted }),
+          }
+      )
+  )
+  ```
+- Use selectors for granular subscriptions — `useMyStore(s => s.field)` only re-renders when `field` changes.
+- Keep mutations in React hooks (not in stores) — they need reactive data from `useLiveQuery` and TanStack Query's `isPending`/`isError` tracking. Compose stores + mutation hooks in a slim `useFeature()` hook when a component needs both.
+- Do NOT use React Context for new shared UI state — use a Zustand store instead.
+
+## Logging
+- Use the centralized logger from `lib/logger.ts` instead of console.log
+- Import with: `import { log } from '@/lib/logger'`
+- Available log levels: `log.debug()`, `log.info()`, `log.warn()`, `log.error()`
+- `log.error()` automatically sends errors to Sentry for tracking
+- Use `log.debug()` for verbose development info, `log.info()` for general information, `log.warn()` for warnings, and `log.error()` for errors
+- The logger shows timestamps and colors in development mode
+
+## Scripts Reference
+- `bun run dev` starts Expo dev server (`expo start --port 7100`).
+- `bun run dev:local` starts both the PocketBase backend and Expo dev server together.
+- `bun run typecheck` runs `tsc --noEmit --skipLibCheck`.
+- `bun run checks` runs lint and typechecks
+- `bun run lint` (or `bun run lint:fix`) runs Biome linting/formatting.
+- `bun run test:e2e` and `bun run test:server` cover the Playwright suite and supporting services.
+   - never start or kill servers when running Playwright. It will manage it's own service and test data. If you see network errors or other issues, stop and ask for advice
+- `bun run test:e2e <test file>` will run a single test.  This will also start the dev server for testing.
+- `bun run build:web` runs `expo export --platform web` for production web builds.
+- `bun run ios` runs `expo run:ios` to build and launch on iOS.
+- `bun run android` runs `expo run:android` to build and launch on Android.
+
+## PocketBase Notes
+- Local data lives in `server/pb_data/`; reset via `tests/pb-test-server` scripts when fixtures fall out of sync.
+- Keep migrations in `server/pb_migrations/` and describe manual steps in the PR body.
+- Create api routes only as a last resort and after discussion. Prefer to create records using standard useMutation with pbtsdb stores.  If needed we can use golang hooks to observe and modify records as they're created/modified
+- Go server hooks (e.g. CardDAV in the `@tinycld/contacts` sibling's `server/` directory) use SDK methods that bypass PocketBase API rules — they implement equivalent authorization manually. When changing API rules on a collection, check if a Go hook also accesses that collection and update its filters to match.
+
+## Users & Organizations
+- Users belong to orgs via the `user_org` junction table (many-to-many)
+- Roles (`admin`, `clerical`, `workforce`) are per-org—a user can have different roles in different orgs
+- Use `useOrgInfo()` from `@tinycld/core/lib/use-org-info` to get `{ orgSlug, orgId, org }` for the current org context
+- `useOrgSlug()` from `@tinycld/core/lib/use-org-slug` returns just the org slug — on web it reads from `OrgSlugContext` (set by `[orgSlug]/_layout.tsx`), on native it reads from AsyncStorage
+- `navigateToOrg(orgSlug)` from `@tinycld/core/lib/org-url` does a same-origin path navigation to `/a/<orgSlug>`
+- Session helpers like `getRoleForOrg(session, orgSlug)` provide role lookups
+
+## Routing & Navigation
+- **Org context comes from the URL path**: `/a/<orgSlug>/<service>` — e.g. `/a/acme/contacts`, `/a/acme/mail`, `/a/acme/settings/profile`
+- All org-scoped routes use the `/a/[orgSlug]/` prefix in file-system routing
+- Use `useOrgHref()` from `@tinycld/core/lib/org-routes` for **type-safe** org-scoped navigation. Pass short paths (without the `/a/[orgSlug]` prefix) — misspellings are caught at compile time:
+  ```tsx
+  const orgHref = useOrgHref()
+  router.push(orgHref('contacts/new'))
+  router.push(orgHref('contacts/[id]', { id: contact.id }))
+  router.push(orgHref('mail', { folder: 'sent' }))
+  <Link href={orgHref('mail/[id]', { id: threadId })} />
+  ```
+- **Never** use `as OneRouter.Href` casts for org routes — always use `useOrgHref()`
+- For dynamic package navigation where the slug is a runtime value (e.g. rail/tab bar), use the resolved URL string: `` `/a/${orgSlug}/${pkgSlug}` ``
+- Use `useOrgInfo()` or `useOrgSlug()` to get the current org — `useOrgSlug()` reads from context on web
+
+## Package System
+- Feature packages live in **sibling git repos** at `~/code/tinycld/{contacts,mail,calendar,drive,google-takeout-import}/` and are linked in via `bun run packages:link`. They appear as symlinks under `tinycld/packages/@tinycld/<name>`. `@tinycld/core` is not a sibling — it is bundled inside this repo at `packages/@tinycld/core/`.
+- `tinycld.packages.ts::getPackages()` scans `tinycld/packages/` for directories with a `manifest.ts` — the symlink set is the source of truth. A fresh clone has no feature packages; devs add entries via `bun run packages:install <git-url>` (clone + link in one step) or `bun run packages:link <slug>` (link an already-cloned sibling).
+- `bun run packages:generate` (runs automatically before `dev` and `build:web`) wires linked feature packages into the app:
+  - Re-exports package screens into `app/a/[orgSlug]/{slug}/` (org-scoped routes)
+  - Re-exports public top-level routes declared via manifest `publicRoutes` into `app/<path>` (e.g. drive's `/share/[token]`)
+  - Generates typed collection wiring in `lib/generated/package-collections.ts`
+  - Generates package registry in `lib/generated/package-registry.ts`
+  - Symlinks migrations/hooks into `server/pb_migrations/` and `server/pb_hooks/`. Core's migrations are symlinked in via a separate explicit pass (core has no `manifest.ts`).
+- Each feature package provides: `manifest.ts`, optionally `types.ts` (schema types), `collections.ts`, `screens/`, `public-screens/`, `pb-migrations/`, `pb-hooks/`, `seed.ts`, `tests/`, `settings/` (settings-panel contributions).
+- Manifest fields `routes`, `publicRoutes`, and `nav` are all optional — a package can contribute only a settings panel (see `@tinycld/google-takeout-import`) with none of these.
+- The type system is fully integrated — package `types.ts` exports a `{PascalSlug}Schema` type that gets merged into `MergedSchema` so `useStore('packageCollection')` is strongly typed end-to-end.
+- Package screens run in the app's bundle context and can import from the host app using `~/` and from core using `@tinycld/core/...`.
+- `lib/generated/`, `app/a/[orgSlug]/*/`, and `/app/share/` are gitignored; `app/a/[orgSlug]/_layout.tsx` and `app/a/[orgSlug]/settings/*` are app files (force-add to git).
+- **Do NOT `bun install` inside a feature sibling repo** — bun auto-installs peer deps, which duplicates `react`, `react-native`, `pbtsdb`, etc. and causes hundreds of "Type X is not assignable to type X" errors. Siblings inherit peer deps through this repo's `node_modules/` via the link symlink.
+- Metro bundler reads sibling packages via `watchFolders` + `nodeModulesPaths` in `metro.config.cjs`, computed dynamically by scanning `tinycld/packages/`.
+- Sibling-package tests (vitest) are discovered via `packages/@*/*/tests/**/*.test.ts` in `vitest.config.ts`; Playwright discovers them via a matching glob in `playwright.config.ts`.
+- Runtime hooks: `usePackages()` and `usePackage(slug)` from `@tinycld/core/lib/packages/use-packages`.
+- Full documentation: `docs/packages.md` (in this repo, or in core's docs subtree).
+
+## Forms and other components
+- All form UI components live in `ui/form/` and are exported from `~/ui/form`
+- The barrel export re-exports `useForm`, `Control`, `Controller`, `zodResolver`, and `z` so screens only need one import:
+  ```tsx
+  import { useForm, zodResolver, z, TextInput, FormErrorSummary } from '~/ui/form'
+  ```
+- Available components: `TextInput`, `TextAreaInput`, `NumberInput`, `SelectInput`, `Toggle`, `FormErrorSummary`
+- Each input accepts a generic `control` and type-safe `name` via `Path<T>` — pass the `control` from `useForm()` and field names are autocompleted
+- Define a Zod schema per form, pass it via `zodResolver(schema)` to `useForm()`, and let TypeScript infer the form type from `defaultValues` — do not manually specify the generic
+- Use `mode: 'onChange'` for real-time validation as the user types
+- Show `<FormErrorSummary errors={errors} isEnabled={isSubmitted} />` above fields to surface all errors after first submit
+- **Always use `useMutation` from `@tinycld/core/lib/mutations`** for form submissions — this ensures pbtsdb errors bubble up to the form via `onError`:
+  ```ts
+  const create = useMutation({
+      mutationFn: function* (data) {
+          yield collection.insert({ id: newRecordId(), ...data })
+      },
+      onSuccess: () => router.back(),
+      onError: handleMutationErrorsWithForm({ setError, getValues }),
+  })
+  const onSubmit = handleSubmit((data) => create.mutate(data))
+  ```
+- Use `create.isPending` to disable the submit button and show loading state
+- Error utilities in `lib/errors.ts`: `errorToString()`, `extractValidationErrors()`, `handleMutationErrorsWithForm()`, `captureException()`
+- Do NOT use manual `useState` for form fields — always use `useForm` + the form components
+- For complex forms, extract a `useFeatureForm()` hook that wraps `useForm` with schema, defaults, and submit logic
+- See `@tinycld/contacts`'s `screens/new.tsx` (in the contacts sibling repo) for a reference implementation
+- When developing a feature for a package, consider if the components you are adding would be of use to other packages. If so add them to the top-level ./components and offer to update other packages to use them.
+- **UI Framework: Gluestack UI + Uniwind (Tailwind v4 for React Native)**
+  - Use React Native primitives (`View`, `Text`, `Pressable`, `ScrollView`) with Tailwind `className` for styling via Uniwind.
+  - Complex UI components (Modal, ActionSheet, AlertDialog) are built with Gluestack UI's headless `create*` factories in `ui/` — they use `@gluestack-ui/core` internally and are styled with Uniwind + `tva()`.
+  - The custom `Menu` component in `ui/menu/` provides a compound-component API (`Menu`, `Menu.Trigger`, `Menu.Portal`, `Menu.Overlay`, `Menu.Content`, `Menu.Item`, `Menu.ItemTitle`, `Menu.Label`, `Separator`). It portals to `document.body` on web.
+  - Layout: `View` + `className="flex-row"` replaces XStack; plain `View` is column by default (replaces YStack).
+  - Text: `Text` + `className="text-sm text-foreground"` — use semantic color tokens (`text-foreground`, `text-muted`, `text-accent`, `text-danger`).
+  - Colors via className: `bg-background`, `bg-surface-secondary`, `border-border`, `text-muted`, `bg-accent`, `text-accent-foreground`, `bg-danger-soft`, `text-danger`.
+  - Colors via hook (for non-className contexts like Lucide icons, RN style props): import `useThemeColor` from `@tinycld/core/lib/use-app-theme`. This provides both built-in tokens (`foreground`, `background`, `muted-foreground`, etc.) and custom app tokens (`rail-background`, `rail-text`, `rail-active-text`, `sidebar-background`, `active-indicator`, `hover-background`).
+  - Tuple form for multiple colors: `const [fg, bg] = useThemeColor(['foreground', 'background'])`.
+  - Custom theme tokens are defined in `global.css` under `@variant light` / `@variant dark`.
+  - Do not use `StyleSheet.create` — prefer `className` or inline `style` objects.
+
+## Documentation & Support
+- Gluestack UI: https://v5.gluestack.io/llms.txt
+- Uniwind (Tailwind for RN): https://docs.uniwind.dev
+- Expo documentation: https://docs.expo.dev/llms-full.txt
+- PocketBase reference: https://raw.githubusercontent.com/Suryapratap-R/pocketbase-llm-txt/refs/heads/main/llms-full.txt
+- PocketBase TS helper docs: https://raw.githubusercontent.com/satohshi/pocketbase-ts/refs/heads/master/README.md
+
+## Project Structure & Module Organization
+Expo routes live under `app/`, with organization screens in `app/a/[orgSlug]/` and shared layouts in `_layout.tsx`. Shared UI lives in `components/` and `ui/`, hooks in `hooks/`, and domain utilities in `lib/` and `constants/`. Static assets stay in `assets/` and `public/`. PocketBase data, migrations, and hooks live in `pb_data/`, `pb_migrations/`, and `pb_hooks/`. Tests and automation land in `tests/`, covering Playwright, Vitest, and Docker helpers.
+

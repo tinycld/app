@@ -3,20 +3,15 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 // ROOT is the source of truth — every other path derives from it or from an
-// explicit override env var. Default: parent of the scripts/ directory (i.e.
-// the current monorepo's core/). The upcoming core/app split will invoke the
-// generator with TINYCLD_APP_ROOT pointing at the new tinycld/ sibling.
+// explicit override env var. Default: parent of the scripts/ directory.
 const ROOT = process.env.TINYCLD_APP_ROOT
     ? path.resolve(process.env.TINYCLD_APP_ROOT)
     : path.resolve(import.meta.dirname, '..')
 
-// GENERATED_DIR is the TypeScript output target. In the current monorepo it
-// sits under core's nested tinycld/core/lib/generated/. After the split, the
-// app sibling will pass TINYCLD_GENERATED_DIR=<tinycld>/lib/generated so
-// generated files live with the app that imports them.
+// GENERATED_DIR is the TypeScript output target.
 const GENERATED_DIR = process.env.TINYCLD_GENERATED_DIR
     ? path.resolve(process.env.TINYCLD_GENERATED_DIR)
-    : path.join(ROOT, 'tinycld/core/lib/generated')
+    : path.join(ROOT, 'lib/generated')
 
 // APP_DIR hosts the generated route re-exports. Both the org-scoped routes
 // (a/[orgSlug]/...) and public routes (publicRoutes) land under here.
