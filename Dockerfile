@@ -1,6 +1,6 @@
 # Build pipeline assumes the build context contains:
 #   - tinycld/ repo at root
-#   - packages/@tinycld/core/ — full core repo tree (a sibling, not a symlink)
+#   - packages/@tinycld/core/ — full core source tree (real directory)
 #   - packages/@tinycld/<other>/ — one entry per linked feature package
 # The deploy/build.sh script in the deploy/ sibling assembles this layout
 # from the per-repo git HEADs before running `docker build`.
@@ -9,13 +9,6 @@
 FROM oven/bun:1.3.12-debian AS web-builder
 
 WORKDIR /app
-
-# package.json declares `@tinycld/core: file:../core`, which from /app/
-# resolves to /core. Stage core there so bun can satisfy the dep during
-# install. (The eventual canonical location is /app/packages/@tinycld/core,
-# copied below; the generator overwrites node_modules/@tinycld/core with a
-# symlink there once packages/ is in place.)
-COPY packages/@tinycld/core /core
 
 # Install dependencies first (layer caching). --ignore-scripts skips the
 # project's `postinstall` (`bun run packages:generate`); the generator needs
@@ -44,10 +37,7 @@ COPY packages/ ./packages/
 # Generate package wiring (produces server/package_extensions.go,
 # lib/generated/, app/a/[orgSlug]/<slug>/ routes, public route re-exports,
 # server/pb_migrations/ symlinks, and updates server/go.mod replace
-# directives). Output dir is overridden via TINYCLD_GENERATED_DIR; the
-# default is core's nested tinycld/core/lib/generated which doesn't exist
-# in this layout.
-ENV TINYCLD_GENERATED_DIR=./lib/generated
+# directives).
 RUN bun run scripts/generate-packages.ts
 
 # Resolve any migration/hook symlinks into real files. generate-packages.ts

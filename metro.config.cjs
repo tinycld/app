@@ -271,12 +271,6 @@ if (upstreamCreateModuleIdFactory) {
     }
 }
 
-// global.css is a thin shim at the app root that `@import`s
-// `@tinycld/core/global.css`. The shim approach keeps Tailwind's PostCSS
-// resolution anchored in this repo's node_modules — pointing uniwind
-// directly at packages/@tinycld/core/global.css realpaths into core/,
-// where the at-rule processor reaches a different tailwindcss install
-// (or none) and emits noisy "Unknown at rule" warnings for @theme/@variant.
 module.exports = withUniwindConfig(config, {
     cssEntryFile: './global.css',
     dtsFile: './uniwind-types.d.ts',

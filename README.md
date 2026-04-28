@@ -3,14 +3,14 @@
 The runnable [TinyCld](https://tinycld.org) app — Expo Router on the front, PocketBase on the
 back, every feature shipped as a separately-installable package.
 
-This repo composes the [`@tinycld/core`](../core) library with branding, Expo native projects,
-deployment configs, and the package generator. It's the entrypoint for `bun run dev` and
-`docker pull tinycld/tinycld`.
+This repo bundles `@tinycld/core` (the shared TypeScript + Go library) directly at
+`packages/@tinycld/core/` along with branding, Expo native projects, deployment configs, and
+the package generator. It's the entrypoint for `bun run dev` and `docker pull tinycld/tinycld`.
 
 ```
 ~/code/tinycld/
-    tinycld/                 # @tinycld/app — this repo
-    core/                    # @tinycld/core (library)
+    tinycld/                 # @tinycld/app — this repo (bundles @tinycld/core)
+    core/                    # symlink → tinycld/packages/@tinycld/core/
     mail/                    # @tinycld/mail (feature package)
     calendar/                # @tinycld/calendar
     contacts/                # @tinycld/contacts
@@ -18,10 +18,12 @@ deployment configs, and the package generator. It's the entrypoint for `bun run 
     google-takeout-import/   # @tinycld/google-takeout-import
 ```
 
+The `~/code/tinycld/core/` symlink keeps feature sibling repos' `../core/...` tsconfig
+references resolving without any sibling-side change.
+
 ## Quick start
 
 ```sh
-git clone https://github.com/tinycld/core.git ~/code/tinycld/core
 git clone https://github.com/tinycld/tinycld.git ~/code/tinycld/tinycld
 cd ~/code/tinycld/tinycld
 bun install
@@ -43,20 +45,22 @@ PocketBase server on 7093, and a local SSL proxy on 7090 → 7093. Visit
   `configureCore` runs before any other `@tinycld/core/*` import.
 - **`lib/generated/`** — package-registry/collections/sidebars/providers/settings/seeds.
   Generator output. Gitignored.
-- **`packages/@tinycld/{core,mail,…}`** — symlinks to sibling repos. Metro and vitest scan
-  this tree.
+- **`packages/@tinycld/core/`** — bundled shared library (`tinycld/core/{lib,ui,components,types}/`,
+  `server/coreserver/...`, migrations). No separate git repo.
+- **`packages/@tinycld/{mail,calendar,…}`** — symlinks to feature sibling repos. Metro and
+  vitest scan this tree.
 - **`scripts/generate-packages.ts`** — the generator. Reads `tinycld.packages.ts` + each
-  package's `manifest.ts`, writes route re-exports, the registry, Go server wiring, and
-  PocketBase migration symlinks. Honors `TINYCLD_APP_ROOT`, `TINYCLD_GENERATED_DIR`,
+  feature package's `manifest.ts`, writes route re-exports, the registry, Go server wiring,
+  and PocketBase migration symlinks. Honors `TINYCLD_APP_ROOT`, `TINYCLD_GENERATED_DIR`,
   `TINYCLD_APP_DIR`, `TINYCLD_SERVER_DIR`, `TINYCLD_CORE_IMPORT_ALIAS`.
 - **`server/main.go`** — ~50 lines: load env, init Sentry, build `coreserver.Options`, call
   `coreserver.Register(app, opts)`. Module `tinycld.org/app` with
   `replace tinycld.org/core => ../packages/@tinycld/core/server`.
 - **`server/pb_migrations/`** — landing dir for symlinks. Generator populates from core's
-  `server/pb_migrations/` plus each linked package's `pb-migrations/`.
+  `server/pb_migrations/` plus each linked feature package's `pb-migrations/`.
 - **`Dockerfile`, `docker-compose.yml`, `eas.json`** — deployment.
 
-## Adding / removing packages
+## Adding / removing feature packages
 
 ```sh
 bun run packages:install <git-url>     # clone + link + regenerate
@@ -78,9 +82,8 @@ cd server && go build -o tinycld . && ./tinycld --help
 
 ## Code style
 
-See [`@tinycld/core`'s CONTRIBUTING.md](../core/CONTRIBUTING.md). The same conventions apply —
-no `useState`/`useEffect` shortcuts, semantic Tailwind tokens, pbtsdb for data, etc. Both
-repos share Biome config and Vitest patterns.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions — no `useState`/`useEffect` shortcuts,
+semantic Tailwind tokens, pbtsdb for data, etc.
 
 ## Deploy
 
@@ -94,4 +97,4 @@ work via `app.json` + the `Procfile` analog in `Dockerfile`.
 
 ## License
 
-[AGPL-3.0](../core/LICENSE). Commercial relicensing available — open an issue to discuss.
+[AGPL-3.0](LICENSE). Commercial relicensing available — open an issue to discuss.

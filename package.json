@@ -7,7 +7,7 @@
     "main": "expo-router/entry",
     "type": "module",
     "scripts": {
-        "packages:generate": "TINYCLD_GENERATED_DIR=./lib/generated bunx tsx scripts/generate-packages.ts",
+        "packages:generate": "bunx tsx scripts/generate-packages.ts",
         "packages:link": "bunx tsx scripts/link-package.ts link",
         "packages:unlink": "bunx tsx scripts/link-package.ts unlink",
         "packages:install": "bunx tsx scripts/install-package.ts",
@@ -48,7 +48,6 @@
         "test:server": "bunx tsx scripts/test-server-api.ts"
     },
     "dependencies": {
-        "@tinycld/core": "file:../core",
         "@10play/tentap-editor": "^1.0.1",
         "@expo/html-elements": "^0.12.5",
         "@gluestack-ui/core": "^5.0.0-alpha.0",

@@ -3,12 +3,8 @@
         "paths": {
             "@tinycld/app-generated/*": ["./lib/generated/*"],
             "@tinycld/core": ["./packages/@tinycld/core/index.ts"],
-            "@tinycld/core/*": ["./packages/@tinycld/core/tinycld/core/*"],
-            "@tinycld/core/global.css": ["./packages/@tinycld/core/global.css"],
-            "@tinycld/core/Providers": [
-                "./packages/@tinycld/core/tinycld/core/components/Providers.tsx"
-            ],
-            "~/tinycld/core/*": ["./packages/@tinycld/core/tinycld/core/*"],
+            "@tinycld/core/*": ["./packages/@tinycld/core/*"],
+            "@tinycld/core/Providers": ["./packages/@tinycld/core/components/Providers.tsx"],
             "~/*": ["./*"]
         },
         "strict": true,

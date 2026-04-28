@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  checks:
+    name: Lint, Typecheck & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+      - run: bun install
+      - name: Generate PB schema types
+        run: |
+          cd server && go build -o tinycld .
+          ./tinycld --dev serve &
+          sleep 3
+          kill %1 2>/dev/null || true
+      - run: bun run checks
+      - run: bun run test:unit
