@@ -29,8 +29,6 @@ tsconfig.tsbuildinfo
 # generated code
 /ios
 /android
-/types/pbSchema.ts
-/types/pbZodSchema.ts
 
 # PocketBase data
 server/pb_data/
