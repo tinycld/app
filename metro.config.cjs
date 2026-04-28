@@ -24,6 +24,19 @@ const siblingByName = new Map()
 // and Node's exports field has no extension-fallback on a single wildcard.
 const siblingExportsByName = new Map()
 
+// Map of sibling realpath basename → in-tree symlink path. Used by the
+// resolver below to redirect web-worker bundle URL fetches back through the
+// project tree. Background: the `new Worker(new URL('./worker', ...))`
+// Babel transform records the worker dependency by its absolutePath, which
+// Metro's TreeFS canonicalizes to the sibling's realpath (outside the
+// project tree). The serializer then emits the worker URL as
+// `path.relative(serverRoot, realpath)`, which for our layout produces
+// `../<sibling>/...`; `new URL(...)` strips the leading `..`, leaving the
+// browser to fetch `/<sibling>/...`. Without this redirect, Metro's Server
+// would resolve `./<sibling>/...` from `<serverRoot>/.` and 404 because no
+// such directory exists under tinycld/.
+const siblingRealBaseToSymlinkPath = new Map()
+
 function scanPackagesDir(dir, scope) {
     if (!fs.existsSync(dir)) return
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -48,6 +61,7 @@ function scanPackagesDir(dir, scope) {
             // which is fed into watchFolders.
             siblingByName.set(name, linkPath)
             siblingExportsByName.set(name, loadExportsPatterns(real))
+            siblingRealBaseToSymlinkPath.set(path.basename(real), linkPath)
         } catch {
             // dangling symlink — skip
         }
@@ -166,6 +180,31 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
         return { type: 'sourceFile', filePath: resolved }
     }
 
+    // Worker bundle URL fetches. When the browser hits
+    // `/<sibling-real-base>/<rest>/worker.bundle?...`, Metro's Server calls
+    // resolveRequest with `originModulePath = <projectRoot>/.` and
+    // `moduleName = ./<sibling-real-base>/<rest>/worker`. The shape comes
+    // from the worker URL being emitted as
+    // `path.relative(serverRoot, <worker-realpath>)` and serialized through
+    // `new URL(...)`, which strips a leading `..`. We redirect back through
+    // the in-tree symlink so resolution lands on a path under
+    // tinycld/packages/<name>/... instead of a non-existent
+    // tinycld/<sibling-real-base>/...
+    if (moduleName.startsWith('./') && isServerRootOrigin(context.originModulePath)) {
+        const rest = moduleName.slice(2)
+        const slash = rest.indexOf('/')
+        const head = slash === -1 ? rest : rest.slice(0, slash)
+        const symlinkRoot = siblingRealBaseToSymlinkPath.get(head)
+        if (symlinkRoot) {
+            const tail = slash === -1 ? '' : rest.slice(slash)
+            const stem = symlinkRoot + tail
+            const resolved = probeSourceFile(stem, platform)
+            if (resolved) {
+                return { type: 'sourceFile', filePath: resolved }
+            }
+        }
+    }
+
     // @tinycld/app-generated/* — generator output written to lib/generated/.
     // Mirrors tinycld's tsconfig path alias; Metro doesn't honor tsconfig
     // paths, so we resolve here.
@@ -206,6 +245,14 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     }
 
     return (originalResolveRequest ?? context.resolveRequest)(context, moduleName, platform)
+}
+
+// Recognize the `<projectRoot>/.` originModulePath that Metro's Server
+// passes when resolving an incoming bundle URL request. `path.join` strips
+// the trailing dot, so we compare against the literal string Metro emits.
+function isServerRootOrigin(originPath) {
+    if (typeof originPath !== 'string') return false
+    return originPath === `${__dirname}/.` || originPath === __dirname
 }
 
 // Pull the package name (scoped: @scope/name, unscoped: name) out of a
