@@ -65,8 +65,8 @@ Copy this verbatim into App Store Connect → App Review Information → Notes w
         Email:           appreview@tinycld.org
         Password:        <FILL IN FROM 1PASSWORD>
 
-    On the first screen, tap "Use default tinycld.org server" to pre-fill
-    the URL, then sign in with the credentials above. The demo account is
+    On the first screen, tap "Use tinycld.org" to connect to the demo
+    server, then sign in with the credentials above. The demo account is
     reseeded nightly, so Mail, Calendar, Contacts, and Drive are always
     populated.
 
@@ -112,7 +112,8 @@ Copy this verbatim into App Store Connect → App Review Information → Notes w
 ## End-to-end verification checklist (TestFlight)
 
 - Fresh install → lands on `/connect` without AuthGate flash.
-- "Use default tinycld.org server" → URL fills → Connect succeeds.
+- "Use tinycld.org" (primary CTA) → connects directly to the demo server.
+- "I host my own server" → opens the URL sheet → Connect succeeds with a custom address.
 - Sign in with demo account → primary org loads.
 - Browse mail, calendar, contacts, drive — all populated.
 - Toggle system dark mode → app follows.
