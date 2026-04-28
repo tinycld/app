@@ -10,6 +10,13 @@ FROM oven/bun:1.3.12-debian AS web-builder
 
 WORKDIR /app
 
+# package.json declares `@tinycld/core: file:../core`, which from /app/
+# resolves to /core. Stage core there so bun can satisfy the dep during
+# install. (The eventual canonical location is /app/packages/@tinycld/core,
+# copied below; the generator overwrites node_modules/@tinycld/core with a
+# symlink there once packages/ is in place.)
+COPY packages/@tinycld/core /core
+
 # Install dependencies first (layer caching). --ignore-scripts skips the
 # project's `postinstall` (`bun run packages:generate`); the generator needs
 # scripts/, lib/, and packages/, none of which are staged yet. We run it
