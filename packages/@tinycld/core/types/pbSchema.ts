@@ -404,6 +404,7 @@ export interface Users {
     created: string
     updated: string
     is_demo: boolean
+    username: string
 }
 
 

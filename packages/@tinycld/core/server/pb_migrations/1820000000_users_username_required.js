@@ -1,35 +1,49 @@
 /// <reference path="../pb_data/types.d.ts" />
-// Switch user identity from email-only to username-first.
+// Add a username field to the users auth collection so login can use either
+// username or email as the identifier.
 //
-// On `users` (`_pb_users_auth_`):
-//   - `username` becomes required, with the pattern the front-end validates.
-//   - `email` becomes optional.
-//   - `passwordAuth.identityFields` accepts both username and email so
-//     existing users can sign in with their old email during the transition.
+// PocketBase v0.36 auth collections do NOT include `username` by default —
+// only `id` and `email`. We add it as a regular text field with a unique
+// index, then list it alongside `email` in passwordAuth.identityFields so
+// authWithPassword(...) accepts either.
 //
-// Backfill mirrors coreserver/usernames.go::BackfillUsernames. The JS and Go
-// implementations share TestBackfillUsernames as a parity check.
+// Existing rows are backfilled from the email-prefix with collision-resolution.
+// The JS and Go (coreserver/usernames.go::BackfillUsernames) implementations
+// share TestBackfillUsernames as a parity check.
 
 migrate(
     app => {
         const users = app.findCollectionByNameOrId('users')
 
-        const usernameField = users.fields.getByName('username')
-        if (!usernameField) {
-            throw new Error('users.username: system field missing')
+        // Add the username field if not already present (idempotent).
+        if (!users.fields.getByName('username')) {
+            users.fields.add(
+                new TextField({
+                    id: 'users_username',
+                    name: 'username',
+                    required: true,
+                    pattern: '^[a-z0-9][a-z0-9_-]{1,31}$',
+                    min: 2,
+                    max: 32,
+                })
+            )
         }
-        usernameField.required = true
-        usernameField.pattern = '^[a-z0-9][a-z0-9_-]{1,31}$'
-        usernameField.min = 2
-        usernameField.max = 32
 
+        // Email becomes optional. PB exposes it via fields.getByName('email').
         const emailField = users.fields.getByName('email')
         if (emailField) {
             emailField.required = false
         }
 
-        // Backfill before saving the collection — flipping required=true on
-        // username while a row has none would fail validation.
+        // Save the collection first so the new column exists, then backfill.
+        // We can't enable required=true on a fresh column with empty rows, so
+        // we add the column with required=false initially, backfill, then
+        // upgrade to required=true.
+        const usernameField = users.fields.getByName('username')
+        usernameField.required = false
+        app.save(users)
+
+        // Backfill.
         const NON = /[^a-z0-9_-]/g
         const taken = new Set()
         const rows = app.findAllRecords('users')
@@ -57,6 +71,13 @@ migrate(
             app.save(r)
         }
 
+        // Now flip to required=true and add unique index, then enable
+        // username as an identity field for password auth.
+        usernameField.required = true
+        users.indexes = (users.indexes || []).concat([
+            'CREATE UNIQUE INDEX `idx_users_username` ON `users` (`username`)',
+        ])
+
         const opts = users.passwordAuth || {}
         opts.enabled = true
         opts.identityFields = ['username', 'email']
@@ -66,18 +87,25 @@ migrate(
     },
     app => {
         const users = app.findCollectionByNameOrId('users')
-        const usernameField = users.fields.getByName('username')
-        if (usernameField) {
-            usernameField.required = false
-            usernameField.pattern = ''
-        }
+
+        const opts = users.passwordAuth || {}
+        opts.identityFields = ['email']
+        users.passwordAuth = opts
+
+        users.indexes = (users.indexes || []).filter(
+            i => !i.includes('idx_users_username')
+        )
+
         const emailField = users.fields.getByName('email')
         if (emailField) {
             emailField.required = true
         }
-        const opts = users.passwordAuth || {}
-        opts.identityFields = ['email']
-        users.passwordAuth = opts
+
+        const usernameField = users.fields.getByName('username')
+        if (usernameField) {
+            users.fields.removeByName('username')
+        }
+
         app.save(users)
     }
 )

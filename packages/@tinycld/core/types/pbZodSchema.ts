@@ -400,7 +400,7 @@ export const usersSchema = z.object({
     id: z.string().regex(/^[a-z0-9]+$/).length(15).optional(),
     password: z.string().min(8),
     tokenKey: z.string().min(30).max(60).optional(),
-    email: z.string().email(),
+    email: z.string().email().optional(),
     emailVisibility: z.boolean().optional(),
     verified: z.boolean().optional(),
     name: z.string().max(255).optional(),
@@ -408,5 +408,6 @@ export const usersSchema = z.object({
     created: z.string().regex(DATETIME_REGEX).optional(),
     updated: z.string().regex(DATETIME_REGEX).optional(),
     is_demo: z.boolean().optional(),
+    username: z.string().regex(/^[a-z0-9][a-z0-9_-]{1,31}$/).min(2).max(32),
 })
 
