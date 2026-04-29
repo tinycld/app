@@ -98,10 +98,35 @@ func handleGetInviteLink(app core.App, re *core.RequestEvent) error {
     })
 }
 
-// Stubs for the other two handlers — implemented in later tasks. Defined here
-// so the file compiles end-to-end.
 func handleRotateInviteLink(app core.App, re *core.RequestEvent) error {
-    return re.InternalServerError("not implemented", errors.New("stub"))
+    uo, err := resolveUserOrgAsAdmin(app, re)
+    if err != nil {
+        return err
+    }
+    userID := uo.GetString("user")
+    orgID := uo.GetString("org")
+
+    if err := invalidateExistingTokens(app, userID, orgID); err != nil {
+        return re.InternalServerError("Failed to invalidate old tokens", err)
+    }
+
+    user, err := app.FindRecordById("users", userID)
+    if err != nil {
+        return re.InternalServerError("Failed to load user", err)
+    }
+    org, err := app.FindRecordById("orgs", orgID)
+    if err != nil {
+        return re.InternalServerError("Failed to load org", err)
+    }
+
+    token, err := mintInviteToken(app, user, org, uo.GetString("role"))
+    if err != nil {
+        return re.InternalServerError("Failed to mint invite token", err)
+    }
+
+    return re.JSON(http.StatusOK, map[string]any{
+        "inviteUrl": buildInviteURL(app, token),
+    })
 }
 
 func handleSendInviteLink(app core.App, re *core.RequestEvent) error {
