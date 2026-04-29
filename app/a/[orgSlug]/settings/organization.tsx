@@ -1,5 +1,6 @@
 import { eq } from '@tanstack/db'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient, useMutation as useRawMutation } from '@tanstack/react-query'
+import { OrgLogo } from '@tinycld/core/components/OrgLogo'
 import { handleMutationErrorsWithForm } from '@tinycld/core/lib/errors'
 import { formatBytes } from '@tinycld/core/lib/format-utils'
 import { mutation, useMutation } from '@tinycld/core/lib/mutations'
@@ -17,11 +18,37 @@ import {
     z,
     zodResolver,
 } from '@tinycld/core/ui/form'
+import * as DocumentPicker from 'expo-document-picker'
 import { useRouter } from 'expo-router'
 import { ArrowLeft } from 'lucide-react-native'
 import { newRecordId } from 'pbtsdb/core'
 import { useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { Platform, Pressable, ScrollView, Text, View } from 'react-native'
+
+const LOGO_MIME_TYPES = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/webp']
+const LOGO_MAX_BYTES = 5 * 1024 * 1024
+
+type PickedLogo = File | { uri: string; name: string; type: string; size?: number }
+
+async function pickLogo(): Promise<PickedLogo | null> {
+    if (Platform.OS === 'web') {
+        return new Promise(resolve => {
+            const input = document.createElement('input')
+            input.type = 'file'
+            input.accept = LOGO_MIME_TYPES.join(',')
+            input.onchange = () => resolve(input.files?.[0] ?? null)
+            input.click()
+        })
+    }
+    const result = await DocumentPicker.getDocumentAsync({ type: LOGO_MIME_TYPES, multiple: false })
+    if (result.canceled) return null
+    const a = result.assets[0]
+    return { uri: a.uri, name: a.name, type: a.mimeType ?? 'image/png', size: a.size }
+}
+
+function logoSize(picked: PickedLogo): number {
+    return 'size' in picked && typeof picked.size === 'number' ? picked.size : 0
+}
 
 const orgSchema = z.object({
     name: z.string().min(1, 'Organization name is required'),
@@ -128,6 +155,10 @@ export default function OrganizationSettings() {
                         </Text>
                     </View>
                 </View>
+
+                <Divider className="my-5" />
+
+                <LogoSection org={org ?? null} />
 
                 <Divider className="my-5" />
 
@@ -389,6 +420,97 @@ function UserBreakdownTable({
                     </View>
                 )
             })}
+        </View>
+    )
+}
+
+function LogoSection({ org }: { org: { id: string; name: string; logo?: string } | null }) {
+    const fgColor = useThemeColor('foreground')
+    const mutedColor = useThemeColor('muted-foreground')
+    const primaryColor = useThemeColor('primary')
+    const primaryFgColor = useThemeColor('primary-foreground')
+    const dangerColor = useThemeColor('danger')
+    const borderColor = useThemeColor('border')
+    const [error, setError] = useState<string | null>(null)
+
+    const upload = useRawMutation({
+        mutationFn: async () => {
+            if (!org?.id) throw new Error('No organization context')
+            const picked = await pickLogo()
+            if (!picked) return
+            const size = logoSize(picked)
+            if (size > LOGO_MAX_BYTES) {
+                throw new Error(`Logo must be 5 MB or smaller (got ${formatBytes(size)}).`)
+            }
+            const fd = new FormData()
+            fd.append('logo', picked as unknown as Blob)
+            await pb.collection('orgs').update(org.id, fd)
+        },
+        onError: (err: Error) => setError(err.message),
+        onSuccess: () => setError(null),
+    })
+
+    const remove = useRawMutation({
+        mutationFn: async () => {
+            if (!org?.id) throw new Error('No organization context')
+            await pb.collection('orgs').update(org.id, { logo: null })
+        },
+        onError: (err: Error) => setError(err.message),
+        onSuccess: () => setError(null),
+    })
+
+    const hasLogo = !!org?.logo
+
+    return (
+        <View className="gap-3">
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: fgColor }}>Logo</Text>
+            <Text style={{ fontSize: 12, color: mutedColor }}>
+                Up to 5 MB. PNG, JPEG, SVG, or WEBP.
+            </Text>
+
+            <View className="flex-row items-center gap-4">
+                <View
+                    style={{
+                        width: 96,
+                        height: 96,
+                        borderRadius: 48,
+                        borderWidth: 1,
+                        borderColor,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden',
+                    }}
+                >
+                    <OrgLogo org={org} size={96} />
+                </View>
+
+                <View className="flex-row gap-2">
+                    <Pressable
+                        onPress={() => upload.mutate()}
+                        disabled={upload.isPending}
+                        className={`px-4 py-2 rounded-lg ${upload.isPending ? 'opacity-50' : ''}`}
+                        style={{ backgroundColor: primaryColor }}
+                    >
+                        <Text style={{ fontWeight: '600', color: primaryFgColor }}>
+                            {upload.isPending ? 'Uploading…' : hasLogo ? 'Replace' : 'Upload'}
+                        </Text>
+                    </Pressable>
+                    {hasLogo ? (
+                        <Pressable
+                            onPress={() => remove.mutate()}
+                            disabled={remove.isPending}
+                            className={`px-4 py-2 rounded-lg border ${remove.isPending ? 'opacity-50' : ''}`}
+                            style={{ borderColor }}
+                        >
+                            <Text style={{ fontWeight: '600', color: fgColor }}>
+                                {remove.isPending ? 'Removing…' : 'Remove'}
+                            </Text>
+                        </Pressable>
+                    ) : null}
+                </View>
+            </View>
+
+            {error ? <Text style={{ fontSize: 13, color: dangerColor }}>{error}</Text> : null}
         </View>
     )
 }
