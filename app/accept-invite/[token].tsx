@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 
 interface InviteInfo {
+    username: string
     email: string
     orgName: string
     orgSlug: string
@@ -151,9 +152,13 @@ function AcceptForm({ token, info }: { token: string; info: InviteInfo }) {
                 const body = (await res.json().catch(() => null)) as { message?: string } | null
                 throw new Error(body?.message ?? 'Failed to accept invitation')
             }
-            const { email, orgSlug } = (await res.json()) as { email: string; orgSlug: string }
+            const { username, orgSlug } = (await res.json()) as {
+                username: string
+                email: string
+                orgSlug: string
+            }
 
-            await pb.collection('users').authWithPassword(email, data.password)
+            await pb.collection('users').authWithPassword(username, data.password)
             setIsSuccess(true)
             router.replace(`/a/${orgSlug}`)
         } catch (err) {
@@ -191,9 +196,14 @@ function AcceptForm({ token, info }: { token: string; info: InviteInfo }) {
                     style={{ fontSize: 13, color: mutedColor, lineHeight: 18 }}
                 >
                     Signing in as{' '}
-                    <Text style={{ fontWeight: '600', color: fgColor }}>{info.email}</Text> •{' '}
+                    <Text style={{ fontWeight: '600', color: fgColor }}>@{info.username}</Text> ·{' '}
                     {info.role}
                 </Text>
+                {info.email ? (
+                    <Text className="text-center" style={{ fontSize: 12, color: mutedColor }}>
+                        {info.email}
+                    </Text>
+                ) : null}
                 <Text
                     className="text-center"
                     style={{ fontSize: 13, color: mutedColor, marginTop: 4 }}
