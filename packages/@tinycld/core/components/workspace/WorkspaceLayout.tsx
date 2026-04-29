@@ -1,5 +1,6 @@
 import { Slot } from 'expo-router'
 import { Platform, Pressable, View } from 'react-native'
+import { DemoBanner } from '@tinycld/core/components/DemoBanner'
 import { NotificationDrawer } from '@tinycld/core/components/NotificationDrawer'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { MobileLayout } from './MobileLayout'
@@ -24,7 +25,7 @@ export function WorkspaceLayout({ isReady = true }: { isReady?: boolean }) {
 
     return (
         <View
-            className="flex-1 flex-row"
+            className="flex-1"
             style={[
                 {
                     backgroundColor: bgColor,
@@ -32,26 +33,29 @@ export function WorkspaceLayout({ isReady = true }: { isReady?: boolean }) {
                 Platform.OS === 'web' ? ({ height: '100vh' } as object) : undefined,
             ]}
         >
-            {isReady && <PackageRail />}
+            <DemoBanner />
+            <View className="flex-1 flex-row" style={{ minHeight: 0 }}>
+                {isReady && <PackageRail />}
 
-            {isReady && <NotificationDrawer />}
+                {isReady && <NotificationDrawer />}
 
-            <PackageProviderWrapper>
-                {isReady &&
-                    (isTablet ? (
-                        <SidebarOverlay
-                            isVisible={showSidebarOverlay}
-                            overlayColor={overlayColor}
-                            onDismiss={() => setSidebarOpen(false)}
-                        />
-                    ) : (
-                        <PackageSidebar width={SIDEBAR_WIDTH} />
-                    ))}
+                <PackageProviderWrapper>
+                    {isReady &&
+                        (isTablet ? (
+                            <SidebarOverlay
+                                isVisible={showSidebarOverlay}
+                                overlayColor={overlayColor}
+                                onDismiss={() => setSidebarOpen(false)}
+                            />
+                        ) : (
+                            <PackageSidebar width={SIDEBAR_WIDTH} />
+                        ))}
 
-                <View className="flex-1" style={{ backgroundColor: bgColor, minHeight: 0 }}>
-                    <Slot />
-                </View>
-            </PackageProviderWrapper>
+                    <View className="flex-1" style={{ backgroundColor: bgColor, minHeight: 0 }}>
+                        <Slot />
+                    </View>
+                </PackageProviderWrapper>
+            </View>
         </View>
     )
 }

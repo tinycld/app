@@ -1,6 +1,7 @@
 import { Slot } from 'expo-router'
 import { Platform, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { DemoBanner } from '@tinycld/core/components/DemoBanner'
 import { NotificationDrawer } from '@tinycld/core/components/NotificationDrawer'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { MobileDrawer } from './MobileDrawer'
@@ -26,6 +27,7 @@ export function MobileLayout({ isReady = true }: { isReady?: boolean }) {
                     Platform.OS === 'web' ? ({ height: '100vh' } as object) : undefined,
                 ]}
             >
+                <DemoBanner />
                 <View className="flex-1 overflow-hidden">
                     <Slot />
                     {isReady && <MoreDrawer />}
