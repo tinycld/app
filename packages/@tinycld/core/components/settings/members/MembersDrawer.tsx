@@ -6,6 +6,7 @@ import { mutation, useMutation } from '@tinycld/core/lib/mutations'
 import { pb, useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useOrgInfo } from '@tinycld/core/lib/use-org-info'
+import { ThemedSwitch } from '@tinycld/core/ui/ThemedSwitch'
 import {
     Drawer,
     DrawerBackdrop,
@@ -35,6 +36,16 @@ import {
     ROLE_ORDER,
     ROLE_SWATCH,
 } from './types'
+
+// writeIsDemo writes the demo flag onto a pbtsdb users-collection draft. The
+// generated schema doesn't yet include `is_demo` (it regenerates after the
+// next dev-server start picks up migration 1810000000), so we cast through
+// `unknown` here in one place. Once pbSchema regenerates, the cast can be
+// dropped — the helper stays as a single, named call site so the cast isn't
+// scattered across the codebase.
+function writeIsDemo(draft: unknown, demo: boolean): void {
+    ;(draft as { is_demo: boolean }).is_demo = demo
+}
 
 interface Props {
     mode: DrawerMode
@@ -79,7 +90,7 @@ function ViewMember({
 }) {
     const { user } = useAuth()
     const { orgId } = useOrgInfo()
-    const [userOrgCollection] = useStore('user_org')
+    const [userOrgCollection, usersCollection] = useStore('user_org', 'users')
 
     const fgColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
@@ -120,6 +131,19 @@ function ViewMember({
                 headers: { 'Content-Type': 'application/json' },
             })
         },
+    })
+
+    // is_demo lives on the users record. Migration 1810000000 relaxes
+    // users.updateRule to allow shared-org members to attempt an update;
+    // the RegisterUsersFieldGuard hook on the server narrows that to
+    // "shared-org admin/owner, allowlisted field only", so this pbtsdb
+    // mutation only succeeds for the right caller and field.
+    const setDemo = useMutation({
+        mutationFn: mutation(function* (demo: boolean) {
+            yield usersCollection.update(member.userId, draft => {
+                writeIsDemo(draft, demo)
+            })
+        }),
     })
 
     const displayName = member.name || member.email.split('@')[0] || member.email
@@ -212,6 +236,13 @@ function ViewMember({
                         isLastOwner={isLastOwner}
                         isSelf={isSelf}
                         onChange={role => updateRole.mutate({ role })}
+                    />
+
+                    <DemoToggle
+                        isDemo={member.isDemo}
+                        disabled={isSelf || setDemo.isPending}
+                        isSelf={isSelf}
+                        onToggle={value => setDemo.mutate(value)}
                     />
 
                     {showPackageAccess && <PackageAccessPanel userOrgId={member.userOrgId} />}
@@ -593,5 +624,56 @@ function InviteView({ onDone }: { onDone: () => void }) {
                 </View>
             </DrawerFooter>
         </>
+    )
+}
+
+function DemoToggle({
+    isDemo,
+    disabled,
+    isSelf,
+    onToggle,
+}: {
+    isDemo: boolean
+    disabled: boolean
+    isSelf: boolean
+    onToggle: (value: boolean) => void
+}) {
+    const mutedColor = useThemeColor('muted-foreground')
+
+    return (
+        <View className="gap-1.5">
+            <View className="flex-row items-center justify-between gap-3">
+                <View className="flex-1" style={{ minWidth: 0 }}>
+                    <Text
+                        style={{
+                            fontSize: 11,
+                            fontWeight: '700',
+                            color: mutedColor,
+                            textTransform: 'uppercase',
+                            letterSpacing: 0.8,
+                        }}
+                    >
+                        Demo account
+                    </Text>
+                    <Text
+                        style={{ fontSize: 12, color: mutedColor, lineHeight: 16, marginTop: 2 }}
+                    >
+                        Sandboxed: outbound email and notifications are simulated. The user
+                        sees the full app but nothing leaves the box.
+                    </Text>
+                </View>
+                <ThemedSwitch
+                    value={isDemo}
+                    onValueChange={onToggle}
+                    disabled={disabled}
+                    accessibilityLabel="Demo account"
+                />
+            </View>
+            {isSelf ? (
+                <Text style={{ fontSize: 11, color: mutedColor, marginTop: 2 }}>
+                    You can’t change your own demo flag. Ask another admin.
+                </Text>
+            ) : null}
+        </View>
     )
 }

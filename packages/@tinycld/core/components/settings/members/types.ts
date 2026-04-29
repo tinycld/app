@@ -7,6 +7,7 @@ export interface MemberRow {
     email: string
     role: OrgRole
     isPending: boolean
+    isDemo: boolean
 }
 
 export type DrawerMode =
