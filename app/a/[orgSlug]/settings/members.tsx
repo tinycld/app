@@ -45,6 +45,9 @@ export default function MembersSettings() {
             .select(({ uo, u }) => ({
                 userOrgId: uo.id,
                 userId: uo.user,
+                // Cast: username is added by Phase A migration; pbSchema regenerates
+                // after the next dev-server start picks it up.
+                username: (u as unknown as { username: string }).username,
                 name: u.name,
                 email: u.email,
                 role: uo.role,
@@ -60,6 +63,7 @@ export default function MembersSettings() {
             (memberRows ?? []).map(row => ({
                 userOrgId: row.userOrgId,
                 userId: row.userId,
+                username: row.username ?? '',
                 name: row.name ?? '',
                 email: row.email ?? '',
                 role: row.role as OrgRole,
@@ -78,6 +82,7 @@ export default function MembersSettings() {
         const matches = (m: MemberRow) =>
             !q ||
             m.name.toLowerCase().includes(q) ||
+            m.username.toLowerCase().includes(q) ||
             m.email.toLowerCase().includes(q) ||
             m.role.toLowerCase().includes(q)
 
@@ -367,7 +372,7 @@ function MemberRowItem({
     const borderColor = useThemeColor('border')
 
     const isSelf = member.userId === user.id
-    const displayName = member.name || member.email.split('@')[0] || member.email
+    const displayName = member.name || member.username || member.email
 
     return (
         <Pressable
@@ -398,7 +403,8 @@ function MemberRowItem({
                     {isSelf && <YouBadge />}
                 </View>
                 <Text style={{ fontSize: 12.5, color: mutedColor }} numberOfLines={1}>
-                    {member.email}
+                    @{member.username}
+                    {member.email ? ` · ${member.email}` : ''}
                 </Text>
             </View>
 
