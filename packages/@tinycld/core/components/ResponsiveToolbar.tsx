@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react-native'
 import { EllipsisVertical } from 'lucide-react-native'
 import type { ReactNode } from 'react'
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
-import { Platform, Pressable, View } from 'react-native'
+import { Platform, Pressable, ScrollView, View } from 'react-native'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { Menu, Separator } from '@tinycld/core/ui/menu'
 import { MenuActionItem } from './DropdownMenu'
@@ -41,17 +41,20 @@ interface ResponsiveToolbarProps {
 
 function NativeToolbar({ items, rightItems, height = 44 }: ResponsiveToolbarProps) {
     return (
-        <View
-            className="flex-row items-center justify-between px-2"
-            style={{ height, overflow: 'visible' }}
-        >
-            <View className="flex-row items-center gap-0.5" style={{ overflow: 'visible' }}>
+        <View className="flex-row items-center px-2" style={{ height }}>
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ alignItems: 'center', gap: 2 }}
+                style={{ flex: 1 }}
+                keyboardShouldPersistTaps="handled"
+            >
                 {items.map((item, i) => (
                     <RenderItem key={itemKey(item, i)} item={item} />
                 ))}
-            </View>
+            </ScrollView>
             {rightItems && rightItems.length > 0 && (
-                <View className="flex-row items-center gap-0.5" style={{ overflow: 'visible' }}>
+                <View className="flex-row items-center gap-0.5 pl-2">
                     {rightItems.map((item, i) => (
                         <RenderItem key={itemKey(item, i)} item={item} />
                     ))}
