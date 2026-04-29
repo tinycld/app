@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router'
-import { Building2, LogOut, Settings, User } from 'lucide-react-native'
+import { LogOut, Settings, User } from 'lucide-react-native'
 import { Pressable, Text, View } from 'react-native'
 import { MenuActionItem } from '@tinycld/core/components/DropdownMenu'
+import { OrgLogo } from '@tinycld/core/components/OrgLogo'
 import { useAuth } from '@tinycld/core/lib/auth'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { getOrgHrefString, navigateToOrg } from '@tinycld/core/lib/org-url'
@@ -54,7 +55,7 @@ export function UserMenu() {
                         <MenuActionItem
                             key={org.id}
                             label={org.name}
-                            icon={Building2}
+                            leading={<OrgLogo org={org} size={18} />}
                             isActive={org.slug === orgSlug}
                             href={getOrgHrefString(org.slug)}
                             onPress={() => navigateToOrg(org.slug)}

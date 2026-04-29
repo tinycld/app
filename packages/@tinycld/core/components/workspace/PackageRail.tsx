@@ -2,8 +2,10 @@ import { Link } from 'expo-router'
 import { Building2, type LucideIcon, Settings } from 'lucide-react-native'
 import { StyleSheet, View } from 'react-native'
 import { NotificationBell } from '@tinycld/core/components/NotificationBell'
+import { OrgLogo } from '@tinycld/core/components/OrgLogo'
 import { ImportIndicator } from '@tinycld/core/components/workspace/ImportIndicator'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
+import { useOrgInfo } from '@tinycld/core/lib/use-org-info'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useSortedPackages } from '@tinycld/core/lib/use-sorted-packages'
 import { getIcon } from './package-icon-map'
@@ -18,6 +20,7 @@ export function PackageRail() {
     const sorted = useSortedPackages()
     const { activePkgSlug } = useWorkspaceLayout()
     const orgHref = useOrgHref()
+    const { org } = useOrgInfo()
 
     return (
         <View
@@ -32,7 +35,11 @@ export function PackageRail() {
         >
             <View className="items-center gap-1">
                 <Link href={orgHref('')} style={styles.railItem} aria-label="Organization home">
-                    <Building2 size={24} color={railText} />
+                    <OrgLogo
+                        org={org}
+                        size={32}
+                        fallback={<Building2 size={24} color={railText} />}
+                    />
                 </Link>
 
                 <View

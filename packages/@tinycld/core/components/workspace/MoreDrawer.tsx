@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router'
-import { Bell, Building2, LogOut, Settings, User, X } from 'lucide-react-native'
+import { Bell, LogOut, Settings, User, X } from 'lucide-react-native'
 import { useCallback, useEffect, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { OrgLogo } from '@tinycld/core/components/OrgLogo'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
     runOnJS,
@@ -177,7 +178,7 @@ export function MoreDrawer() {
                                             style={styles.drawerItem}
                                             onPress={() => handleNav(() => navigateToOrg(org.slug))}
                                         >
-                                            <Building2 size={20} color={color} />
+                                            <OrgLogo org={org} size={20} />
                                             <Text style={[styles.drawerItemLabel, { color }]}>
                                                 {org.name}
                                             </Text>
