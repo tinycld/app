@@ -31,17 +31,9 @@ func RegisterInviteLifecycle(app *pocketbase.PocketBase) {
 func registerInviteLifecycleCore(app core.App) {
 	app.OnRecordAfterCreateSuccess("user_org").BindFunc(func(e *core.RecordEvent) error {
 		userOrg := e.Record
-		go safeHandleUserOrgInvite(app, userOrg)
+		go handleUserOrgInvite(app, userOrg)
 		return e.Next()
 	})
-}
-
-// safeHandleUserOrgInvite wraps handleUserOrgInvite with panic recovery so that
-// goroutine-based email sends never crash the server (e.g. during app shutdown
-// when the DB connection is already closed).
-func safeHandleUserOrgInvite(app core.App, userOrg *core.Record) {
-	defer func() { _ = recover() }()
-	handleUserOrgInvite(app, userOrg)
 }
 
 func handleUserOrgInvite(app core.App, userOrg *core.Record) {

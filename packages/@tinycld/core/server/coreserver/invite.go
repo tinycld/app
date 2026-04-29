@@ -195,9 +195,7 @@ func handleInviteMember(app core.App, re *core.RequestEvent) error {
 		return re.BadRequestError("Failed to invite member", err)
 	}
 
-	// Notify the invited user (best-effort: recover from panics on app shutdown)
 	go func() {
-		defer func() { _ = recover() }()
 		orgRecord, err := app.FindRecordById("orgs", req.OrgID)
 		if err != nil {
 			return
