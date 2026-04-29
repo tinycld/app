@@ -13,10 +13,10 @@ import { useThemePreference } from '@tinycld/core/lib/use-theme-preference'
 import { GluestackUIProvider } from '@tinycld/core/ui/gluestack-ui-provider'
 
 function ThemeAwareGluestackProvider({ children }: { children: ReactNode }) {
-    const { resolved } = useThemePreference()
+    const { preference } = useThemePreference()
     const { colorTheme } = useColorTheme()
     return (
-        <GluestackUIProvider mode={resolved} colorTheme={colorTheme}>
+        <GluestackUIProvider mode={preference} colorTheme={colorTheme}>
             {children}
             <ToastRenderer />
             <ShortcutHelp />

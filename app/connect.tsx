@@ -37,6 +37,7 @@ export default function Connect() {
     const accent = useThemeColor('primary')
     const border = useThemeColor('border')
     const surface = useThemeColor('surface')
+    const bg = useThemeColor('background')
 
     const { control, handleSubmit, reset } = useForm({
         resolver: zodResolver(urlSchema),
@@ -91,7 +92,7 @@ export default function Connect() {
     const busy = busyDefault || busyCustom
 
     return (
-        <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: bg }} edges={['top', 'bottom']}>
             <ScrollView
                 className="flex-1"
                 contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 28, paddingBottom: 32 }}
