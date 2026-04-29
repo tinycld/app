@@ -140,7 +140,7 @@ function ViewMember({
         }),
     })
 
-    const displayName = member.name || member.email.split('@')[0] || member.email
+    const displayName = member.name || member.username || member.email
 
     return (
         <>
@@ -166,7 +166,8 @@ function ViewMember({
                             style={{ fontSize: 12.5, color: mutedColor, marginTop: 1 }}
                             numberOfLines={1}
                         >
-                            {member.email}
+                            @{member.username}
+                            {member.email ? ` · ${member.email}` : ''}
                         </Text>
                     </View>
                 </View>
@@ -425,7 +426,19 @@ function RemoveSection({
 }
 
 const inviteSchema = z.object({
-    email: z.string().email('Enter a valid email address'),
+    username: z
+        .string()
+        .min(3, 'At least 3 characters')
+        .max(32, 'At most 32 characters')
+        .regex(
+            /^[a-z0-9][a-z0-9_-]+$/,
+            'Use lowercase letters, digits, dash or underscore'
+        ),
+    email: z
+        .string()
+        .email('Enter a valid email address')
+        .or(z.literal(''))
+        .optional(),
     role: z.enum(['admin', 'member', 'guest']),
 })
 
@@ -449,7 +462,7 @@ function InviteView({ onDone }: { onDone: () => void }) {
     } = useForm<InviteFormValues>({
         mode: 'onChange',
         resolver: zodResolver(inviteSchema),
-        defaultValues: { email: '', role: 'member' },
+        defaultValues: { username: '', email: '', role: 'member' },
     })
 
     const [result, setResult] = useState<{ userOrgId: string; inviteUrl: string } | null>(null)
@@ -458,7 +471,12 @@ function InviteView({ onDone }: { onDone: () => void }) {
         mutationFn: async (data: InviteFormValues) => {
             return pb.send<{ userOrgId: string; inviteUrl: string }>('/api/invite-member', {
                 method: 'POST',
-                body: JSON.stringify({ email: data.email, role: data.role, orgId }),
+                body: JSON.stringify({
+                    username: data.username.trim().toLowerCase(),
+                    email: data.email?.trim() ?? '',
+                    role: data.role,
+                    orgId,
+                }),
                 headers: { 'Content-Type': 'application/json' },
             })
         },
@@ -502,7 +520,7 @@ function InviteView({ onDone }: { onDone: () => void }) {
                             Invite a teammate
                         </Text>
                         <Text style={{ fontSize: 12.5, color: mutedColor, marginTop: 2 }}>
-                            We’ll email them a link to join your organization.
+                            Pick a username for your teammate. We’ll generate an invite link.
                         </Text>
                     </View>
                 </View>
@@ -517,9 +535,19 @@ function InviteView({ onDone }: { onDone: () => void }) {
 
                     <TextInput
                         control={control}
+                        name="username"
+                        label="Username"
+                        placeholder="alice"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="username"
+                    />
+
+                    <TextInput
+                        control={control}
                         name="email"
-                        label="Email address"
-                        placeholder="teammate@company.com"
+                        label="Email (optional)"
+                        placeholder="alice@company.com"
                         autoCapitalize="none"
                         autoComplete="email"
                         keyboardType="email-address"

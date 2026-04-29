@@ -3,6 +3,7 @@ export type OrgRole = 'owner' | 'admin' | 'member' | 'guest'
 export interface MemberRow {
     userOrgId: string
     userId: string
+    username: string
     name: string
     email: string
     role: OrgRole
