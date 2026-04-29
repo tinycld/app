@@ -94,6 +94,7 @@ func Register(app *pocketbase.PocketBase, opts Options) {
 
 	notify.Register(app)
 	RegisterInviteEndpoint(app)
+	RegisterInviteLinkEndpoints(app)
 	RegisterInviteLifecycle(app)
 	RegisterAuditHooks(app)
 	RegisterOrgPkgEnabledHooks(app)

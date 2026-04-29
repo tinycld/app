@@ -26,17 +26,21 @@ func TestInviteLink_Get_ReturnsLiveURL(t *testing.T) {
         t.Fatal(err)
     }
 
+    // Register the endpoint on the test app before running the scenario.
+    RegisterInviteLinkEndpoints(app)
+
     authToken, err := tokenForUser(app, owner)
     if err != nil {
         t.Fatal(err)
     }
 
     scenario := &tests.ApiScenario{
-        Name:           "GET invite-link returns live URL",
-        Method:         http.MethodGet,
-        URL:            "/api/invite-link/" + uo.Id,
-        Headers:        map[string]string{"Authorization": authToken},
-        ExpectedStatus: http.StatusOK,
+        Name:            "GET invite-link returns live URL",
+        Method:          http.MethodGet,
+        URL:             "/api/invite-link/" + uo.Id,
+        Headers:         map[string]string{"Authorization": authToken},
+        ExpectedStatus:  http.StatusOK,
+        ExpectedContent: []string{`"inviteUrl":`},
         TestAppFactory: func(_ testing.TB) *tests.TestApp {
             return app
         },
