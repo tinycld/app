@@ -47,6 +47,7 @@ interface SeedConfig {
     adminPassword: string
     mode: SeedMode
     userEmail: string
+    userUsername: string
     userName: string
     userPassword: string
     isDemo: boolean
@@ -57,6 +58,7 @@ interface SeedConfig {
 
 const TEST_DEFAULTS = {
     userEmail: process.env.TEST_USER_LOGIN || 'user@tinycld.org',
+    userUsername: process.env.TEST_USER_USERNAME || 'tester',
     userName: 'Test User',
     userPassword: process.env.TEST_USER_PW || 'TestUser1234!',
     orgSlug: 'test-org',
@@ -67,6 +69,7 @@ const TEST_DEFAULTS = {
 // packages/@tinycld/core/server/coreserver/demo_start.go. Keep in sync.
 const DEMO_DEFAULTS = {
     userEmail: 'demo@tinycld.org',
+    userUsername: 'demo',
     userName: 'Demo Tour',
     orgSlug: 'demo',
     orgName: 'Demo Workspace',
@@ -80,6 +83,7 @@ function parseArgs(): SeedConfig {
     let mode: SeedMode = 'test'
     const overrides: Partial<{
         userEmail: string
+        userUsername: string
         userName: string
         userPassword: string
         orgSlug: string
@@ -106,6 +110,9 @@ function parseArgs(): SeedConfig {
             }
             case '--user-email':
                 overrides.userEmail = args[++i]
+                break
+            case '--user-username':
+                overrides.userUsername = args[++i]
                 break
             case '--user-name':
                 overrides.userName = args[++i]
@@ -143,6 +150,7 @@ function parseArgs(): SeedConfig {
         adminPassword,
         mode,
         userEmail: overrides.userEmail ?? defaults.userEmail,
+        userUsername: overrides.userUsername ?? defaults.userUsername,
         userName: overrides.userName ?? defaults.userName,
         userPassword: overrides.userPassword ?? (mode === 'test' ? TEST_DEFAULTS.userPassword : ''),
         isDemo: mode === 'demo',
@@ -426,15 +434,15 @@ async function seedSecondOrg(pb: PocketBase, ctx: OrgSeedContext) {
 export async function seedForUser(pb: PocketBase, config: SeedConfig) {
     let user: { id: string }
     try {
-        user = await pb.collection('users').getFirstListItem(`email = "${config.userEmail}"`)
-        log('Found existing user:', config.userEmail)
+        user = await pb.collection('users').getFirstListItem(`username = "${config.userUsername}"`)
+        log('Found existing user:', config.userUsername)
         if (config.isDemo) {
             // Make sure pre-existing accounts have the flag — otherwise outbound
             // side-effect chokepoints won't suppress for this user.
             await pb.collection('users').update(user.id, { is_demo: true })
         }
     } catch {
-        log('Creating user:', config.userEmail)
+        log('Creating user:', config.userUsername)
         // Demo accounts are created by the Go endpoint with a random password;
         // when we create one here from the CLI we still need *some* password
         // to satisfy the auth collection. The user authenticates via
@@ -443,6 +451,7 @@ export async function seedForUser(pb: PocketBase, config: SeedConfig) {
             config.userPassword ||
             `Demo${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}!`
         user = await pb.collection('users').create({
+            username: config.userUsername,
             email: config.userEmail,
             password,
             passwordConfirm: password,
