@@ -49,6 +49,9 @@ export default function MembersSettings() {
                 email: u.email,
                 role: uo.role,
                 verified: u.verified,
+                // Cast: is_demo is added by migration 1810000000; the pbSchema
+                // regenerator picks it up after the next dev-server start.
+                isDemo: (u as unknown as { is_demo: boolean }).is_demo,
             }))
     )
 
@@ -61,6 +64,7 @@ export default function MembersSettings() {
                 email: row.email ?? '',
                 role: row.role as OrgRole,
                 isPending: row.verified === false,
+                isDemo: !!row.isDemo,
             })),
         [memberRows]
     )
