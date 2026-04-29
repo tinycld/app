@@ -46,8 +46,14 @@ RUN bun run scripts/generate-packages.ts
 # real content, so materialize them in place.
 RUN find server/pb_migrations server/pb_hooks -type l -exec sh -c 'target=$(readlink "$1") && rm "$1" && cp "$target" "$1"' _ {} \; 2>/dev/null || true
 
-# Build web app.
+# Build web app. EXPO_PUBLIC_* vars are inlined at bundle time, so they
+# must be present in the environment when `expo export` runs. Pass them in
+# via `docker build --build-arg`.
+ARG EXPO_PUBLIC_SENTRY_DSN=
+ARG EXPO_PUBLIC_GIT_COMMIT=
 ENV EXPO_PUBLIC_ENV=web
+ENV EXPO_PUBLIC_SENTRY_DSN=$EXPO_PUBLIC_SENTRY_DSN
+ENV EXPO_PUBLIC_GIT_COMMIT=$EXPO_PUBLIC_GIT_COMMIT
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 RUN bunx expo export --platform web
 
