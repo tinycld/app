@@ -11,8 +11,8 @@ import { login, ORG_SLUG, TEST_USER_EMAIL, TEST_USER_PASSWORD } from './helpers'
 //   4. The invited user signs out, then signs back in with the new password.
 
 test.describe('Invite flow', () => {
-    // Unique email per run — the test DB is reset across runs but not between tests.
-    const inviteEmail = `invitee-${Date.now()}@example.com`
+    // Unique username per run — the test DB is reset across runs but not between tests.
+    const inviteUsername = `invitee${Date.now()}`
     const invitePassword = 'BrandNewPass1!'
 
     test('owner invites user, user sets password, logs out, logs back in', async ({ page }) => {
@@ -28,9 +28,8 @@ test.describe('Invite flow', () => {
             timeout: 10_000,
         })
 
-        // The TextInput custom component sets testID={name} — so the invite form's
-        // "email" field is a stable selector regardless of the labels/placeholders.
-        await page.getByTestId('email').fill(inviteEmail)
+        // Fill username only — proves email is optional.
+        await page.getByTestId('username').fill(inviteUsername)
         await page.getByText('Send invite', { exact: true }).click()
 
         // --- 2. Invite link panel surfaces the accept URL directly ---
@@ -70,8 +69,8 @@ test.describe('Invite flow', () => {
         })
         await invitee.goto('/')
 
-        // Back to the login modal — sign in as the invitee with their new creds.
-        await invitee.getByPlaceholder('you@example.com').fill(inviteEmail)
+        // Back to the login modal — sign in as the invitee by username with their new creds.
+        await invitee.getByTestId('identifier').fill(inviteUsername)
         await invitee.getByPlaceholder('Password').fill(invitePassword)
         await invitee.getByText('Sign in', { exact: true }).last().click()
         await invitee.waitForURL(/\/a\//, { timeout: 15_000 })
@@ -87,7 +86,7 @@ test.describe('Invite flow', () => {
             window.sessionStorage.clear()
         })
         await invitee.goto('/')
-        await invitee.getByPlaceholder('you@example.com').fill(TEST_USER_EMAIL)
+        await invitee.getByTestId('identifier').fill(TEST_USER_EMAIL)
         await invitee.getByPlaceholder('Password').fill(TEST_USER_PASSWORD)
         await invitee.getByText('Sign in', { exact: true }).last().click()
         await invitee.waitForURL(/\/a\//, { timeout: 15_000 })
@@ -97,7 +96,7 @@ test.describe('Invite flow', () => {
 
     test('admin sends invite link to an alternate email address', async ({ page }) => {
         clearEmailLog()
-        const altInviteEmail = `invitee-alt-${Date.now()}@example.com`
+        const altInviteUsername = `inviteealt${Date.now()}`
         const altEmail = `personal-${Date.now()}@example.com`
 
         await login(page)
@@ -107,7 +106,8 @@ test.describe('Invite flow', () => {
             timeout: 10_000,
         })
 
-        await page.getByTestId('email').fill(altInviteEmail)
+        // Fill username only — proves email is optional at invite creation.
+        await page.getByTestId('username').fill(altInviteUsername)
         await page.getByText('Send invite', { exact: true }).click()
         await expect(page.getByTestId('invite-link-step')).toBeVisible({ timeout: 10_000 })
 
@@ -125,7 +125,7 @@ test.describe('Invite flow', () => {
     })
 
     test('rotate invalidates the old invite link', async ({ page }) => {
-        const rotateInviteEmail = `invitee-rotate-${Date.now()}@example.com`
+        const rotateInviteUsername = `inviteerotate${Date.now()}`
 
         await login(page)
         await page.goto(`/a/${ORG_SLUG}/settings/members`)
@@ -134,7 +134,8 @@ test.describe('Invite flow', () => {
             timeout: 10_000,
         })
 
-        await page.getByTestId('email').fill(rotateInviteEmail)
+        // Fill username only — proves email is optional.
+        await page.getByTestId('username').fill(rotateInviteUsername)
         await page.getByText('Send invite', { exact: true }).click()
         await expect(page.getByTestId('invite-link-step')).toBeVisible({ timeout: 10_000 })
 

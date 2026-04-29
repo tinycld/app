@@ -5,6 +5,7 @@ import type { Page } from '@playwright/test'
 export const ORG_SLUG = 'test-org'
 export const TEST_USER_EMAIL = process.env.TEST_USER_LOGIN || 'user@tinycld.org'
 export const TEST_USER_PASSWORD = process.env.TEST_USER_PW || 'TestUser1234!'
+export const TEST_USER_USERNAME = process.env.TEST_USER_USERNAME ?? 'tester'
 
 // isPackageLinked checks whether a given @tinycld/* package is wired into
 // this core checkout. Tests that depend on package-contributed routes or
@@ -21,7 +22,7 @@ export function isPackageLinked(slug: string): boolean {
 
 export async function login(page: Page) {
     await page.goto('/')
-    await page.getByPlaceholder('you@example.com').fill(TEST_USER_EMAIL)
+    await page.getByTestId('identifier').fill(TEST_USER_EMAIL)
     await page.getByPlaceholder('Password').fill(TEST_USER_PASSWORD)
     await page.getByText('Sign in', { exact: true }).last().click()
     await page.waitForURL(/\/a\//, { timeout: 15_000 })
