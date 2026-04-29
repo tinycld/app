@@ -4,7 +4,7 @@ import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useCurrentRole } from '@tinycld/core/lib/use-current-role'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeft } from 'lucide-react-native'
-import { useMemo } from 'react'
+import { Suspense, useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
 export default function PackageSettingsSection() {
@@ -73,7 +73,9 @@ export default function PackageSettingsSection() {
                 <Text style={{ fontSize: 15, color: mutedColor }}>{group.packageName}</Text>
             </View>
             <View className="flex-1">
-                <PanelComponent />
+                <Suspense fallback={null}>
+                    <PanelComponent />
+                </Suspense>
             </View>
         </View>
     )

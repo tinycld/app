@@ -6,7 +6,17 @@
         "scheme": "tinycld",
         "platforms": ["ios", "android", "web"],
         "userInterfaceStyle": "automatic",
-        "plugins": ["expo-router"],
+        "plugins": [
+            [
+                "expo-router",
+                {
+                    "asyncRoutes": {
+                        "web": true,
+                        "default": "development"
+                    }
+                }
+            ]
+        ],
         "icon": "./assets/app-icon.png",
         "splash": {
             "image": "./assets/app-splash.png",

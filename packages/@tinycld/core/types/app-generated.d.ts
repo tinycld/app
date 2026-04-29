@@ -39,19 +39,22 @@ declare module '@tinycld/app-generated/package-providers' {
 }
 
 declare module '@tinycld/app-generated/package-sidebars' {
-    import type { ComponentType } from 'react'
+    import type { ComponentType, LazyExoticComponent } from 'react'
     interface PackageSidebarProps {
         isCollapsed: boolean
     }
-    export const packageSidebars: Record<string, ComponentType<PackageSidebarProps> | null>
+    type SidebarComponent =
+        | ComponentType<PackageSidebarProps>
+        | LazyExoticComponent<ComponentType<PackageSidebarProps>>
+    export const packageSidebars: Record<string, SidebarComponent | null>
 }
 
 declare module '@tinycld/app-generated/package-settings' {
-    import type { ComponentType } from 'react'
+    import type { ComponentType, LazyExoticComponent } from 'react'
     export interface PackageSettingsPanel {
         slug: string
         label: string
-        Component: ComponentType
+        Component: ComponentType | LazyExoticComponent<ComponentType>
     }
     export interface PackageSettingsGroup {
         packageName: string

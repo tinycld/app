@@ -29,19 +29,25 @@ describe('scanInstalledPackages', () => {
 
     it('finds unscoped packages with "tinycld": true', () => {
         writePkg(path.join(tmp, 'pkg-a'), { name: 'pkg-a', tinycld: true })
-        const found = scanInstalledPackages(tmp).map(p => p.name).sort()
+        const found = scanInstalledPackages(tmp)
+            .map(p => p.name)
+            .sort()
         expect(found).toEqual(['pkg-a'])
     })
 
     it('finds scoped packages with "tinycld": true', () => {
         writePkg(path.join(tmp, '@acme', 'pkg-a'), { name: '@acme/pkg-a', tinycld: true })
-        const found = scanInstalledPackages(tmp).map(p => p.name).sort()
+        const found = scanInstalledPackages(tmp)
+            .map(p => p.name)
+            .sort()
         expect(found).toEqual(['@acme/pkg-a'])
     })
 
     it('finds packages with manifest.ts fallback (no tinycld field)', () => {
         writePkg(path.join(tmp, 'pkg-b'), { name: 'pkg-b' }, { manifest: true })
-        const found = scanInstalledPackages(tmp).map(p => p.name).sort()
+        const found = scanInstalledPackages(tmp)
+            .map(p => p.name)
+            .sort()
         expect(found).toEqual(['pkg-b'])
     })
 
@@ -55,7 +61,9 @@ describe('scanInstalledPackages', () => {
         fs.mkdirSync(path.join(tmp, '.bin'), { recursive: true })
         fs.mkdirSync(path.join(tmp, '.cache'), { recursive: true })
         writePkg(path.join(tmp, 'pkg-a'), { name: 'pkg-a', tinycld: true })
-        const found = scanInstalledPackages(tmp).map(p => p.name).sort()
+        const found = scanInstalledPackages(tmp)
+            .map(p => p.name)
+            .sort()
         expect(found).toEqual(['pkg-a'])
     })
 
@@ -63,16 +71,16 @@ describe('scanInstalledPackages', () => {
         fs.symlinkSync('/nonexistent', path.join(tmp, 'broken'))
         fs.mkdirSync(path.join(tmp, 'no-pkg-json'), { recursive: true })
         writePkg(path.join(tmp, 'pkg-a'), { name: 'pkg-a', tinycld: true })
-        const found = scanInstalledPackages(tmp).map(p => p.name).sort()
+        const found = scanInstalledPackages(tmp)
+            .map(p => p.name)
+            .sort()
         expect(found).toEqual(['pkg-a'])
     })
 
     it('returns name and absolute path for each package', () => {
         writePkg(path.join(tmp, '@acme', 'pkg-a'), { name: '@acme/pkg-a', tinycld: true })
         const found = scanInstalledPackages(tmp)
-        expect(found).toEqual([
-            { name: '@acme/pkg-a', dir: path.join(tmp, '@acme', 'pkg-a') },
-        ])
+        expect(found).toEqual([{ name: '@acme/pkg-a', dir: path.join(tmp, '@acme', 'pkg-a') }])
     })
 
     it('handles tinycld field as object form', () => {
