@@ -100,8 +100,31 @@ func isNotificationMuted(app core.App, userID, notifType string) bool {
 	return false
 }
 
+// isDemoUser reports whether the given user has the is_demo flag set.
+// Defined locally rather than calling coreserver.IsDemoUser to avoid an
+// import cycle (coreserver imports notify). Returns false on lookup failure
+// so non-demo behavior is the safe default.
+func isDemoUser(app core.App, userID string) bool {
+	if userID == "" {
+		return false
+	}
+	rec, err := app.FindRecordById("users", userID)
+	if err != nil {
+		return false
+	}
+	return rec.GetBool("is_demo")
+}
+
 // sendExpoPush sends push notifications to all Expo push subscriptions for the user.
 func sendExpoPush(app core.App, userID string, params NotifyParams) {
+	// Demo users: skip the external Expo Push API hop. The notification
+	// record is already saved and the in-app web push has fired, so the user
+	// still sees the notification in the app — we just don't wake an actual
+	// device.
+	if isDemoUser(app, userID) {
+		return
+	}
+
 	records, err := app.FindRecordsByFilter(
 		"push_subscriptions",
 		"user = {:userId} && platform = 'expo'",
