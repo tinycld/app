@@ -39,6 +39,7 @@ try {
 
 // Mirror demo_start.go constants exactly.
 const DEMO_USER_EMAIL = 'demo@tinycld.org'
+const DEMO_USER_USERNAME = 'demo'
 const DEMO_USER_NAME = 'Demo Tour'
 const DEMO_ORG_SLUG = 'demo'
 const DEMO_ORG_NAME = 'Demo Workspace'
@@ -106,6 +107,7 @@ async function main() {
         adminPassword: config.adminPassword,
         mode: 'demo',
         userEmail: DEMO_USER_EMAIL,
+        userUsername: DEMO_USER_USERNAME,
         userName: DEMO_USER_NAME,
         userPassword: '',
         isDemo: true,
