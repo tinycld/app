@@ -91,6 +91,7 @@ func mustCreateUser(t *testing.T, app core.App, email string, demo bool) *core.R
 	}
 	r := core.NewRecord(col)
 	r.SetEmail(email)
+	r.Set("username", DeriveUsername(email))
 	r.Set("name", "Test")
 	r.SetVerified(true)
 	r.SetPassword("Password123!")

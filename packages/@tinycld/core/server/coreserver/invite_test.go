@@ -32,9 +32,10 @@ func TestInviteMember_NewUser_ReturnsInviteURLAndDoesNotEmail(t *testing.T) {
 	}
 
 	bodyBytes, _ := json.Marshal(map[string]string{
-		"email": "newhire@example.com",
-		"role":  "member",
-		"orgId": org.Id,
+		"username": "newhire",
+		"email":    "newhire@example.com",
+		"role":     "member",
+		"orgId":    org.Id,
 	})
 
 	scenario := &tests.ApiScenario{
@@ -74,5 +75,130 @@ func TestInviteMember_NewUser_ReturnsInviteURLAndDoesNotEmail(t *testing.T) {
 		},
 	}
 
+	scenario.Test(t)
+}
+
+func TestInviteMember_NewUser_ByUsername_NoEmail(t *testing.T) {
+	app := setupInviteTestApp(t)
+	read := captureMailerOutput(t)
+
+	owner := mustCreateUser(t, app, "owner-by-uname@test.local", false)
+	org := mustCreateOrg(t, app)
+	newMembership(t, app, owner, org, "owner", "")
+
+	registerInviteEndpointCore(app)
+	registerInviteLifecycleCore(app)
+
+	tok, err := tokenForUser(app, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bodyBytes, _ := json.Marshal(map[string]string{
+		"username": "newhire",
+		"role":     "member",
+		"orgId":    org.Id,
+	})
+
+	scenario := &tests.ApiScenario{
+		Method:                http.MethodPost,
+		URL:                   "/api/invite-member",
+		Body:                  strings.NewReader(string(bodyBytes)),
+		Headers:               map[string]string{"Authorization": tok},
+		ExpectedStatus:        http.StatusOK,
+		ExpectedContent:       []string{`"userId":`},
+		Delay:                 150 * time.Millisecond,
+		TestAppFactory:        func(_ testing.TB) *tests.TestApp { return app },
+		DisableTestAppCleanup: true,
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, res *http.Response) {
+			tt := t.(*testing.T)
+			body := readJSONBody(tt, res)
+			uid, _ := body["userId"].(string)
+
+			rec, err := app.FindRecordById("users", uid)
+			if err != nil {
+				tt.Fatal(err)
+			}
+			if got := rec.GetString("username"); got != "newhire" {
+				tt.Errorf("username = %q, want %q", got, "newhire")
+			}
+			if got := rec.GetString("email"); got != "" {
+				tt.Errorf("email = %q, want empty (none provided)", got)
+			}
+			if sends := read(); len(sends) != 0 {
+				tt.Errorf("expected no emails, got %d", len(sends))
+			}
+		},
+	}
+	scenario.Test(t)
+}
+
+func TestInviteMember_RejectsDuplicateUsername(t *testing.T) {
+	app := setupInviteTestApp(t)
+
+	owner := mustCreateUser(t, app, "owner-dup@test.local", false)
+	// Existing verified member with username "newhire".
+	existing := mustCreateUser(t, app, "newhire@x.com", false) // DeriveUsername → "newhire"
+	org := mustCreateOrg(t, app)
+	newMembership(t, app, owner, org, "owner", "")
+	// Make existing user an active member so re-inviting by username returns 400.
+	newMembership(t, app, existing, org, "member", owner.Id)
+
+	registerInviteEndpointCore(app)
+	registerInviteLifecycleCore(app)
+
+	tok, err := tokenForUser(app, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bodyBytes, _ := json.Marshal(map[string]string{
+		"username": "newhire",
+		"role":     "member",
+		"orgId":    org.Id,
+	})
+
+	scenario := &tests.ApiScenario{
+		Method:                http.MethodPost,
+		URL:                   "/api/invite-member",
+		Body:                  strings.NewReader(string(bodyBytes)),
+		Headers:               map[string]string{"Authorization": tok},
+		ExpectedStatus:        http.StatusBadRequest,
+		ExpectedContent:       []string{"already a member"},
+		TestAppFactory:        func(_ testing.TB) *tests.TestApp { return app },
+		DisableTestAppCleanup: true,
+	}
+	scenario.Test(t)
+}
+
+func TestInviteMember_RejectsMissingUsername(t *testing.T) {
+	app := setupInviteTestApp(t)
+	owner := mustCreateUser(t, app, "owner-missing@test.local", false)
+	org := mustCreateOrg(t, app)
+	newMembership(t, app, owner, org, "owner", "")
+
+	registerInviteEndpointCore(app)
+	registerInviteLifecycleCore(app)
+
+	tok, err := tokenForUser(app, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bodyBytes, _ := json.Marshal(map[string]string{
+		"role":  "member",
+		"orgId": org.Id,
+	})
+
+	scenario := &tests.ApiScenario{
+		Method:                http.MethodPost,
+		URL:                   "/api/invite-member",
+		Body:                  strings.NewReader(string(bodyBytes)),
+		Headers:               map[string]string{"Authorization": tok},
+		ExpectedStatus:        http.StatusBadRequest,
+		ExpectedContent:       []string{"required"},
+		TestAppFactory:        func(_ testing.TB) *tests.TestApp { return app },
+		DisableTestAppCleanup: true,
+	}
 	scenario.Test(t)
 }

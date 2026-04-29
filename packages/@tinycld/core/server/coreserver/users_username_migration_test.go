@@ -14,12 +14,14 @@ func TestDeriveUsername(t *testing.T) {
 		{"foo@bar.com", "foo"},
 		{"Bob.Smith+work@example.com", "bobsmithwork"},
 		{"alice123@x.com", "alice123"},
-		{"", "user"},
-		{"@example.com", "user"},
+		{"", "user"},             // empty → falls back to "user"
+		{"@example.com", "user"}, // no local part → empty after strip → "user"
 		{"UPPER@example.com", "upper"},
 		{"dots.and+plus@x.com", "dotsandplus"},
 		{"under_score-dash@x.com", "under_score-dash"},
 		{"noemail", "noemail"},
+		{"ab@x.com", "ab0"}, // 2-char prefix padded to 3 with "0"
+		{"a@x.com", "a00"},  // 1-char prefix padded to 3 with "00"
 	}
 	for _, tc := range cases {
 		got := DeriveUsername(tc.input)
@@ -30,8 +32,8 @@ func TestDeriveUsername(t *testing.T) {
 }
 
 func TestIsValidUsername(t *testing.T) {
-	valid := []string{"ab", "foo", "foo123", "a1", "foo-bar", "foo_bar", "a" + "b"}
-	invalid := []string{"a", "", "FOO", "foo@bar", "foo bar", "foo!", "-foo"}
+	valid := []string{"abc", "foo", "foo123", "a1b", "foo-bar", "foo_bar", "abc"}
+	invalid := []string{"ab", "a", "", "FOO", "foo@bar", "foo bar", "foo!", "-foo"}
 	for _, s := range valid {
 		if !IsValidUsername(s) {
 			t.Errorf("IsValidUsername(%q) = false, want true", s)

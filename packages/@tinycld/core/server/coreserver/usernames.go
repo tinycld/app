@@ -13,7 +13,8 @@ import (
 var nonUsernameChar = regexp.MustCompile(`[^a-z0-9_-]`)
 
 // DeriveUsername turns an email (or arbitrary string) into a candidate
-// username. Empty input falls back to "user". The result is always non-empty.
+// username. Empty input falls back to "user". The result is always at least 3
+// chars (PocketBase's system minimum for the username field).
 func DeriveUsername(email string) string {
 	prefix := email
 	if at := strings.IndexByte(email, '@'); at >= 0 {
@@ -22,16 +23,19 @@ func DeriveUsername(email string) string {
 	prefix = strings.ToLower(prefix)
 	prefix = nonUsernameChar.ReplaceAllString(prefix, "")
 	if prefix == "" {
-		prefix = "user"
+		return "user"
+	}
+	for len(prefix) < 3 {
+		prefix += "0"
 	}
 	return prefix
 }
 
-var usernameRE = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]{1,31}$`)
+var usernameRE = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]{2,31}$`)
 
 // IsValidUsername enforces the rules the front-end also validates: lowercase
-// alphanumeric with dash or underscore, 2..32 chars, must start with
-// alphanumeric.
+// alphanumeric with dash or underscore, 3..32 chars (matching PocketBase's
+// built-in system field minimum), must start with alphanumeric.
 func IsValidUsername(s string) bool { return usernameRE.MatchString(s) }
 
 // BackfillUsernames assigns a username to every users row that lacks one.

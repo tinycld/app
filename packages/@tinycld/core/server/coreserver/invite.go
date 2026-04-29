@@ -15,9 +15,10 @@ import (
 )
 
 type inviteRequest struct {
-	Email string `json:"email"`
-	Role  string `json:"role"`
-	OrgID string `json:"orgId"`
+	Username string `json:"username"`
+	Email    string `json:"email"` // optional — recovery / notifications only
+	Role     string `json:"role"`
+	OrgID    string `json:"orgId"`
 }
 
 func RegisterInviteEndpoint(app *pocketbase.PocketBase) {
@@ -56,8 +57,15 @@ func handleInviteMember(app core.App, re *core.RequestEvent) error {
 		return re.BadRequestError("Invalid request body", err)
 	}
 
-	if req.Email == "" || req.OrgID == "" {
-		return re.BadRequestError("email and orgId are required", nil)
+	req.Username = strings.ToLower(strings.TrimSpace(req.Username))
+	req.Email = strings.TrimSpace(req.Email)
+
+	if req.Username == "" || req.OrgID == "" {
+		return re.BadRequestError("username and orgId are required", nil)
+	}
+	if !IsValidUsername(req.Username) {
+		return re.BadRequestError(
+			"username must be 2-32 chars, lowercase letters, digits, dash or underscore", nil)
 	}
 
 	validRoles := map[string]bool{"admin": true, "member": true, "guest": true}
@@ -93,7 +101,8 @@ func handleInviteMember(app core.App, re *core.RequestEvent) error {
 	var userRecord *core.Record
 	isNewUser := false
 
-	existing, _ := app.FindAuthRecordByEmail(usersCollection, req.Email)
+	existing, _ := app.FindFirstRecordByFilter(
+		"users", "username = {:u}", map[string]any{"u": req.Username})
 	if existing != nil {
 		userRecord = existing
 	} else {
@@ -147,13 +156,24 @@ func handleInviteMember(app core.App, re *core.RequestEvent) error {
 			}
 
 			newUser := core.NewRecord(usersCollection)
-			newUser.Set("email", req.Email)
-			name := req.Email
-			if idx := strings.IndexByte(req.Email, '@'); idx >= 0 {
-				name = req.Email[:idx]
+			newUser.Set("username", req.Username)
+			if req.Email != "" {
+				newUser.SetEmail(req.Email)
+				newUser.Set("emailVisibility", true)
 			}
-			newUser.Set("name", name)
-			newUser.Set("emailVisibility", true)
+
+			// Display name defaults to email-prefix when an email was provided,
+			// otherwise to the username itself. The accept-invite step lets the
+			// user override `name`.
+			displayName := req.Username
+			if req.Email != "" {
+				if idx := strings.IndexByte(req.Email, '@'); idx >= 0 {
+					displayName = req.Email[:idx]
+				} else {
+					displayName = req.Email
+				}
+			}
+			newUser.Set("name", displayName)
 			newUser.Set("verified", false)
 			newUser.SetPassword(password)
 
@@ -192,6 +212,11 @@ func handleInviteMember(app core.App, re *core.RequestEvent) error {
 		return nil
 	})
 	if err != nil {
+		msg := err.Error()
+		lower := strings.ToLower(msg)
+		if strings.Contains(lower, "username") && strings.Contains(lower, "unique") {
+			return re.BadRequestError("That username is already taken", err)
+		}
 		return re.BadRequestError("Failed to invite member", err)
 	}
 
@@ -287,10 +312,11 @@ func handleGetAcceptInvite(app core.App, re *core.RequestEvent) error {
 	}
 
 	return re.JSON(http.StatusOK, map[string]any{
-		"email":   user.GetString("email"),
-		"orgName": org.GetString("name"),
-		"orgSlug": org.GetString("slug"),
-		"role":    record.GetString("role"),
+		"username": user.GetString("username"),
+		"email":    user.GetString("email"),
+		"orgName":  org.GetString("name"),
+		"orgSlug":  org.GetString("slug"),
+		"role":     record.GetString("role"),
 	})
 }
 
@@ -305,7 +331,7 @@ func handlePostAcceptInvite(app core.App, re *core.RequestEvent) error {
 		return re.BadRequestError("Password must be at least 8 characters", nil)
 	}
 
-	var email, orgSlug string
+	var username, email, orgSlug string
 	err := app.RunInTransaction(func(txApp core.App) error {
 		record, err := txApp.FindFirstRecordByFilter(
 			"invite_tokens",
@@ -346,6 +372,7 @@ func handlePostAcceptInvite(app core.App, re *core.RequestEvent) error {
 			return fmt.Errorf("save token: %w", err)
 		}
 
+		username = user.GetString("username")
 		email = user.GetString("email")
 		orgSlug = org.GetString("slug")
 		return nil
@@ -355,7 +382,8 @@ func handlePostAcceptInvite(app core.App, re *core.RequestEvent) error {
 	}
 
 	return re.JSON(http.StatusOK, map[string]string{
-		"email":   email,
-		"orgSlug": orgSlug,
+		"username": username,
+		"email":    email,
+		"orgSlug":  orgSlug,
 	})
 }
