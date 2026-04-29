@@ -65,7 +65,7 @@ func handleInviteMember(app core.App, re *core.RequestEvent) error {
 	}
 	if !IsValidUsername(req.Username) {
 		return re.BadRequestError(
-			"username must be 2-32 chars, lowercase letters, digits, dash or underscore", nil)
+			"username must be 3-32 chars, lowercase letters, digits, dash or underscore", nil)
 	}
 
 	validRoles := map[string]bool{"admin": true, "member": true, "guest": true}

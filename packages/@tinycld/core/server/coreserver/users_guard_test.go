@@ -1,6 +1,7 @@
 package coreserver
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -83,7 +84,7 @@ func makeUser(t *testing.T, app core.App, email string) *core.Record {
 	}
 	r := core.NewRecord(col)
 	r.SetEmail(email)
-	r.Set("username", DeriveUsername(email))
+	r.Set("username", uniqueDerivedUsername(t, app, email))
 	r.Set("name", "Original Name")
 	r.SetVerified(true)
 	r.SetPassword("Password123!")
@@ -91,6 +92,23 @@ func makeUser(t *testing.T, app core.App, email string) *core.Record {
 		t.Fatalf("save user %s: %v", email, err)
 	}
 	return r
+}
+
+// uniqueDerivedUsername derives a username from email and adds a numeric
+// suffix if the base is already taken. Mirrors the production backfill so
+// short prefixes like "ma@..." and "mb@..." (both → "user") don't collide.
+func uniqueDerivedUsername(t *testing.T, app core.App, email string) string {
+	t.Helper()
+	base := DeriveUsername(email)
+	candidate := base
+	for i := 2; ; i++ {
+		existing, _ := app.FindFirstRecordByFilter(
+			"users", "username = {:u}", map[string]any{"u": candidate})
+		if existing == nil {
+			return candidate
+		}
+		candidate = base + strconv.Itoa(i)
+	}
 }
 
 func makeOrg(t *testing.T, app core.App, name, slug string) *core.Record {

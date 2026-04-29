@@ -428,11 +428,9 @@ function RemoveSection({
 const inviteSchema = z.object({
     username: z
         .string()
-        .min(3, 'At least 3 characters')
-        .max(32, 'At most 32 characters')
         .regex(
-            /^[a-z0-9][a-z0-9_-]+$/,
-            'Use lowercase letters, digits, dash or underscore'
+            /^[a-z0-9][a-z0-9_-]{2,31}$/,
+            'Use 3-32 chars: lowercase letters, digits, dash or underscore'
         ),
     email: z
         .string()

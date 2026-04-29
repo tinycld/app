@@ -20,8 +20,8 @@ func TestDeriveUsername(t *testing.T) {
 		{"dots.and+plus@x.com", "dotsandplus"},
 		{"under_score-dash@x.com", "under_score-dash"},
 		{"noemail", "noemail"},
-		{"ab@x.com", "ab0"}, // 2-char prefix padded to 3 with "0"
-		{"a@x.com", "a00"},  // 1-char prefix padded to 3 with "00"
+		{"ab@x.com", "user"}, // 2-char prefix is too short; falls back
+		{"a@x.com", "user"},  // 1-char prefix is too short; falls back
 	}
 	for _, tc := range cases {
 		got := DeriveUsername(tc.input)
