@@ -43,6 +43,8 @@
         "eas:update:preview": "scripts/eas-update.sh preview",
         "db:reset": "bunx tsx scripts/reset-dev-db.ts",
         "db:seed": "bunx tsx scripts/seed-db.ts",
+        "db:seed:demo": "bunx tsx scripts/seed-db.ts --mode demo",
+        "db:reset:demo": "bunx tsx scripts/reset-demo.ts",
         "test:e2e:debug": "NODE_OPTIONS=--preserve-symlinks playwright test --ui --headed --debug",
         "test:e2e": "NODE_OPTIONS=--preserve-symlinks bunx playwright test",
         "test:unit": "bunx vitest run",
