@@ -159,6 +159,59 @@ func TestInviteLink_Get_403WhenCallerIsMember(t *testing.T) {
     scenario.Test(t)
 }
 
+func TestInviteLink_Send_DeliversToAltEmailNotAccountEmail(t *testing.T) {
+	app := setupInviteTestApp(t)
+	RegisterInviteLinkEndpoints(app)
+	read := captureMailerOutput(t)
+
+	owner := mustCreateUser(t, app, "owner@test.local", false)
+	target := mustCreateUser(t, app, "pending@example.com", false) // dead inbox
+	org := mustCreateOrg(t, app)
+	newMembership(t, app, owner, org, "owner", "")
+	uo := newMembership(t, app, target, org, "member", owner.Id)
+	if _, err := mintInviteToken(app, target, org, "member"); err != nil {
+		t.Fatal(err)
+	}
+
+	authToken, err := tokenForUser(app, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	scenario := &tests.ApiScenario{
+		Name:                  "POST send delivers to alt email",
+		Method:                http.MethodPost,
+		URL:                   "/api/invite-link/" + uo.Id + "/send",
+		Body:                  strings.NewReader(`{"email":"alt@known-good.example"}`),
+		Headers:               map[string]string{"Authorization": authToken, "Content-Type": "application/json"},
+		ExpectedStatus:        http.StatusOK,
+		ExpectedContent:       []string{`"delivered":`},
+		Delay:                 50 * time.Millisecond,
+		TestAppFactory:        func(_ testing.TB) *tests.TestApp { return app },
+		DisableTestAppCleanup: true,
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, res *http.Response) {
+			tt := t.(*testing.T)
+			sends := read()
+			if len(sends) != 1 {
+				tt.Fatalf("expected 1 send, got %d: %v", len(sends), sends)
+			}
+			to, _ := sends[0]["to"].([]any)
+			if len(to) == 0 {
+				tt.Fatalf("send had no recipients: %v", sends[0])
+			}
+			first, _ := to[0].(map[string]any)
+			got, _ := first["email"].(string)
+			if got != "alt@known-good.example" {
+				tt.Errorf("recipient: got %q, want %q", got, "alt@known-good.example")
+			}
+			if got == "pending@example.com" {
+				tt.Fatalf("send leaked to account email — that's the bug we're fixing")
+			}
+		},
+	}
+	scenario.Test(t)
+}
+
 func TestInviteLink_Rotate_ReturnsNewURLAndInvalidatesOld(t *testing.T) {
     app := setupInviteTestApp(t)
     RegisterInviteLinkEndpoints(app)
