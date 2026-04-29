@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { clearEmailLog, extractFirstLink, waitForEmailTo } from './email-log-helpers'
+import { clearEmailLog, waitForEmailTo } from './email-log-helpers'
 import { login, ORG_SLUG, TEST_USER_EMAIL, TEST_USER_PASSWORD } from './helpers'
 
 // End-to-end invite flow:
