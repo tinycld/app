@@ -4,6 +4,7 @@ import { Platform, View } from 'react-native'
 import { usePackage } from '@tinycld/core/lib/packages/use-packages'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { PackageSidebarFallback } from './PackageSidebarFallback'
+import { SkeletonSidebar } from './SkeletonLayout'
 import { useWorkspaceLayout } from './useWorkspaceLayout'
 
 interface PackageSidebarProps {
@@ -41,7 +42,7 @@ export function PackageSidebar({ width }: PackageSidebarProps) {
         >
             <View style={{ width, flex: 1, minHeight: 0 }}>
                 {SidebarComponent ? (
-                    <Suspense fallback={null}>
+                    <Suspense fallback={<SkeletonSidebar width={width} />}>
                         <SidebarComponent isCollapsed={false} />
                     </Suspense>
                 ) : (

@@ -79,7 +79,7 @@ function SkeletonRail() {
     )
 }
 
-function SkeletonSidebar({ width }: { width: number }) {
+export function SkeletonSidebar({ width }: { width: number }) {
     const sidebarBg = useThemeColor('sidebar-background')
     const borderColor = useThemeColor('border')
 
