@@ -230,6 +230,7 @@ export function getUserFromAuthStore(primaryOrgSlug?: string | null): UserSessio
         name: authRecord.name,
         email: authRecord.email,
         primaryOrgSlug: primaryOrgSlug ?? undefined,
+        isDemo: !!(authRecord as Users & { is_demo?: boolean }).is_demo,
     }
 }
 

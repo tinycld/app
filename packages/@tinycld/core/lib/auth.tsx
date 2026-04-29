@@ -12,12 +12,20 @@ export class AuthRequiredError extends Error {
     }
 }
 
+interface UserShape {
+    id: string
+    name: string
+    email: string
+    primaryOrgSlug?: string
+    isDemo: boolean
+}
+
 type AuthActions = {
     login: (
         email: string,
         password: string
     ) => Promise<{
-        user: { id: string; name: string; email: string; primaryOrgSlug?: string } | null
+        user: UserShape | null
         error: string | null
     }>
     logout: () => void
@@ -25,13 +33,13 @@ type AuthActions = {
 
 type AuthenticatedContext = AuthActions & {
     isLoggedIn: true
-    user: { id: string; name: string; email: string; primaryOrgSlug?: string }
+    user: UserShape
 }
 
 type AuthContextType =
     | (AuthActions & {
           isLoggedIn: true
-          user: { id: string; name: string; email: string; primaryOrgSlug?: string }
+          user: UserShape
           isInitializing: boolean
       })
     | (AuthActions & {
@@ -74,7 +82,7 @@ export function useAuth(options?: {
             return {
                 ...context,
                 isLoggedIn: false,
-                user: { id: '', name: '', email: '' },
+                user: { id: '', name: '', email: '', isDemo: false },
             } as unknown as AuthenticatedContext
         }
         return context as AuthenticatedContext
