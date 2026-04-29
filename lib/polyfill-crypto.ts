@@ -1,7 +1,5 @@
 import { randomUUID } from 'expo-crypto'
+import { polyfillGlobal } from 'react-native/Libraries/Utilities/PolyfillFunctions'
 
-type CryptoLike = { randomUUID?: () => string }
-const g = globalThis as unknown as { crypto?: CryptoLike }
-const c: CryptoLike = g.crypto ?? {}
-if (!c.randomUUID) c.randomUUID = randomUUID
-g.crypto = c
+const existing = (globalThis as { crypto?: object }).crypto ?? {}
+polyfillGlobal('crypto', () => ({ ...existing, randomUUID }))
