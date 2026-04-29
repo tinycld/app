@@ -32,10 +32,11 @@ func RegisterInviteLifecycle(app *pocketbase.PocketBase) {
 	})
 }
 
-func handleUserOrgInvite(app *pocketbase.PocketBase, userOrg *core.Record) {
+func handleUserOrgInvite(app core.App, userOrg *core.Record) {
 	userID := userOrg.GetString("user")
 	orgID := userOrg.GetString("org")
 	role := userOrg.GetString("role")
+	inviterID := userOrg.GetString("created_by")
 
 	user, err := app.FindRecordById("users", userID)
 	if err != nil {
@@ -50,8 +51,14 @@ func handleUserOrgInvite(app *pocketbase.PocketBase, userOrg *core.Record) {
 		return
 	}
 
+	// Demo inviters: skip the outbound email but still mint the token so the
+	// invited record exists and the demo flow looks complete from the UI.
+	suppressEmail := IsDemoUser(app, inviterID)
+
 	if user.GetBool("verified") {
-		sendExistingMemberEmail(app, user, org, role)
+		if !suppressEmail {
+			sendExistingMemberEmail(app, user, org, role)
+		}
 		return
 	}
 
@@ -61,7 +68,9 @@ func handleUserOrgInvite(app *pocketbase.PocketBase, userOrg *core.Record) {
 			"userID", userID, "orgID", orgID, "error", err)
 		return
 	}
-	sendNewInviteEmail(app, user, org, role, token)
+	if !suppressEmail {
+		sendNewInviteEmail(app, user, org, role, token)
+	}
 }
 
 // invalidateExistingTokens marks all unused invite tokens for a user+org as used.
@@ -87,7 +96,7 @@ func invalidateExistingTokens(app *pocketbase.PocketBase, userID, orgID string) 
 	return nil
 }
 
-func mintInviteToken(app *pocketbase.PocketBase, user *core.Record, org *core.Record, role string) (string, error) {
+func mintInviteToken(app core.App, user *core.Record, org *core.Record, role string) (string, error) {
 	tokenBytes := make([]byte, inviteTokenSize)
 	if _, err := rand.Read(tokenBytes); err != nil {
 		return "", fmt.Errorf("read random bytes: %w", err)
@@ -112,7 +121,7 @@ func mintInviteToken(app *pocketbase.PocketBase, user *core.Record, org *core.Re
 	return token, nil
 }
 
-func sendNewInviteEmail(app *pocketbase.PocketBase, user *core.Record, org *core.Record, role, token string) {
+func sendNewInviteEmail(app core.App, user *core.Record, org *core.Record, role, token string) {
 	appURL := strings.TrimRight(app.Settings().Meta.AppURL, "/")
 	link := fmt.Sprintf("%s/accept-invite/%s", appURL, token)
 
@@ -142,7 +151,7 @@ func sendNewInviteEmail(app *pocketbase.PocketBase, user *core.Record, org *core
 	send(app, userName, userEmail, subject, htmlBody, text)
 }
 
-func sendExistingMemberEmail(app *pocketbase.PocketBase, user *core.Record, org *core.Record, role string) {
+func sendExistingMemberEmail(app core.App, user *core.Record, org *core.Record, role string) {
 	appURL := strings.TrimRight(app.Settings().Meta.AppURL, "/")
 	slug := org.GetString("slug")
 	link := fmt.Sprintf("%s/a/%s", appURL, slug)
@@ -173,7 +182,7 @@ func sendExistingMemberEmail(app *pocketbase.PocketBase, user *core.Record, org 
 	send(app, userName, userEmail, subject, htmlBody, text)
 }
 
-func send(app *pocketbase.PocketBase, toName, toEmail, subject, htmlBody, textBody string) {
+func send(app core.App, toName, toEmail, subject, htmlBody, textBody string) {
 	msg := &mailer.Message{
 		To:      []mailer.Recipient{{Name: toName, Email: toEmail}},
 		Subject: subject,

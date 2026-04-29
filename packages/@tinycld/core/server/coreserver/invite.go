@@ -120,7 +120,9 @@ func handleInviteMember(app *pocketbase.PocketBase, re *core.RequestEvent) error
 				if err != nil {
 					return re.InternalServerError("Failed to mint invite token", err)
 				}
-				go sendNewInviteEmail(app, userRecord, org, req.Role, token)
+				if !IsDemoUser(app, authUser.Id) {
+					go sendNewInviteEmail(app, userRecord, org, req.Role, token)
+				}
 				return re.JSON(http.StatusOK, map[string]any{
 					"userId":    userRecord.Id,
 					"userOrgId": existingMembership[0].Id,
@@ -162,6 +164,7 @@ func handleInviteMember(app *pocketbase.PocketBase, re *core.RequestEvent) error
 		membership.Set("user", userRecord.Id)
 		membership.Set("org", req.OrgID)
 		membership.Set("role", req.Role)
+		membership.Set("created_by", authUser.Id)
 
 		if err := txApp.Save(membership); err != nil {
 			return err
