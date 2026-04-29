@@ -1,4 +1,5 @@
 import { Check, Mail, Send, Trash2, UserPlus, X } from 'lucide-react-native'
+import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useAuth } from '@tinycld/core/lib/auth'
 import { handleMutationErrorsWithForm } from '@tinycld/core/lib/errors'
@@ -24,6 +25,7 @@ import {
     z,
     zodResolver,
 } from '@tinycld/core/ui/form'
+import { InviteLinkPanel } from './InviteLinkPanel'
 import { MemberAvatar } from './MemberAvatar'
 import { PendingBadge, RoleBadge, YouBadge } from './MemberBadges'
 import { PackageAccessPanel } from './PackageAccessPanel'
@@ -97,6 +99,8 @@ function ViewMember({
     const borderColor = useThemeColor('border')
     const surfaceBg = useThemeColor('surface-secondary')
 
+    const [showLink, setShowLink] = useState(false)
+
     const isSelf = member.userId === user.id
     const ownerCount = members.filter(m => m.role === 'owner').length
     const isLastOwner = member.role === 'owner' && ownerCount <= 1
@@ -121,16 +125,6 @@ function ViewMember({
             yield userOrgCollection.delete(member.userOrgId)
         }),
         onSuccess: onClose,
-    })
-
-    const resendInvite = useMutation({
-        mutationFn: async () => {
-            return pb.send('/api/invite-member', {
-                method: 'POST',
-                body: JSON.stringify({ email: member.email, role: member.role, orgId }),
-                headers: { 'Content-Type': 'application/json' },
-            })
-        },
     })
 
     // is_demo lives on the users record. Migration 1810000000 relaxes
@@ -202,29 +196,42 @@ function ViewMember({
                                     This invite hasn’t been accepted yet. They’ll appear fully once
                                     they verify their email.
                                 </Text>
-                                <Pressable
-                                    onPress={() => resendInvite.mutate()}
-                                    disabled={resendInvite.isPending}
-                                    className="flex-row items-center gap-1.5 self-start rounded-md"
-                                    style={{
-                                        paddingVertical: 5,
-                                        paddingHorizontal: 10,
-                                        borderWidth: 1,
-                                        borderColor,
-                                        opacity: resendInvite.isPending ? 0.5 : 1,
-                                    }}
-                                >
-                                    <Send size={11} color={fgColor} />
-                                    <Text
-                                        style={{ fontSize: 12, fontWeight: '600', color: fgColor }}
+                                <View className="gap-2">
+                                    <Pressable
+                                        testID={`show-invite-link-${member.userOrgId}`}
+                                        onPress={() => setShowLink(prev => !prev)}
+                                        className="flex-row items-center gap-1.5 self-start rounded-md"
+                                        style={{
+                                            paddingVertical: 5,
+                                            paddingHorizontal: 10,
+                                            borderWidth: 1,
+                                            borderColor,
+                                        }}
                                     >
-                                        {resendInvite.isPending
-                                            ? 'Sending…'
-                                            : resendInvite.isSuccess
-                                              ? 'Resent ✓'
-                                              : 'Resend invite'}
-                                    </Text>
-                                </Pressable>
+                                        <Send size={11} color={fgColor} />
+                                        <Text
+                                            style={{
+                                                fontSize: 12,
+                                                fontWeight: '600',
+                                                color: fgColor,
+                                            }}
+                                        >
+                                            {showLink ? 'Hide invite link' : 'Show invite link'}
+                                        </Text>
+                                    </Pressable>
+                                    {showLink && (
+                                        <View
+                                            className="rounded-xl p-3"
+                                            style={{
+                                                backgroundColor: surfaceBg,
+                                                borderWidth: 1,
+                                                borderColor,
+                                            }}
+                                        >
+                                            <InviteLinkPanel userOrgId={member.userOrgId} />
+                                        </View>
+                                    )}
+                                </View>
                             </View>
                         </View>
                     )}
@@ -445,23 +452,36 @@ function InviteView({ onDone }: { onDone: () => void }) {
         defaultValues: { email: '', role: 'member' },
     })
 
+    const [result, setResult] = useState<{ userOrgId: string; inviteUrl: string } | null>(null)
+
     const invite = useMutation({
         mutationFn: async (data: InviteFormValues) => {
-            return pb.send('/api/invite-member', {
+            return pb.send<{ userOrgId: string; inviteUrl: string }>('/api/invite-member', {
                 method: 'POST',
                 body: JSON.stringify({ email: data.email, role: data.role, orgId }),
                 headers: { 'Content-Type': 'application/json' },
             })
         },
-        onSuccess: () => {
-            reset()
-            onDone()
-        },
+        onSuccess: data => setResult({ userOrgId: data.userOrgId, inviteUrl: data.inviteUrl }),
         onError: handleMutationErrorsWithForm({ setError, getValues }),
     })
 
     const onSubmit = handleSubmit(data => invite.mutate(data))
     const inviteRoles: OrgRole[] = ['admin', 'member', 'guest']
+
+    if (result) {
+        return (
+            <InviteLinkSuccessView
+                userOrgId={result.userOrgId}
+                inviteUrl={result.inviteUrl}
+                onDone={() => {
+                    reset()
+                    setResult(null)
+                    onDone()
+                }}
+            />
+        )
+    }
 
     return (
         <>
@@ -619,6 +639,76 @@ function InviteView({ onDone }: { onDone: () => void }) {
                         <Send size={13} color={primaryFgColor} />
                         <Text style={{ fontSize: 13, fontWeight: '700', color: primaryFgColor }}>
                             {invite.isPending ? 'Sending…' : 'Send invite'}
+                        </Text>
+                    </Pressable>
+                </View>
+            </DrawerFooter>
+        </>
+    )
+}
+
+function InviteLinkSuccessView({
+    userOrgId,
+    inviteUrl,
+    onDone,
+}: {
+    userOrgId: string
+    inviteUrl: string
+    onDone: () => void
+}) {
+    const fgColor = useThemeColor('foreground')
+    const mutedColor = useThemeColor('muted-foreground')
+    const primaryColor = useThemeColor('primary')
+    const primaryFgColor = useThemeColor('primary-foreground')
+
+    return (
+        <>
+            <DrawerHeader>
+                <View className="flex-row items-start gap-3 flex-1">
+                    <View
+                        className="items-center justify-center rounded-xl"
+                        style={{
+                            width: 44,
+                            height: 44,
+                            backgroundColor: `${primaryColor}1F`,
+                        }}
+                    >
+                        <Mail size={20} color={primaryColor} />
+                    </View>
+                    <View className="flex-1" style={{ minWidth: 0 }}>
+                        <Text style={{ fontSize: 16, fontWeight: '700', color: fgColor }}>
+                            Invite created
+                        </Text>
+                        <Text style={{ fontSize: 12.5, color: mutedColor, marginTop: 2 }}>
+                            Share this link with your teammate however works best.
+                        </Text>
+                    </View>
+                </View>
+                <DrawerCloseButton onPress={onDone}>
+                    <X size={18} color={mutedColor} />
+                </DrawerCloseButton>
+            </DrawerHeader>
+
+            <DrawerBody>
+                <View testID="invite-link-step" className="gap-4">
+                    <InviteLinkPanel userOrgId={userOrgId} initialUrl={inviteUrl} />
+                </View>
+            </DrawerBody>
+
+            <DrawerFooter>
+                <View className="flex-row items-center justify-end gap-2">
+                    <Pressable
+                        testID="invite-link-done"
+                        onPress={onDone}
+                        className="flex-row items-center gap-1.5 rounded-md"
+                        style={{
+                            paddingVertical: 8,
+                            paddingHorizontal: 14,
+                            backgroundColor: primaryColor,
+                        }}
+                    >
+                        <Text style={{ fontSize: 13, fontWeight: '700', color: primaryFgColor }}>
+                            Done
                         </Text>
                     </Pressable>
                 </View>
