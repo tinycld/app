@@ -30,6 +30,8 @@ export function ToolbarMenu({ icon, label, children }: ToolbarMenuProps) {
 interface MenuActionItemProps {
     label: string
     icon?: LucideIcon
+    /** Custom leading element. Takes precedence over `icon` and `colorDot`. */
+    leading?: React.ReactNode
     onPress: () => void
     href?: string
     isActive?: boolean
@@ -40,6 +42,7 @@ interface MenuActionItemProps {
 export function MenuActionItem({
     label,
     icon: Icon,
+    leading,
     onPress,
     href,
     isActive,
@@ -51,7 +54,9 @@ export function MenuActionItem({
 
     return (
         <Menu.Item onPress={disabled ? undefined : onPress} href={href} isDisabled={disabled}>
-            {Icon ? (
+            {leading ? (
+                leading
+            ) : Icon ? (
                 <Icon size={16} color={mutedColor} />
             ) : colorDot ? (
                 <View
