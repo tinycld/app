@@ -111,7 +111,7 @@ func captureMailerOutput(t *testing.T) func() []map[string]any {
 	}
 }
 
-func TestInvite_NonDemoInviter_SendsEmail(t *testing.T) {
+func TestInviteLifecycle_NonDemoInviter_UnverifiedTarget_DoesNotEmail(t *testing.T) {
 	app := setupInviteTestApp(t)
 	read := captureMailerOutput(t)
 
@@ -127,16 +127,12 @@ func TestInvite_NonDemoInviter_SendsEmail(t *testing.T) {
 	handleUserOrgInvite(app, uo)
 
 	sends := read()
-	if len(sends) != 1 {
-		t.Fatalf("expected 1 email send, got %d: %v", len(sends), sends)
-	}
-	subject, _ := sends[0]["subject"].(string)
-	if !strings.Contains(subject, "invited") {
-		t.Errorf("expected invite subject, got %q", subject)
+	if len(sends) != 0 {
+		t.Fatalf("expected 0 emails for unverified target via lifecycle hook, got %d: %v", len(sends), sends)
 	}
 }
 
-func TestInvite_DemoInviter_SkipsEmailButMintsToken(t *testing.T) {
+func TestInviteLifecycle_DemoInviter_UnverifiedTarget_DoesNothing(t *testing.T) {
 	app := setupInviteTestApp(t)
 	read := captureMailerOutput(t)
 
@@ -151,11 +147,13 @@ func TestInvite_DemoInviter_SkipsEmailButMintsToken(t *testing.T) {
 	uo := newMembership(t, app, target, org, "member", inviter.Id)
 	handleUserOrgInvite(app, uo)
 
-	if sends := read(); len(sends) != 0 {
-		t.Errorf("expected 0 email sends for demo inviter, got %d: %v", len(sends), sends)
+	sends := read()
+	if len(sends) != 0 {
+		t.Errorf("demo inviter unverified target: expected 0 sends, got %d: %v", len(sends), sends)
 	}
 
-	// Token should still be minted so the demo flow looks complete.
+	// The lifecycle hook should not have minted a token either — that's the
+	// endpoint's job now.
 	tokens, err := app.FindRecordsByFilter(
 		"invite_tokens",
 		"user = {:u} && org = {:o}",
@@ -165,8 +163,8 @@ func TestInvite_DemoInviter_SkipsEmailButMintsToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(tokens) == 0 {
-		t.Error("expected an invite token for demo flow consistency, got 0")
+	if len(tokens) != 0 {
+		t.Errorf("expected 0 tokens minted by lifecycle hook, got %d", len(tokens))
 	}
 }
 
