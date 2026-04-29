@@ -15,10 +15,11 @@ import (
 // slug are stable so the front door always lands on the same record set —
 // repeated /api/demo/start hits sign the caller into the same playground.
 const (
-	demoUserEmail = "demo@tinycld.org"
-	demoUserName  = "Demo Tour"
-	demoOrgName   = "Demo Workspace"
-	demoOrgSlug   = "demo"
+	demoUserEmail    = "demo@tinycld.org"
+	demoUserUsername = "demo"
+	demoUserName     = "Demo Tour"
+	demoOrgName      = "Demo Workspace"
+	demoOrgSlug      = "demo"
 )
 
 // RegisterDemoStart wires POST /api/demo/start. The endpoint is unauthenticated
@@ -86,11 +87,12 @@ func handleDemoStart(app core.App, re *core.RequestEvent) error {
 // IsDemoUser before writing to the wire, so demo sessions can exercise the
 // full app surface without anything actually leaving the server.
 func ensureDemoUser(app core.App) (*core.Record, error) {
-	existing, err := app.FindAuthRecordByEmail("users", demoUserEmail)
-	if err == nil {
+	existing, err := app.FindFirstRecordByFilter(
+		"users", "username = {:u}", dbx.Params{"u": demoUserUsername})
+	if err == nil && existing != nil {
 		return existing, nil
 	}
-	if !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("look up demo user: %w", err)
 	}
 
@@ -100,6 +102,7 @@ func ensureDemoUser(app core.App) (*core.Record, error) {
 	}
 
 	rec := core.NewRecord(collection)
+	rec.Set("username", demoUserUsername)
 	rec.SetEmail(demoUserEmail)
 	// Make the email visible in PublicExport so the auth response carries
 	// it back to the client. The demo address is published on the marketing

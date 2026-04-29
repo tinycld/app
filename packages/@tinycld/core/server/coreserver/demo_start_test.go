@@ -227,6 +227,33 @@ func TestDemoStartReturnsValidAuthToken(t *testing.T) {
 	scenario.Test(t)
 }
 
+// TestDemoStart_SetsUsername verifies that the demo user gets the stable
+// "demo" username so the front-end can address the demo session by username.
+func TestDemoStart_SetsUsername(t *testing.T) {
+	app := setupDemoStartTestApp(t)
+
+	scenario := &tests.ApiScenario{
+		Method:                http.MethodPost,
+		URL:                   "/api/demo/start",
+		ExpectedStatus:        http.StatusOK,
+		ExpectedContent:       []string{`"username":"demo"`},
+		TestAppFactory:        func(_ testing.TB) *tests.TestApp { return app },
+		DisableTestAppCleanup: true,
+		AfterTestFunc: func(t testing.TB, _ *tests.TestApp, _ *http.Response) {
+			tt := t.(*testing.T)
+			rec, err := app.FindFirstRecordByFilter(
+				"users", "username = {:u}", dbx.Params{"u": demoUserUsername})
+			if err != nil {
+				tt.Fatalf("demo user not found by username: %v", err)
+			}
+			if got := rec.GetString("username"); got != demoUserUsername {
+				tt.Errorf("username = %q, want %q", got, demoUserUsername)
+			}
+		},
+	}
+	scenario.Test(t)
+}
+
 // TestDemoStartUserPasswordIsUnknowable verifies that even though the
 // endpoint creates a real auth user, the password is set to fresh random
 // bytes and never returned. Anyone who learns the email can't sign in via
