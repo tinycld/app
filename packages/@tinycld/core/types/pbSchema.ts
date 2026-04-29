@@ -379,6 +379,7 @@ export interface UserOrg {
     role: 'owner' | 'admin' | 'member' | 'guest'
     created: string
     updated: string
+    created_by: string
 }
 
 export interface UserPreferences {
@@ -402,6 +403,7 @@ export interface Users {
     avatar: string
     created: string
     updated: string
+    is_demo: boolean
 }
 
 
@@ -647,6 +649,7 @@ export type Schema = {
             // org_pkg_access_via_user_org?: OrgPkgAccess[]
             org: Orgs
             user: Users
+            created_by?: Users
         }
     }
     user_preferences: {
@@ -665,6 +668,7 @@ export type Schema = {
             // pkg_install_log_via_initiated_by?: PkgInstallLog[]
             // push_subscriptions_via_user?: PushSubscriptions[]
             // user_org_via_user?: UserOrg[]
+            // user_org_via_created_by?: UserOrg[]
             // user_preferences_via_user?: UserPreferences[]
         }
     }

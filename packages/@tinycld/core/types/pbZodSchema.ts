@@ -383,6 +383,7 @@ export const userOrgSchema = z.object({
     role: z.enum(["owner", "admin", "member", "guest"]),
     created: z.string().regex(DATETIME_REGEX).optional(),
     updated: z.string().regex(DATETIME_REGEX).optional(),
+    created_by: z.string().regex(/^[a-z0-9]+$/).length(15).optional(),
 })
 
 export const userPreferencesSchema = z.object({
@@ -406,5 +407,6 @@ export const usersSchema = z.object({
     avatar: z.string().optional(),
     created: z.string().regex(DATETIME_REGEX).optional(),
     updated: z.string().regex(DATETIME_REGEX).optional(),
+    is_demo: z.boolean().optional(),
 })
 
