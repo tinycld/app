@@ -31,9 +31,17 @@ func RegisterInviteLifecycle(app *pocketbase.PocketBase) {
 func registerInviteLifecycleCore(app core.App) {
 	app.OnRecordAfterCreateSuccess("user_org").BindFunc(func(e *core.RecordEvent) error {
 		userOrg := e.Record
-		go handleUserOrgInvite(app, userOrg)
+		go safeHandleUserOrgInvite(app, userOrg)
 		return e.Next()
 	})
+}
+
+// safeHandleUserOrgInvite wraps handleUserOrgInvite with panic recovery so that
+// goroutine-based email sends never crash the server (e.g. during app shutdown
+// when the DB connection is already closed).
+func safeHandleUserOrgInvite(app core.App, userOrg *core.Record) {
+	defer func() { _ = recover() }()
+	handleUserOrgInvite(app, userOrg)
 }
 
 func handleUserOrgInvite(app core.App, userOrg *core.Record) {
@@ -66,15 +74,11 @@ func handleUserOrgInvite(app core.App, userOrg *core.Record) {
 		return
 	}
 
-	token, err := mintInviteToken(app, user, org, role)
-	if err != nil {
-		app.Logger().Error("invite lifecycle: failed to mint invite token",
-			"userID", userID, "orgID", orgID, "error", err)
-		return
-	}
-	if !suppressEmail {
-		sendNewInviteEmail(app, user, org, role, token)
-	}
+	// Brand-new (unverified) users are handled by the admin-delivered invite flow:
+	// POST /api/invite-member mints the token and returns the URL in its response.
+	// The admin shares it manually, or via POST /api/invite-link/:userOrgId/send.
+	// This hook used to also mint a token + email here; both responsibilities now
+	// belong to the endpoint.
 }
 
 // invalidateExistingTokens marks all unused invite tokens for a user+org as used.

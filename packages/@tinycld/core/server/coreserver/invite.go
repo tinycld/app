@@ -124,12 +124,10 @@ func handleInviteMember(app core.App, re *core.RequestEvent) error {
 				if err != nil {
 					return re.InternalServerError("Failed to mint invite token", err)
 				}
-				if !IsDemoUser(app, authUser.Id) {
-					go sendNewInviteEmail(app, userRecord, org, req.Role, token)
-				}
 				return re.JSON(http.StatusOK, map[string]any{
 					"userId":    userRecord.Id,
 					"userOrgId": existingMembership[0].Id,
+					"inviteUrl": buildInviteURL(app, token),
 					"isNew":     false,
 					"resent":    true,
 				})
@@ -140,6 +138,7 @@ func handleInviteMember(app core.App, re *core.RequestEvent) error {
 
 	// Create user + membership in a transaction so we don't orphan users
 	var membershipId string
+	var inviteToken string
 	err = app.RunInTransaction(func(txApp core.App) error {
 		if isNewUser {
 			password, err := randomPassword(32)
@@ -175,14 +174,30 @@ func handleInviteMember(app core.App, re *core.RequestEvent) error {
 		}
 		membershipId = membership.Id
 
+		// Mint the invite token inside the same transaction so we don't end up
+		// with a membership row but no token — the admin-delivered flow needs
+		// the URL in the response.
+		if isNewUser {
+			org, err := txApp.FindRecordById("orgs", req.OrgID)
+			if err != nil {
+				return err
+			}
+			token, err := mintInviteToken(txApp, userRecord, org, req.Role)
+			if err != nil {
+				return err
+			}
+			inviteToken = token
+		}
+
 		return nil
 	})
 	if err != nil {
 		return re.BadRequestError("Failed to invite member", err)
 	}
 
-	// Notify the invited user
+	// Notify the invited user (best-effort: recover from panics on app shutdown)
 	go func() {
+		defer func() { _ = recover() }()
 		orgRecord, err := app.FindRecordById("orgs", req.OrgID)
 		if err != nil {
 			return
@@ -201,11 +216,20 @@ func handleInviteMember(app core.App, re *core.RequestEvent) error {
 		})
 	}()
 
-	return re.JSON(http.StatusOK, map[string]any{
+	resp := map[string]any{
 		"userId":    userRecord.Id,
 		"userOrgId": membershipId,
 		"isNew":     isNewUser,
-	})
+	}
+	if inviteToken != "" {
+		resp["inviteUrl"] = buildInviteURL(app, inviteToken)
+	}
+	return re.JSON(http.StatusOK, resp)
+}
+
+func buildInviteURL(app core.App, token string) string {
+	base := strings.TrimRight(app.Settings().Meta.AppURL, "/")
+	return fmt.Sprintf("%s/accept-invite/%s", base, token)
 }
 
 func randomPassword(length int) (string, error) {
