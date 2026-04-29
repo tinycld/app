@@ -1,8 +1,13 @@
-// configure-core MUST be the first import — it calls configureCore(appConfig)
-// at module-init time so every other module in the static-import graph sees
-// the registered config on its first read.
+// polyfill-crypto MUST run before configure-core: @tanstack/db's collection
+// constructor calls crypto.randomUUID() at module init, and Hermes has no
+// global crypto.
+import '~/lib/polyfill-crypto'
+// configure-core MUST be the first import after the polyfill — it calls
+// configureCore(appConfig) at module-init time so every other module in the
+// static-import graph sees the registered config on its first read.
 import '~/lib/configure-core'
 import '~/global.css'
+import { MinimalProviders } from '@tinycld/core/components/MinimalProviders'
 import { initSentry } from '@tinycld/core/lib/sentry'
 import {
     getResolvedAddress,
@@ -80,12 +85,26 @@ export default function Layout() {
     const state = useServerAddressGate(pathname)
 
     if (state.status === 'resolving') {
-        return <View className="flex-1 bg-background" />
+        return (
+            <MinimalProviders>
+                <View className="flex-1 bg-background" />
+            </MinimalProviders>
+        )
     }
 
     if (state.status === 'unresolved') {
-        if (pathname === '/connect') return <Slot />
-        return <View className="flex-1 bg-background" />
+        if (pathname === '/connect') {
+            return (
+                <MinimalProviders>
+                    <Slot />
+                </MinimalProviders>
+            )
+        }
+        return (
+            <MinimalProviders>
+                <View className="flex-1 bg-background" />
+            </MinimalProviders>
+        )
     }
 
     const { Providers } = state
