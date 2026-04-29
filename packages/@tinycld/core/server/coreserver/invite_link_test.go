@@ -3,6 +3,7 @@ package coreserver
 import (
     "net/http"
     "regexp"
+    "strings"
     "testing"
     "time"
 
@@ -154,6 +155,60 @@ func TestInviteLink_Get_403WhenCallerIsMember(t *testing.T) {
         ExpectedContent:       []string{`"message"`},
         TestAppFactory:        func(_ testing.TB) *tests.TestApp { return app },
         DisableTestAppCleanup: true,
+    }
+    scenario.Test(t)
+}
+
+func TestInviteLink_Rotate_ReturnsNewURLAndInvalidatesOld(t *testing.T) {
+    app := setupInviteTestApp(t)
+    RegisterInviteLinkEndpoints(app)
+
+    owner := mustCreateUser(t, app, "owner@test.local", false)
+    target := mustCreateUser(t, app, "pending@test.local", false)
+    org := mustCreateOrg(t, app)
+    newMembership(t, app, owner, org, "owner", "")
+    uo := newMembership(t, app, target, org, "member", owner.Id)
+
+    oldToken, err := mintInviteToken(app, target, org, "member")
+    if err != nil {
+        t.Fatal(err)
+    }
+
+    authToken, err := tokenForUser(app, owner)
+    if err != nil {
+        t.Fatal(err)
+    }
+
+    scenario := &tests.ApiScenario{
+        Name:                  "POST invite-link/rotate returns new URL",
+        Method:                http.MethodPost,
+        URL:                   "/api/invite-link/" + uo.Id + "/rotate",
+        Headers:               map[string]string{"Authorization": authToken},
+        ExpectedStatus:        http.StatusOK,
+        ExpectedContent:       []string{`"inviteUrl":`},
+        TestAppFactory:        func(_ testing.TB) *tests.TestApp { return app },
+        DisableTestAppCleanup: true,
+        AfterTestFunc: func(t testing.TB, _ *tests.TestApp, res *http.Response) {
+            tt := t.(*testing.T)
+            body := readJSONBody(tt, res)
+            url, _ := body["inviteUrl"].(string)
+            if strings.Contains(url, oldToken) {
+                tt.Errorf("rotate returned old token; url=%q oldToken=%q", url, oldToken)
+            }
+            if !regexp.MustCompile(`/accept-invite/[0-9a-f]{64}$`).MatchString(url) {
+                tt.Errorf("inviteUrl: got %q, want .../accept-invite/<64-hex>", url)
+            }
+
+            old, err := app.FindFirstRecordByFilter(
+                "invite_tokens", "token = {:t}", map[string]any{"t": oldToken},
+            )
+            if err != nil {
+                tt.Fatal(err)
+            }
+            if old.GetString("used_at") == "" {
+                tt.Errorf("expected old token to have used_at set")
+            }
+        },
     }
     scenario.Test(t)
 }
