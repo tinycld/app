@@ -278,7 +278,10 @@ function NotificationContent() {
                 <View className="flex-row items-center gap-3">
                     <MarkAllReadButton
                         isVisible={notifications.some(n => !n.read) && !markAllRead.isPending}
-                        onPress={() => markAllRead.mutate()}
+                        onPress={() => {
+                            markAllRead.mutate()
+                            close(false)
+                        }}
                         color={primaryColor}
                     />
                     <Pressable onPress={() => close(false)} hitSlop={8}>
