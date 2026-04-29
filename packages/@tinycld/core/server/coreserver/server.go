@@ -100,6 +100,9 @@ func Register(app *pocketbase.PocketBase, opts Options) {
 	RegisterPackageInstallEndpoints(app)
 	RegisterSetupBootstrap(app)
 	RegisterAccountDelete(app)
+	RegisterDemoStart(app)
+	RegisterUsersFieldGuard(app)
+	RegisterUsersDemoAuditHook(app)
 
 	registerSchemaHooks(app, opts.TypesDir)
 	registerStaticServe(app, opts)
