@@ -2,16 +2,24 @@
 /**
  * Database Seed Script
  *
- * Populates the PocketBase database with a test user and org.
+ * Populates the PocketBase database with a target user, org, and package data.
  *
  * Usage:
  *   bunx tsx scripts/seed-db.ts [options]
  *
  * Options:
- *   --url <url>           PocketBase URL (default: http://127.0.0.1:7090)
- *   --admin-email <email> Admin email
- *   --admin-pw <pw>       Admin password
- *   --help                Show this help message
+ *   --mode <test|demo>     Preset (default: test)
+ *                            test: user@tinycld.org + test-org (+ acme second org)
+ *                            demo: demo@tinycld.org (is_demo=true) + demo org, single org
+ *   --user-email <email>   Override user email
+ *   --user-name <name>     Override user display name
+ *   --user-pw <pw>         Override user password (test mode only — ignored in demo)
+ *   --org-slug <slug>      Override primary org slug
+ *   --org-name <name>      Override primary org name
+ *   --url <url>            PocketBase URL (default: http://127.0.0.1:7090)
+ *   --admin-email <email>  Superuser email
+ *   --admin-pw <pw>        Superuser password
+ *   --help                 Show this help message
  */
 
 import PocketBase from 'pocketbase'
@@ -31,52 +39,118 @@ try {
     // .env may not exist in CI
 }
 
+type SeedMode = 'test' | 'demo'
+
 interface SeedConfig {
     url: string
     adminEmail: string
     adminPassword: string
+    mode: SeedMode
+    userEmail: string
+    userName: string
+    userPassword: string
+    isDemo: boolean
+    orgSlug: string
+    orgName: string
+    seedSecondOrg: boolean
 }
+
+const TEST_DEFAULTS = {
+    userEmail: process.env.TEST_USER_LOGIN || 'user@tinycld.org',
+    userName: 'Test User',
+    userPassword: process.env.TEST_USER_PW || 'TestUser1234!',
+    orgSlug: 'test-org',
+    orgName: 'Test Organization',
+}
+
+// These mirror the singleton constants in
+// packages/@tinycld/core/server/coreserver/demo_start.go. Keep in sync.
+const DEMO_DEFAULTS = {
+    userEmail: 'demo@tinycld.org',
+    userName: 'Demo Tour',
+    orgSlug: 'demo',
+    orgName: 'Demo Workspace',
+}
+
+const SECOND_ORG_NAME = 'Acme Corp'
+const SECOND_ORG_SLUG = 'acme'
 
 function parseArgs(): SeedConfig {
     const args = process.argv.slice(2)
-    const config: SeedConfig = {
-        url: 'http://127.0.0.1:7090',
-        adminEmail: process.env.ADMIN_USER_LOGIN || 'admin@tinycld.org',
-        adminPassword: process.env.ADMIN_USER_PW || 'AdminPass1234!',
-    }
+    let mode: SeedMode = 'test'
+    const overrides: Partial<{
+        userEmail: string
+        userName: string
+        userPassword: string
+        orgSlug: string
+        orgName: string
+    }> = {}
+
+    let url = 'http://127.0.0.1:7090'
+    let adminEmail = process.env.ADMIN_USER_LOGIN || 'admin@tinycld.org'
+    let adminPassword = process.env.ADMIN_USER_PW || 'AdminPass1234!'
+
+    if (args.includes('--help')) process.exit(0)
 
     for (let i = 0; i < args.length; i++) {
         const arg = args[i]
         switch (arg) {
+            case '--mode': {
+                const next = args[++i]
+                if (next !== 'test' && next !== 'demo') {
+                    logError(`Invalid --mode: ${next} (expected: test|demo)`)
+                    process.exit(1)
+                }
+                mode = next
+                break
+            }
+            case '--user-email':
+                overrides.userEmail = args[++i]
+                break
+            case '--user-name':
+                overrides.userName = args[++i]
+                break
+            case '--user-pw':
+                overrides.userPassword = args[++i]
+                break
+            case '--org-slug':
+                overrides.orgSlug = args[++i]
+                break
+            case '--org-name':
+                overrides.orgName = args[++i]
+                break
             case '--url':
-                config.url = args[++i]
+                url = args[++i]
                 break
             case '--admin-email':
-                config.adminEmail = args[++i]
+                adminEmail = args[++i]
                 break
             case '--admin-pw':
-                config.adminPassword = args[++i]
-                break
-            case '--help':
-                process.exit(0)
+                adminPassword = args[++i]
                 break
             default:
                 if (arg.startsWith('-')) {
+                    logError(`Unknown flag: ${arg}`)
                     process.exit(1)
                 }
         }
     }
 
-    return config
+    const defaults = mode === 'demo' ? DEMO_DEFAULTS : TEST_DEFAULTS
+    return {
+        url,
+        adminEmail,
+        adminPassword,
+        mode,
+        userEmail: overrides.userEmail ?? defaults.userEmail,
+        userName: overrides.userName ?? defaults.userName,
+        userPassword: overrides.userPassword ?? (mode === 'test' ? TEST_DEFAULTS.userPassword : ''),
+        isDemo: mode === 'demo',
+        orgSlug: overrides.orgSlug ?? defaults.orgSlug,
+        orgName: overrides.orgName ?? defaults.orgName,
+        seedSecondOrg: mode === 'test' && !overrides.orgSlug,
+    }
 }
-
-const TEST_ORG_NAME = 'Test Organization'
-const TEST_ORG_SLUG = 'test-org'
-const SECOND_ORG_NAME = 'Acme Corp'
-const SECOND_ORG_SLUG = 'acme'
-const TEST_USER_EMAIL = process.env.TEST_USER_LOGIN || 'user@tinycld.org'
-const TEST_USER_PASSWORD = process.env.TEST_USER_PW || 'TestUser1234!'
-const TEST_USER_NAME = 'Test User'
 
 function htmlBlob(html: string) {
     return new File([html], 'body.html', { type: 'text/html' })
@@ -113,7 +187,6 @@ async function hasCollection(pb: PocketBase, name: string): Promise<boolean> {
 async function seedSecondOrg(pb: PocketBase, ctx: OrgSeedContext) {
     log('Seeding second org (light):', SECOND_ORG_SLUG)
 
-    // --- Contacts (3) ---
     if (await hasCollection(pb, 'contacts')) {
         const contacts = [
             {
@@ -146,7 +219,6 @@ async function seedSecondOrg(pb: PocketBase, ctx: OrgSeedContext) {
         log('  skipped contacts (not linked)')
     }
 
-    // --- Mail (2 threads) ---
     if (!(await hasCollection(pb, 'mail_domains'))) {
         log('  skipped mail (not linked)')
     } else {
@@ -269,7 +341,6 @@ async function seedSecondOrg(pb: PocketBase, ctx: OrgSeedContext) {
         log('  Created 2 mail threads')
     }
 
-    // --- Calendar (2 events) ---
     if (!(await hasCollection(pb, 'calendar_calendars'))) {
         log('  skipped calendar (not linked)')
     } else {
@@ -314,7 +385,6 @@ async function seedSecondOrg(pb: PocketBase, ctx: OrgSeedContext) {
         log('  Created 1 calendar with 2 events')
     }
 
-    // --- Drive (1 folder + 1 text file) ---
     if (!(await hasCollection(pb, 'drive_items'))) {
         log('  skipped drive (not linked)')
     } else {
@@ -346,39 +416,52 @@ async function seedSecondOrg(pb: PocketBase, ctx: OrgSeedContext) {
     log('Second org seeding complete')
 }
 
-async function main() {
-    const config = parseArgs()
-    log('Connecting to PocketBase at', config.url)
-    const pb = new PocketBase(config.url)
-
-    log('Authenticating as superuser...')
-    await pb.collection('_superusers').authWithPassword(config.adminEmail, config.adminPassword)
-
+/**
+ * Find-or-create the target user, primary org, and user_org membership, then
+ * run all linked package seeds against them. Optionally seeds a second "Acme"
+ * org with light data when `config.seedSecondOrg` is true.
+ *
+ * Exported so reset-demo.ts can re-seed without shelling out.
+ */
+export async function seedForUser(pb: PocketBase, config: SeedConfig) {
     let user: { id: string }
     try {
-        user = await pb.collection('users').getFirstListItem(`email = "${TEST_USER_EMAIL}"`)
-        log('Found existing test user:', TEST_USER_EMAIL)
+        user = await pb.collection('users').getFirstListItem(`email = "${config.userEmail}"`)
+        log('Found existing user:', config.userEmail)
+        if (config.isDemo) {
+            // Make sure pre-existing accounts have the flag — otherwise outbound
+            // side-effect chokepoints won't suppress for this user.
+            await pb.collection('users').update(user.id, { is_demo: true })
+        }
     } catch {
-        log('Creating test user:', TEST_USER_EMAIL)
+        log('Creating user:', config.userEmail)
+        // Demo accounts are created by the Go endpoint with a random password;
+        // when we create one here from the CLI we still need *some* password
+        // to satisfy the auth collection. The user authenticates via
+        // /api/demo/start tokens, not via this password.
+        const password =
+            config.userPassword ||
+            `Demo${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}!`
         user = await pb.collection('users').create({
-            email: TEST_USER_EMAIL,
-            password: TEST_USER_PASSWORD,
-            passwordConfirm: TEST_USER_PASSWORD,
-            name: TEST_USER_NAME,
+            email: config.userEmail,
+            password,
+            passwordConfirm: password,
+            name: config.userName,
             emailVisibility: true,
             verified: true,
+            ...(config.isDemo ? { is_demo: true } : {}),
         })
     }
 
     let org: { id: string }
     try {
-        org = await pb.collection('orgs').getFirstListItem(`slug = "${TEST_ORG_SLUG}"`)
-        log('Found existing org:', TEST_ORG_SLUG)
+        org = await pb.collection('orgs').getFirstListItem(`slug = "${config.orgSlug}"`)
+        log('Found existing org:', config.orgSlug)
     } catch {
-        log('Creating org:', TEST_ORG_SLUG)
+        log('Creating org:', config.orgSlug)
         org = await pb.collection('orgs').create({
-            name: TEST_ORG_NAME,
-            slug: TEST_ORG_SLUG,
+            name: config.orgName,
+            slug: config.orgSlug,
         })
     }
 
@@ -388,7 +471,7 @@ async function main() {
             .collection('user_org')
             .getFirstListItem(`user = "${user.id}" && org = "${org.id}"`)
         if (userOrg.role !== 'owner') {
-            log(`Updating test user role from "${userOrg.role}" to "owner"`)
+            log(`Updating user role from "${userOrg.role}" to "owner"`)
             userOrg = await pb.collection('user_org').update(userOrg.id, { role: 'owner' })
         } else {
             log('Found existing user_org membership (role: owner)')
@@ -402,9 +485,8 @@ async function main() {
         })
     }
 
-    // Run package seeds for primary org
     const seedContext = {
-        user: { id: user.id, email: TEST_USER_EMAIL, name: TEST_USER_NAME },
+        user: { id: user.id, email: config.userEmail, name: config.userName },
         org,
         userOrg,
     }
@@ -416,48 +498,69 @@ async function main() {
         log(`  ✓ ${slug} done`)
     }
 
-    // Create second org with light seed data
-    let org2: { id: string }
-    try {
-        org2 = await pb.collection('orgs').getFirstListItem(`slug = "${SECOND_ORG_SLUG}"`)
-        log('Found existing org:', SECOND_ORG_SLUG)
-    } catch {
-        log('Creating org:', SECOND_ORG_SLUG)
-        org2 = await pb.collection('orgs').create({
-            name: SECOND_ORG_NAME,
-            slug: SECOND_ORG_SLUG,
+    if (config.seedSecondOrg) {
+        let org2: { id: string }
+        try {
+            org2 = await pb.collection('orgs').getFirstListItem(`slug = "${SECOND_ORG_SLUG}"`)
+            log('Found existing org:', SECOND_ORG_SLUG)
+        } catch {
+            log('Creating org:', SECOND_ORG_SLUG)
+            org2 = await pb.collection('orgs').create({
+                name: SECOND_ORG_NAME,
+                slug: SECOND_ORG_SLUG,
+            })
+        }
+
+        let userOrg2: { id: string }
+        try {
+            userOrg2 = await pb
+                .collection('user_org')
+                .getFirstListItem(`user = "${user.id}" && org = "${org2.id}"`)
+            log('Found existing user_org for', SECOND_ORG_SLUG)
+        } catch {
+            log('Creating user_org membership for', SECOND_ORG_SLUG)
+            userOrg2 = await pb.collection('user_org').create({
+                org: org2.id,
+                user: user.id,
+                role: 'owner',
+            })
+        }
+
+        await seedSecondOrg(pb, {
+            user: { id: user.id, email: config.userEmail, name: config.userName },
+            org: org2,
+            userOrg: userOrg2,
         })
     }
+}
 
-    let userOrg2: { id: string }
-    try {
-        userOrg2 = await pb
-            .collection('user_org')
-            .getFirstListItem(`user = "${user.id}" && org = "${org2.id}"`)
-        log('Found existing user_org for', SECOND_ORG_SLUG)
-    } catch {
-        log('Creating user_org membership for', SECOND_ORG_SLUG)
-        userOrg2 = await pb.collection('user_org').create({
-            org: org2.id,
-            user: user.id,
-            role: 'owner',
-        })
-    }
+export async function authSuperuser(config: {
+    url: string
+    adminEmail: string
+    adminPassword: string
+}): Promise<PocketBase> {
+    log('Connecting to PocketBase at', config.url)
+    const pb = new PocketBase(config.url)
+    log('Authenticating as superuser...')
+    await pb.collection('_superusers').authWithPassword(config.adminEmail, config.adminPassword)
+    return pb
+}
 
-    await seedSecondOrg(pb, {
-        user: { id: user.id, email: TEST_USER_EMAIL, name: TEST_USER_NAME },
-        org: org2,
-        userOrg: userOrg2,
-    })
-
+async function main() {
+    const config = parseArgs()
+    log(`Mode: ${config.mode} (user=${config.userEmail}, org=${config.orgSlug})`)
+    const pb = await authSuperuser(config)
+    await seedForUser(pb, config)
     log('Seeding complete!')
     process.exit(0)
 }
 
-main().catch(err => {
-    logError('Failed:', err)
-    if (err?.response) {
-        logError('Response:', JSON.stringify(err.response, null, 2))
-    }
-    process.exit(1)
-})
+if (process.argv[1]?.endsWith('seed-db.ts')) {
+    main().catch(err => {
+        logError('Failed:', err)
+        if (err?.response) {
+            logError('Response:', JSON.stringify(err.response, null, 2))
+        }
+        process.exit(1)
+    })
+}
