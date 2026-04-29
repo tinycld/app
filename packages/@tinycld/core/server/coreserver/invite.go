@@ -21,6 +21,10 @@ type inviteRequest struct {
 }
 
 func RegisterInviteEndpoint(app *pocketbase.PocketBase) {
+	registerInviteEndpointCore(app)
+}
+
+func registerInviteEndpointCore(app core.App) {
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		e.Router.POST("/api/invite-member", func(re *core.RequestEvent) error {
 			return handleInviteMember(app, re)
@@ -46,7 +50,7 @@ func requireAuthCore(re *core.RequestEvent) error {
 	return re.Next()
 }
 
-func handleInviteMember(app *pocketbase.PocketBase, re *core.RequestEvent) error {
+func handleInviteMember(app core.App, re *core.RequestEvent) error {
 	var req inviteRequest
 	if err := json.NewDecoder(re.Request.Body).Decode(&req); err != nil {
 		return re.BadRequestError("Invalid request body", err)
@@ -221,7 +225,7 @@ type acceptInviteRequest struct {
 // findInviteToken looks up an invite token and validates it is unused and unexpired.
 // Returns the token record and a zero-valued (statusCode, errMsg) on success,
 // or (nil, non-zero status, message) on failure.
-func findInviteToken(app *pocketbase.PocketBase, token string) (*core.Record, int, string) {
+func findInviteToken(app core.App, token string) (*core.Record, int, string) {
 	if len(token) != 64 {
 		return nil, http.StatusNotFound, "invalid invitation link"
 	}
@@ -244,7 +248,7 @@ func findInviteToken(app *pocketbase.PocketBase, token string) (*core.Record, in
 	return record, 0, ""
 }
 
-func handleGetAcceptInvite(app *pocketbase.PocketBase, re *core.RequestEvent) error {
+func handleGetAcceptInvite(app core.App, re *core.RequestEvent) error {
 	token := re.Request.PathValue("token")
 	record, status, msg := findInviteToken(app, token)
 	if record == nil {
@@ -268,7 +272,7 @@ func handleGetAcceptInvite(app *pocketbase.PocketBase, re *core.RequestEvent) er
 	})
 }
 
-func handlePostAcceptInvite(app *pocketbase.PocketBase, re *core.RequestEvent) error {
+func handlePostAcceptInvite(app core.App, re *core.RequestEvent) error {
 	token := re.Request.PathValue("token")
 
 	var body acceptInviteRequest

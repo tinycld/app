@@ -25,6 +25,10 @@ const (
 // it mints an invite_tokens row and emails a password-set link. For existing
 // users, it emails a simple "you've been added" notice linking to the org.
 func RegisterInviteLifecycle(app *pocketbase.PocketBase) {
+	registerInviteLifecycleCore(app)
+}
+
+func registerInviteLifecycleCore(app core.App) {
 	app.OnRecordAfterCreateSuccess("user_org").BindFunc(func(e *core.RecordEvent) error {
 		userOrg := e.Record
 		go handleUserOrgInvite(app, userOrg)
@@ -74,7 +78,7 @@ func handleUserOrgInvite(app core.App, userOrg *core.Record) {
 }
 
 // invalidateExistingTokens marks all unused invite tokens for a user+org as used.
-func invalidateExistingTokens(app *pocketbase.PocketBase, userID, orgID string) error {
+func invalidateExistingTokens(app core.App, userID, orgID string) error {
 	tokens, err := app.FindRecordsByFilter(
 		"invite_tokens",
 		"user = {:userId} && org = {:orgId} && used_at = ''",
