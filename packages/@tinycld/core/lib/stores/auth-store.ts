@@ -53,7 +53,7 @@ interface AuthStoreState {
     hasHydrated: boolean
 
     initAuth: () => () => void
-    login: (email: string, password: string) => Promise<LoginResult>
+    login: (identifier: string, password: string) => Promise<LoginResult>
     logout: () => void
     refreshUser: () => Promise<void>
 }
@@ -85,7 +85,7 @@ export const useAuthStore = create<AuthStoreState>()((set, get) => ({
         return unsubscribe
     },
 
-    login: async (email, password) => {
+    login: async (identifier, password) => {
         pb.authStore.clear()
         try {
             const authData = await pb.collection('users').authWithPassword<
@@ -94,7 +94,7 @@ export const useAuthStore = create<AuthStoreState>()((set, get) => ({
                         user_org_via_user?: UserOrgExpanded[]
                     }
                 }
-            >(email, password, {
+            >(identifier, password, {
                 expand: 'user_org_via_user.org',
             })
             const userOrgs = authData.record.expand?.user_org_via_user ?? []

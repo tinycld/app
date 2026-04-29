@@ -16,18 +16,18 @@ export function LoginModal() {
     const primaryFg = useThemeColor('primary-foreground')
     const backdropColor = useThemeColor('overlay-backdrop')
     const { login } = useAuth({ throwIfAnon: false })
-    const [email, setEmail] = useState('')
+    const [identifier, setIdentifier] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState<string | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
-    const canSubmit = email.trim().length > 0 && password.length > 0 && !isSubmitting
+    const canSubmit = identifier.trim().length > 0 && password.length > 0 && !isSubmitting
 
     const handleSubmit = async () => {
         if (!canSubmit) return
         setError(null)
         setIsSubmitting(true)
-        const result = await login(email.trim(), password)
+        const result = await login(identifier.trim(), password)
         if (result.error) {
             setError(result.error)
             setIsSubmitting(false)
@@ -76,7 +76,7 @@ export function LoginModal() {
                         className="mb-1.5"
                         style={{ fontSize: 14, fontWeight: '600', color: fgColor }}
                     >
-                        Email
+                        Username or email
                     </Text>
                     <TextInput
                         className="border rounded-lg p-3"
@@ -86,13 +86,14 @@ export function LoginModal() {
                             borderColor,
                             backgroundColor: surfaceBg,
                         }}
-                        value={email}
-                        onChangeText={setEmail}
-                        placeholder="you@example.com"
+                        testID="identifier"
+                        value={identifier}
+                        onChangeText={setIdentifier}
+                        placeholder="alice or alice@company.com"
                         placeholderTextColor={mutedColor}
-                        keyboardType="email-address"
                         autoCapitalize="none"
-                        autoComplete="email"
+                        autoCorrect={false}
+                        autoComplete="username"
                         editable={!isSubmitting}
                     />
                 </View>
@@ -139,8 +140,8 @@ export function LoginModal() {
                 </Pressable>
 
                 <ReviewModeHints
-                    onPrefill={(email, password) => {
-                        setEmail(email)
+                    onPrefill={(id, password) => {
+                        setIdentifier(id)
                         setPassword(password)
                     }}
                 />
