@@ -56,8 +56,10 @@ func resolveUserOrgAsAdmin(app core.App, re *core.RequestEvent) (*core.Record, e
     return uo, nil
 }
 
-// liveTokenForUserOrg returns the most recently created unused, unexpired
-// invite token for the user_org's user+org pair. Returns (nil, nil) if none.
+// liveTokenForUserOrg returns an unused, unexpired invite token for the
+// user_org's user+org pair, or (nil, nil) if none exists. Rotation invalidates
+// all prior tokens before minting a new one, so at most one live token exists
+// at a time and ordering doesn't matter.
 func liveTokenForUserOrg(app core.App, uo *core.Record) (*core.Record, error) {
     records, err := app.FindRecordsByFilter(
         "invite_tokens",
