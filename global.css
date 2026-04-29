@@ -33,6 +33,10 @@
 
             /* Overlay */
             --overlay: 255 255 255;
+            --overlay-foreground: 15 23 42;
+            --color-overlay-foreground: rgb(15 23 42);
+            --overlay-backdrop: 15 23 42;
+            --color-overlay-backdrop: rgba(15, 23, 42, 0.45);
 
             /* Status colors (teal-harmonized) */
             --success: 16 185 129;
@@ -89,6 +93,10 @@
 
             /* Overlay */
             --overlay: 18 24 40;
+            --overlay-foreground: 226 232 240;
+            --color-overlay-foreground: rgb(226 232 240);
+            --overlay-backdrop: 0 0 0;
+            --color-overlay-backdrop: rgba(0, 0, 0, 0.6);
 
             /* Status colors (teal-harmonized) */
             --success: 110 231 183;
