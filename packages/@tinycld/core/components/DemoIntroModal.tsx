@@ -31,14 +31,8 @@ export function DemoIntroModal() {
             accentToken="warning"
             title="You're in the demo workspace"
             intro="Poke around freely — this account is shared, sandboxed, and rebuilt nightly."
-            primaryLabel="Take a quick tour"
-            onPrimary={() => {
-                // Tour kickoff lives in a future PR; for now the primary CTA
-                // is a tracked-dismissal action so we know how often users
-                // opt in. Once the tour exists, swap this for a router push
-                // to the tour entry route (e.g. /a/demo/tour).
-            }}
-            secondaryLabel="Just let me look around"
+            primaryLabel="Got it, let me explore"
+            onPrimary={() => {}}
         >
             <FirstRunModalBullet
                 label="No real signup"

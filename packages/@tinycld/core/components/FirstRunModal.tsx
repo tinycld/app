@@ -36,7 +36,12 @@ export interface FirstRunModalProps {
     children?: ReactNode
     primaryLabel: string
     onPrimary: () => void
-    secondaryLabel: string
+    /**
+     * Optional secondary action. When omitted, the modal renders the primary
+     * button alone — useful for "got it" confirmations where there's nothing
+     * meaningful to choose between.
+     */
+    secondaryLabel?: string
     onSecondary?: () => void
 }
 
@@ -156,18 +161,20 @@ export function FirstRunModal({
                     ) : null}
 
                     <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'flex-end' }}>
-                        <Pressable
-                            onPress={() => dismiss('secondary')}
-                            style={{
-                                paddingVertical: 10,
-                                paddingHorizontal: 16,
-                                borderRadius: 10,
-                            }}
-                        >
-                            <Text style={{ fontSize: 14, fontWeight: '600', color: muted }}>
-                                {secondaryLabel}
-                            </Text>
-                        </Pressable>
+                        {secondaryLabel ? (
+                            <Pressable
+                                onPress={() => dismiss('secondary')}
+                                style={{
+                                    paddingVertical: 10,
+                                    paddingHorizontal: 16,
+                                    borderRadius: 10,
+                                }}
+                            >
+                                <Text style={{ fontSize: 14, fontWeight: '600', color: muted }}>
+                                    {secondaryLabel}
+                                </Text>
+                            </Pressable>
+                        ) : null}
                         <Pressable
                             onPress={() => dismiss('primary')}
                             style={{
