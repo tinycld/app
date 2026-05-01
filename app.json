@@ -15,6 +15,12 @@
                         "default": false
                     }
                 }
+            ],
+            [
+                "expo-image-picker",
+                {
+                    "photosPermission": "Allow TinyCld to access your photos so you can upload them to Drive."
+                }
             ]
         ],
         "icon": "./assets/app-icon.png",
