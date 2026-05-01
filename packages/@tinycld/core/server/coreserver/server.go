@@ -75,6 +75,10 @@ func Register(app *pocketbase.PocketBase, opts Options) {
 	// plugins that read them (jsvm, migratecmd).
 	_ = app.RootCmd.ParseFlags(os.Args[1:])
 
+	// Sentry must register first so its router middleware sees every route.
+	// Middleware bound after a route is added does not apply retroactively.
+	RegisterSentry(app)
+
 	jsvm.MustRegister(app, jsvm.Config{
 		MigrationsDir: opts.MigrationsDir,
 		HooksDir:      opts.HooksDir,

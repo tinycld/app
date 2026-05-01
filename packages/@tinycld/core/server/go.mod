@@ -6,6 +6,7 @@ require (
 	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/gen2brain/go-fitz v1.24.14
+	github.com/getsentry/sentry-go v0.44.1
 	github.com/jdeng/goheif v0.0.0-20260407171156-9bf5264f67af
 	github.com/ledongthuc/pdf v0.0.0-20240201131950-da5b75280b06
 	github.com/microcosm-cc/bluemonday v1.0.27
