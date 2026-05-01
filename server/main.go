@@ -16,8 +16,9 @@ import (
 // and forwards here, so this needs to match the SSL proxy's --target port.
 const defaultHTTPAddr = "127.0.0.1:7090"
 
-// main composes the tinycld app server: load env, init Sentry, build the
-// shared core server via coreserver.Register, then start PocketBase.
+// main composes the tinycld app server: load env, build the shared core
+// server via coreserver.Register (which initializes Sentry), then start
+// PocketBase.
 //
 // registerPackageExtensions is generator output (see scripts/generate-packages.ts
 // → server/package_extensions.go). It's declared in this same package so we
@@ -37,14 +38,10 @@ func main() {
 		os.Args = append(os.Args, "--http", defaultHTTPAddr)
 	}
 
-	if err := sentry.Init(sentry.ClientOptions{
-		Dsn:              os.Getenv("SENTRY_DSN"),
-		Environment:      coreserver.GetEnvironment(),
-		TracesSampleRate: 0.2,
-		AttachStacktrace: true,
-	}); err != nil {
-		log.Printf("Sentry initialization failed: %v", err)
-	}
+	// sentry.Init is called inside coreserver.Register so any app composing
+	// the core server (this app, web, future apps) gets Sentry for free.
+	// Flushing on process exit must stay in main — `defer` only fires when
+	// main returns.
 	defer sentry.Flush(2 * time.Second)
 
 	app := pocketbase.New()
