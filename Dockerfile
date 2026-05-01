@@ -51,15 +51,16 @@ RUN find server/pb_migrations server/pb_hooks -type l -exec sh -c 'target=$(read
 # via `docker build --build-arg`.
 ARG EXPO_PUBLIC_SENTRY_DSN=
 ARG EXPO_PUBLIC_GIT_COMMIT=
-# RELEASE_ID is supplied by deploy/build.sh as <date>-<sha>. When Dokku
-# builds directly (no build.sh), we fall back to a date-only id derived
-# inside the build below — the format must still match the regex enforced
-# by the Go server (^\d{4}-\d{2}-\d{2}-\d{6}-[a-f0-9]+$).
-ARG RELEASE_ID=
 ENV EXPO_PUBLIC_ENV=web
 ENV EXPO_PUBLIC_SENTRY_DSN=$EXPO_PUBLIC_SENTRY_DSN
 ENV EXPO_PUBLIC_GIT_COMMIT=$EXPO_PUBLIC_GIT_COMMIT
 ENV NODE_OPTIONS="--max-old-space-size=2048"
+
+# Bring in .release-id, which deploy/deploy.sh writes into the deploy tree
+# right before pushing to Dokku. Format: YYYY-MM-DD-HHMMSS-<short-sha>.
+# When the file is absent (someone running `docker build` by hand without
+# deploy.sh), the RUN below falls back to deriving an id internally.
+COPY .release-id* ./
 
 # Resolve effective release id, build the bundle with EXPO_BASE_URL pointing
 # at /v/<id>/, and stage the dist tree under release-staging/<id>/. Done in
@@ -67,13 +68,15 @@ ENV NODE_OPTIONS="--max-old-space-size=2048"
 # entrypoint promotes this directory to the persistent volume on container
 # start, and renames the SPA shell from index.html to app.html.
 RUN set -eu \
-    && rid="$RELEASE_ID" \
-    && if [ -z "$rid" ]; then \
+    && if [ -s .release-id ]; then \
+        rid=$(tr -d '[:space:]' < .release-id); \
+    else \
         sha="${EXPO_PUBLIC_GIT_COMMIT:-deadbeef}"; \
         sha=$(printf '%s' "$sha" | cut -c1-7); \
         case "$sha" in *[!a-f0-9]*) sha=deadbeef;; esac; \
         rid="$(date -u +%Y-%m-%d-%H%M%S)-$sha"; \
     fi \
+    && rm -f .release-id \
     && export EXPO_PUBLIC_RELEASE_ID="$rid" \
     && export EXPO_BASE_URL="/v/$rid" \
     && bunx expo export --platform web \
