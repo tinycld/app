@@ -153,6 +153,10 @@ COPY --from=web-builder /app/server/bundled-packages.json ./bundled-packages.jso
 # Data + types + packages mount points.
 RUN mkdir -p pb_data types
 
+# Cron-invoked maintenance scripts.
+COPY bin/ ./bin/
+RUN chmod +x ./bin/*.sh
+
 COPY config/dokku.app.json ./app.json
 COPY config/entrypoint.sh ./entrypoint.sh
 
