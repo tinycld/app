@@ -1,5 +1,5 @@
 import { type ReactNode, useRef } from 'react'
-import { StyleSheet, TextInput, View } from 'react-native'
+import { TextInput, View } from 'react-native'
 import { KeyboardExtendedView } from 'react-native-external-keyboard'
 import { createMatcher } from './matcher'
 
@@ -98,13 +98,9 @@ export function ShortcutsProvider({ children }: ShortcutsProviderProps) {
             autoFocus={true}
             haloEffect={false}
             focusable={false}
-            style={styles.root}
+            style={{ flex: 1 }}
         >
-            <View style={styles.root}>{children}</View>
+            <View className="flex-1">{children}</View>
         </KeyboardExtendedView>
     )
 }
-
-const styles = StyleSheet.create({
-    root: { flex: 1 },
-})

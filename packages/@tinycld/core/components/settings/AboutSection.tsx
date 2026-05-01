@@ -2,18 +2,11 @@ import Constants from 'expo-constants'
 import { Linking, Pressable, Text, View } from 'react-native'
 import { getCoreConfigOptional } from '@tinycld/core/lib/core-config'
 import { getResolvedAddress } from '@tinycld/core/lib/server-address'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 
 const DEFAULT_PRIVACY_URL = 'https://tinycld.org/privacy'
 const DEFAULT_SOURCE_URL = 'https://github.com/tinycld/core'
 
 export function AboutSection() {
-    const foregroundColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
-    const primaryColor = useThemeColor('primary')
-    const borderColor = useThemeColor('border')
-    const surfaceBg = useThemeColor('surface-secondary')
-
     const config = getCoreConfigOptional()
     const version = Constants.expoConfig?.version ?? 'unknown'
     const rawCommit = config?.release ?? 'dev'
@@ -24,46 +17,26 @@ export function AboutSection() {
 
     return (
         <View className="gap-3">
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: foregroundColor }}>About</Text>
-            <View
-                className="rounded-xl border p-4 gap-2"
-                style={{ backgroundColor: surfaceBg, borderColor }}
-            >
-                <Row
-                    label="Version"
-                    value={`${version} (${commit})`}
-                    fg={foregroundColor}
-                    muted={mutedColor}
-                />
-                <Row label="Server" value={server} fg={foregroundColor} muted={mutedColor} />
+            <Text className="text-xl font-bold text-foreground">About</Text>
+            <View className="rounded-xl border border-border bg-surface-secondary p-4 gap-2">
+                <Row label="Version" value={`${version} (${commit})`} />
+                <Row label="Server" value={server} />
                 <Pressable onPress={() => Linking.openURL(privacyUrl)}>
-                    <Text style={{ color: primaryColor, fontSize: 14 }}>Privacy policy</Text>
+                    <Text className="text-sm text-primary">Privacy policy</Text>
                 </Pressable>
                 <Pressable onPress={() => Linking.openURL(sourceUrl)}>
-                    <Text style={{ color: primaryColor, fontSize: 14 }}>
-                        Source code (AGPL-3.0)
-                    </Text>
+                    <Text className="text-sm text-primary">Source code (AGPL-3.0)</Text>
                 </Pressable>
             </View>
         </View>
     )
 }
 
-function Row({
-    label,
-    value,
-    fg,
-    muted,
-}: {
-    label: string
-    value: string
-    fg: string
-    muted: string
-}) {
+function Row({ label, value }: { label: string; value: string }) {
     return (
         <View className="flex-row justify-between items-center">
-            <Text style={{ fontSize: 14, color: muted }}>{label}</Text>
-            <Text style={{ fontSize: 14, color: fg }} numberOfLines={1}>
+            <Text className="text-sm text-muted-foreground">{label}</Text>
+            <Text className="text-sm text-foreground" numberOfLines={1}>
                 {value}
             </Text>
         </View>

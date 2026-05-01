@@ -3,7 +3,6 @@ import { useRef, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { PB_SERVER_ADDR } from '@tinycld/core/lib/config'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { FormErrorSummary, TextInput, useForm, z, zodResolver } from '@tinycld/core/ui/form'
 import { SetupDashboard } from './SetupDashboard'
 
@@ -35,13 +34,6 @@ export function SetupWizard({ token }: SetupWizardProps) {
     const [submitError, setSubmitError] = useState<string | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
-    const fgColor = useThemeColor('foreground')
-    const surfaceBg = useThemeColor('surface-secondary')
-    const borderColor = useThemeColor('border')
-    const mutedColor = useThemeColor('muted-foreground')
-    const primaryBg = useThemeColor('primary')
-    const primaryFgColor = useThemeColor('primary-foreground')
-    const surfaceColor = useThemeColor('surface')
 
     const defaultAppUrl = typeof window !== 'undefined' ? window.location.origin : PB_SERVER_ADDR
 
@@ -108,25 +100,15 @@ export function SetupWizard({ token }: SetupWizardProps) {
     return (
         <View className="flex-1 items-center justify-center py-12">
             <View
-                className="gap-4 p-5 self-center rounded-xl border"
-                style={{
-                    maxWidth: 420,
-                    width: '90%',
-                    backgroundColor: surfaceBg,
-                    borderColor,
-                }}
+                className="gap-4 p-5 self-center rounded-xl border border-border bg-surface-secondary"
+                style={{ maxWidth: 420, width: '90%' }}
             >
                 <View className="gap-2 items-center">
-                    <View
-                        className="size-10 rounded-lg items-center justify-center"
-                        style={{ backgroundColor: surfaceColor }}
-                    >
-                        <Text style={{ fontSize: 20 }}>&#9889;</Text>
+                    <View className="size-10 rounded-lg items-center justify-center bg-surface">
+                        <Text className="text-xl">&#9889;</Text>
                     </View>
-                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: fgColor }}>
-                        Welcome to TinyCld
-                    </Text>
-                    <Text className="text-center" style={{ fontSize: 12, color: mutedColor }}>
+                    <Text className="text-xl font-bold text-foreground">Welcome to TinyCld</Text>
+                    <Text className="text-center text-xs text-muted-foreground">
                         Create a superuser account to get started.
                     </Text>
                 </View>
@@ -183,10 +165,9 @@ export function SetupWizard({ token }: SetupWizardProps) {
                 <Pressable
                     onPress={onSubmit}
                     disabled={isSubmitting}
-                    className={`px-4 py-3 rounded-lg items-center ${isSubmitting ? 'opacity-60' : 'opacity-100'}`}
-                    style={{ backgroundColor: primaryBg }}
+                    className={`px-4 py-3 rounded-lg items-center bg-primary ${isSubmitting ? 'opacity-60' : 'opacity-100'}`}
                 >
-                    <Text style={{ fontWeight: '600', color: primaryFgColor }}>
+                    <Text className="font-semibold text-primary-foreground">
                         {isSubmitting ? 'Setting up...' : 'Create Account & Continue'}
                     </Text>
                 </Pressable>

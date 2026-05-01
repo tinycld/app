@@ -94,10 +94,8 @@ function ViewMember({
     const { orgId } = useOrgInfo()
     const [userOrgCollection, usersCollection] = useStore('user_org', 'users')
 
-    const fgColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
-    const borderColor = useThemeColor('border')
-    const surfaceBg = useThemeColor('surface-secondary')
+    const fgColor = useThemeColor('foreground')
 
     const [showLink, setShowLink] = useState(false)
 
@@ -155,7 +153,8 @@ function ViewMember({
                     <View className="flex-1" style={{ minWidth: 0 }}>
                         <View className="flex-row items-center gap-2" style={{ flexWrap: 'wrap' }}>
                             <Text
-                                style={{ fontSize: 16, fontWeight: '700', color: fgColor }}
+                                className="text-foreground"
+                                style={{ fontSize: 16, fontWeight: '700' }}
                                 numberOfLines={1}
                             >
                                 {displayName}
@@ -163,7 +162,8 @@ function ViewMember({
                             {isSelf && <YouBadge />}
                         </View>
                         <Text
-                            style={{ fontSize: 12.5, color: mutedColor, marginTop: 1 }}
+                            className="text-muted-foreground"
+                            style={{ fontSize: 12.5, marginTop: 1 }}
                             numberOfLines={1}
                         >
                             @{member.username}
@@ -187,13 +187,13 @@ function ViewMember({
             <DrawerBody>
                 <View className="gap-5">
                     {member.isPending && (
-                        <View
-                            className="flex-row items-start gap-2.5 rounded-xl p-3"
-                            style={{ backgroundColor: surfaceBg, borderWidth: 1, borderColor }}
-                        >
+                        <View className="flex-row items-start gap-2.5 rounded-xl p-3 bg-surface-secondary border border-border">
                             <Mail size={16} color={mutedColor} style={{ marginTop: 2 }} />
                             <View className="flex-1 gap-2">
-                                <Text style={{ fontSize: 12.5, color: fgColor, lineHeight: 18 }}>
+                                <Text
+                                    className="text-foreground"
+                                    style={{ fontSize: 12.5, lineHeight: 18 }}
+                                >
                                     This invite hasn’t been accepted yet. They’ll appear fully once
                                     they verify their email.
                                 </Text>
@@ -201,34 +201,25 @@ function ViewMember({
                                     <Pressable
                                         testID={`show-invite-link-${member.userOrgId}`}
                                         onPress={() => setShowLink(prev => !prev)}
-                                        className="flex-row items-center gap-1.5 self-start rounded-md"
+                                        className="flex-row items-center gap-1.5 self-start rounded-md border border-border"
                                         style={{
                                             paddingVertical: 5,
                                             paddingHorizontal: 10,
-                                            borderWidth: 1,
-                                            borderColor,
                                         }}
                                     >
                                         <Send size={11} color={fgColor} />
                                         <Text
+                                            className="text-foreground"
                                             style={{
                                                 fontSize: 12,
                                                 fontWeight: '600',
-                                                color: fgColor,
                                             }}
                                         >
                                             {showLink ? 'Hide invite link' : 'Show invite link'}
                                         </Text>
                                     </Pressable>
                                     {showLink && (
-                                        <View
-                                            className="rounded-xl p-3"
-                                            style={{
-                                                backgroundColor: surfaceBg,
-                                                borderWidth: 1,
-                                                borderColor,
-                                            }}
-                                        >
+                                        <View className="rounded-xl p-3 bg-surface-secondary border border-border">
                                             <InviteLinkPanel userOrgId={member.userOrgId} />
                                         </View>
                                     )}
@@ -299,17 +290,20 @@ function RolePicker({
         <View className="gap-2.5">
             <View className="gap-0.5">
                 <Text
+                    className="text-muted-foreground"
                     style={{
                         fontSize: 11,
                         fontWeight: '700',
-                        color: mutedColor,
                         textTransform: 'uppercase',
                         letterSpacing: 0.8,
                     }}
                 >
                     Role
                 </Text>
-                <Text style={{ fontSize: 12, color: mutedColor, lineHeight: 16 }}>
+                <Text
+                    className="text-muted-foreground"
+                    style={{ fontSize: 12, lineHeight: 16 }}
+                >
                     {ROLE_DESCRIPTIONS[currentRole]}
                 </Text>
             </View>
@@ -356,9 +350,9 @@ function RolePicker({
                                     {ROLE_LABELS[role]}
                                 </Text>
                                 <Text
+                                    className="text-muted-foreground"
                                     style={{
                                         fontSize: 11.5,
-                                        color: mutedColor,
                                         marginTop: 1,
                                         lineHeight: 15,
                                     }}
@@ -373,7 +367,10 @@ function RolePicker({
             </View>
 
             {helperText && (
-                <Text style={{ fontSize: 11.5, color: mutedColor, fontStyle: 'italic' }}>
+                <Text
+                    className="text-muted-foreground"
+                    style={{ fontSize: 11.5, fontStyle: 'italic' }}
+                >
                     {helperText}
                 </Text>
             )}
@@ -390,17 +387,21 @@ function RemoveSection({
     onRemove: () => void
     isPending: boolean
 }) {
-    const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
     const dangerColor = useThemeColor('danger')
 
     return (
         <View className="flex-row items-center justify-between gap-3">
             <View className="flex-1">
-                <Text style={{ fontSize: 12.5, color: fgColor, fontWeight: '600' }}>
+                <Text
+                    className="text-foreground"
+                    style={{ fontSize: 12.5, fontWeight: '600' }}
+                >
                     Remove {name}
                 </Text>
-                <Text style={{ fontSize: 11.5, color: mutedColor, marginTop: 1 }}>
+                <Text
+                    className="text-muted-foreground"
+                    style={{ fontSize: 11.5, marginTop: 1 }}
+                >
                     They’ll lose all access immediately. You can re-invite later.
                 </Text>
             </View>
@@ -417,7 +418,10 @@ function RemoveSection({
                 }}
             >
                 <Trash2 size={12} color={dangerColor} />
-                <Text style={{ color: dangerColor, fontSize: 12, fontWeight: '700' }}>
+                <Text
+                    className="text-danger"
+                    style={{ fontSize: 12, fontWeight: '700' }}
+                >
                     {isPending ? 'Removing…' : 'Remove'}
                 </Text>
             </Pressable>
@@ -514,10 +518,16 @@ function InviteView({ onDone }: { onDone: () => void }) {
                         <UserPlus size={20} color={primaryColor} />
                     </View>
                     <View className="flex-1" style={{ minWidth: 0 }}>
-                        <Text style={{ fontSize: 16, fontWeight: '700', color: fgColor }}>
+                        <Text
+                            className="text-foreground"
+                            style={{ fontSize: 16, fontWeight: '700' }}
+                        >
                             Invite a teammate
                         </Text>
-                        <Text style={{ fontSize: 12.5, color: mutedColor, marginTop: 2 }}>
+                        <Text
+                            className="text-muted-foreground"
+                            style={{ fontSize: 12.5, marginTop: 2 }}
+                        >
                             Pick a username for your teammate. We’ll generate an invite link.
                         </Text>
                     </View>
@@ -553,10 +563,10 @@ function InviteView({ onDone }: { onDone: () => void }) {
 
                     <View className="gap-2.5">
                         <Text
+                            className="text-muted-foreground"
                             style={{
                                 fontSize: 11,
                                 fontWeight: '700',
-                                color: mutedColor,
                                 textTransform: 'uppercase',
                                 letterSpacing: 0.8,
                             }}
@@ -620,9 +630,9 @@ function InviteView({ onDone }: { onDone: () => void }) {
                                                         {ROLE_LABELS[role]}
                                                     </Text>
                                                     <Text
+                                                        className="text-muted-foreground"
                                                         style={{
                                                             fontSize: 11.5,
-                                                            color: mutedColor,
                                                             marginTop: 1,
                                                             lineHeight: 15,
                                                         }}
@@ -647,23 +657,28 @@ function InviteView({ onDone }: { onDone: () => void }) {
                         className="rounded-md"
                         style={{ paddingVertical: 8, paddingHorizontal: 14 }}
                     >
-                        <Text style={{ fontSize: 13, fontWeight: '600', color: mutedColor }}>
+                        <Text
+                            className="text-muted-foreground"
+                            style={{ fontSize: 13, fontWeight: '600' }}
+                        >
                             Cancel
                         </Text>
                     </Pressable>
                     <Pressable
                         onPress={onSubmit}
                         disabled={invite.isPending || !isValid}
-                        className="flex-row items-center gap-1.5 rounded-md"
+                        className="flex-row items-center gap-1.5 rounded-md bg-primary"
                         style={{
                             paddingVertical: 8,
                             paddingHorizontal: 14,
-                            backgroundColor: primaryColor,
                             opacity: invite.isPending || !isValid ? 0.5 : 1,
                         }}
                     >
                         <Send size={13} color={primaryFgColor} />
-                        <Text style={{ fontSize: 13, fontWeight: '700', color: primaryFgColor }}>
+                        <Text
+                            className="text-primary-foreground"
+                            style={{ fontSize: 13, fontWeight: '700' }}
+                        >
                             {invite.isPending ? 'Sending…' : 'Send invite'}
                         </Text>
                     </Pressable>
@@ -682,10 +697,8 @@ function InviteLinkSuccessView({
     inviteUrl: string
     onDone: () => void
 }) {
-    const fgColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
     const primaryColor = useThemeColor('primary')
-    const primaryFgColor = useThemeColor('primary-foreground')
 
     return (
         <>
@@ -702,10 +715,16 @@ function InviteLinkSuccessView({
                         <Mail size={20} color={primaryColor} />
                     </View>
                     <View className="flex-1" style={{ minWidth: 0 }}>
-                        <Text style={{ fontSize: 16, fontWeight: '700', color: fgColor }}>
+                        <Text
+                            className="text-foreground"
+                            style={{ fontSize: 16, fontWeight: '700' }}
+                        >
                             Invite created
                         </Text>
-                        <Text style={{ fontSize: 12.5, color: mutedColor, marginTop: 2 }}>
+                        <Text
+                            className="text-muted-foreground"
+                            style={{ fontSize: 12.5, marginTop: 2 }}
+                        >
                             Share this link with your teammate however works best.
                         </Text>
                     </View>
@@ -726,14 +745,16 @@ function InviteLinkSuccessView({
                     <Pressable
                         testID="invite-link-done"
                         onPress={onDone}
-                        className="flex-row items-center gap-1.5 rounded-md"
+                        className="flex-row items-center gap-1.5 rounded-md bg-primary"
                         style={{
                             paddingVertical: 8,
                             paddingHorizontal: 14,
-                            backgroundColor: primaryColor,
                         }}
                     >
-                        <Text style={{ fontSize: 13, fontWeight: '700', color: primaryFgColor }}>
+                        <Text
+                            className="text-primary-foreground"
+                            style={{ fontSize: 13, fontWeight: '700' }}
+                        >
                             Done
                         </Text>
                     </Pressable>
@@ -754,17 +775,15 @@ function DemoToggle({
     isSelf: boolean
     onToggle: (value: boolean) => void
 }) {
-    const mutedColor = useThemeColor('muted-foreground')
-
     return (
         <View className="gap-1.5">
             <View className="flex-row items-center justify-between gap-3">
                 <View className="flex-1" style={{ minWidth: 0 }}>
                     <Text
+                        className="text-muted-foreground"
                         style={{
                             fontSize: 11,
                             fontWeight: '700',
-                            color: mutedColor,
                             textTransform: 'uppercase',
                             letterSpacing: 0.8,
                         }}
@@ -772,7 +791,8 @@ function DemoToggle({
                         Demo account
                     </Text>
                     <Text
-                        style={{ fontSize: 12, color: mutedColor, lineHeight: 16, marginTop: 2 }}
+                        className="text-muted-foreground"
+                        style={{ fontSize: 12, lineHeight: 16, marginTop: 2 }}
                     >
                         Sandboxed: outbound email and notifications are simulated. The user
                         sees the full app but nothing leaves the box.
@@ -786,7 +806,10 @@ function DemoToggle({
                 />
             </View>
             {isSelf ? (
-                <Text style={{ fontSize: 11, color: mutedColor, marginTop: 2 }}>
+                <Text
+                    className="text-muted-foreground"
+                    style={{ fontSize: 11, marginTop: 2 }}
+                >
                     You can’t change your own demo flag. Ask another admin.
                 </Text>
             ) : null}

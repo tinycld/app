@@ -1,6 +1,5 @@
 import { type Control, type FieldValues, type Path, useController } from 'react-hook-form'
 import { Pressable, Text, View, type ViewProps } from 'react-native'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 
 export type SelectOption = {
     label: string
@@ -31,11 +30,6 @@ export function SelectInput<T extends FieldValues = Record<string, unknown>>({
         fieldState: { error },
     } = useController({ name, control })
 
-    const primaryColor = useThemeColor('primary')
-    const borderColor = useThemeColor('border')
-    const primaryFgColor = useThemeColor('primary-foreground')
-    const fgColor = useThemeColor('foreground')
-
     const hasError = !!error
 
     return (
@@ -48,20 +42,14 @@ export function SelectInput<T extends FieldValues = Record<string, unknown>>({
                         <Pressable
                             key={option.value}
                             onPress={() => field.onChange(option.value)}
-                            className="border rounded-lg py-2 px-4 items-center"
+                            className={`border rounded-lg py-2 px-4 items-center ${isSelected ? 'border-primary bg-primary' : 'border-border bg-transparent'}`}
                             style={{
-                                borderColor: isSelected ? primaryColor : borderColor,
-                                backgroundColor: isSelected ? primaryColor : 'transparent',
                                 flex: horizontal ? 1 : undefined,
                                 minWidth: horizontal ? 80 : undefined,
                             }}
                         >
                             <Text
-                                style={{
-                                    fontSize: 14,
-                                    fontWeight: '500',
-                                    color: isSelected ? primaryFgColor : fgColor,
-                                }}
+                                className={`text-sm font-medium ${isSelected ? 'text-primary-foreground' : 'text-foreground'}`}
                             >
                                 {option.label}
                             </Text>

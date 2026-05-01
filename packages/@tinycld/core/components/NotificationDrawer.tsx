@@ -45,8 +45,6 @@ const TRANSITION = 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
 function DesktopNotificationPanel() {
     const isOpen = useWorkspaceStore(s => s.isNotificationsOpen)
     const close = useWorkspaceStore(s => s.setNotificationsOpen)
-    const bgColor = useThemeColor('background')
-    const borderColor = useThemeColor('border')
     const overlayColor = useThemeColor('overlay-backdrop')
 
     return (
@@ -74,16 +72,10 @@ function DesktopNotificationPanel() {
             />
 
             <View
+                className="absolute top-0 bottom-0 left-0 border-r border-border bg-background"
                 style={
                     {
-                        position: 'absolute',
-                        top: 0,
-                        bottom: 0,
-                        left: 0,
                         width: DRAWER_WIDTH,
-                        backgroundColor: bgColor,
-                        borderRightWidth: 1,
-                        borderRightColor: borderColor,
                         zIndex: 201,
                         transform: `translateX(${isOpen ? 0 : -DRAWER_WIDTH}px)`,
                         transition: TRANSITION,
@@ -101,8 +93,6 @@ function DesktopNotificationPanel() {
 function MobileNotificationSheet() {
     const isOpen = useWorkspaceStore(s => s.isNotificationsOpen)
     const setOpen = useWorkspaceStore(s => s.setNotificationsOpen)
-    const railBg = useThemeColor('background')
-    const borderColor = useThemeColor('border')
     const overlayBg = useThemeColor('overlay-backdrop')
 
     const sheetHeight = useSharedValue(600)
@@ -151,7 +141,10 @@ function MobileNotificationSheet() {
     if (!mounted) return null
 
     return (
-        <View style={mobileStyles.container} pointerEvents={isOpen ? 'auto' : 'none'}>
+        <View
+            className="absolute top-0 left-0 right-0 bottom-0 z-[5]"
+            pointerEvents={isOpen ? 'auto' : 'none'}
+        >
             <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
                 <Pressable
                     style={[StyleSheet.absoluteFill, { backgroundColor: overlayBg }]}
@@ -164,14 +157,11 @@ function MobileNotificationSheet() {
                     onLayout={e => {
                         sheetHeight.value = e.nativeEvent.layout.height
                     }}
-                    style={[
-                        mobileStyles.sheet,
-                        { backgroundColor: railBg, borderTopColor: borderColor },
-                        sheetStyle,
-                    ]}
+                    className="absolute left-0 right-0 bottom-0 max-h-[85%] rounded-t-2xl border-t border-border bg-background"
+                    style={sheetStyle}
                 >
-                    <View style={mobileStyles.handleBar}>
-                        <View style={[mobileStyles.handle, { backgroundColor: borderColor }]} />
+                    <View className="items-center py-2.5">
+                        <View className="w-9 h-1 rounded-sm bg-border" />
                     </View>
                     <NotificationContent />
                 </Animated.View>
@@ -180,40 +170,12 @@ function MobileNotificationSheet() {
     )
 }
 
-const mobileStyles = StyleSheet.create({
-    container: {
-        ...StyleSheet.absoluteFillObject,
-        zIndex: 5,
-    },
-    sheet: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        maxHeight: '85%',
-        borderTopLeftRadius: 16,
-        borderTopRightRadius: 16,
-        borderTopWidth: 1,
-    },
-    handleBar: {
-        alignItems: 'center',
-        paddingVertical: 10,
-    },
-    handle: {
-        width: 36,
-        height: 4,
-        borderRadius: 2,
-    },
-})
-
 // ── Shared notification content ──
 
 function NotificationContent() {
     const [notificationsCollection] = useStore('notifications')
-    const foregroundColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
     const primaryColor = useThemeColor('primary')
-    const borderColor = useThemeColor('border')
     const close = useWorkspaceStore(s => s.setNotificationsOpen)
     const router = useRouter()
 
@@ -268,13 +230,8 @@ function NotificationContent() {
 
     return (
         <>
-            <View
-                className="flex-row items-center justify-between px-4 py-3"
-                style={{ borderBottomWidth: 1, borderBottomColor: borderColor }}
-            >
-                <Text style={{ fontSize: 16, fontWeight: '700', color: foregroundColor }}>
-                    Notifications
-                </Text>
+            <View className="flex-row items-center justify-between px-4 py-3 border-b border-border">
+                <Text className="text-base font-bold text-foreground">Notifications</Text>
                 <View className="flex-row items-center gap-3">
                     <MarkAllReadButton
                         isVisible={notifications.some(n => !n.read) && !markAllRead.isPending}
@@ -342,11 +299,9 @@ function NotificationItem({
     onPress: () => void
     onDismiss: () => void
 }) {
-    const foregroundColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
     const accentColor = useThemeColor('accent')
     const primaryColor = useThemeColor('primary')
-    const borderColor = useThemeColor('border')
 
     const Icon = PACKAGE_ICONS[notification.package] ?? Bell
     const isUnread = !notification.read
@@ -354,28 +309,22 @@ function NotificationItem({
     return (
         <Pressable
             onPress={onPress}
-            className="flex-row items-start gap-3 px-4 py-3"
+            className="flex-row items-start gap-3 px-4 py-3 border-b border-border"
             style={{
                 backgroundColor: isUnread ? `${accentColor}08` : undefined,
-                borderBottomWidth: 1,
-                borderBottomColor: borderColor,
             }}
         >
             <Icon size={18} color={mutedColor} style={{ marginTop: 2 }} />
 
             <View style={{ flex: 1, gap: 2 }}>
                 <Text
-                    style={{
-                        fontSize: 14,
-                        fontWeight: isUnread ? '600' : '400',
-                        color: foregroundColor,
-                    }}
+                    className={`text-sm text-foreground ${isUnread ? 'font-semibold' : 'font-normal'}`}
                     numberOfLines={1}
                 >
                     {notification.title}
                 </Text>
                 <NotificationBody body={notification.body} color={mutedColor} />
-                <Text style={{ fontSize: 11, color: mutedColor }}>
+                <Text className="text-[11px] text-muted-foreground">
                     {formatRelativeTime(notification.created)}
                 </Text>
             </View>

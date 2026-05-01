@@ -81,23 +81,20 @@ function SkeletonRail() {
 
 export function SkeletonSidebar({ width }: { width: number }) {
     const sidebarBg = useThemeColor('sidebar-background')
-    const borderColor = useThemeColor('border')
 
     return (
         <View
+            className="border-r border-border px-3"
             style={{
                 width,
-                borderRightWidth: 1,
-                paddingHorizontal: 12,
                 backgroundColor: sidebarBg,
-                borderRightColor: borderColor,
             }}
         >
             <SkeletonBlock width={100} height={11} style={{ marginBottom: 12, marginTop: 20 }} />
             <SkeletonBlock width="85%" height={32} style={{ marginBottom: 4 }} />
             <SkeletonBlock width="85%" height={32} style={{ marginBottom: 4 }} />
             <SkeletonBlock width="85%" height={32} style={{ marginBottom: 16 }} />
-            <View style={{ height: 1, marginVertical: 8, backgroundColor: borderColor }} />
+            <View className="h-px my-2 bg-border" />
             <SkeletonBlock width={80} height={11} style={{ marginBottom: 12, marginTop: 8 }} />
             <SkeletonBlock width="85%" height={32} style={{ marginBottom: 4 }} />
             <SkeletonBlock width="85%" height={32} />
@@ -106,10 +103,8 @@ export function SkeletonSidebar({ width }: { width: number }) {
 }
 
 function SkeletonMain() {
-    const bgColor = useThemeColor('background')
-
     return (
-        <View className="flex-1 p-6" style={{ backgroundColor: bgColor }}>
+        <View className="flex-1 p-6 bg-background">
             <SkeletonBlock width={200} height={24} style={{ marginBottom: 24 }} />
             <SkeletonBlock width="100%" height={48} style={{ marginBottom: 12 }} />
             <SkeletonBlock width="100%" height={48} style={{ marginBottom: 12 }} />
@@ -123,19 +118,12 @@ const SIDEBAR_WIDTH = 260
 
 function SkeletonTabBar() {
     const railBg = useThemeColor('rail-background')
-    const borderColor = useThemeColor('border')
 
     return (
         <View
+            className="h-14 border-t border-border flex-row items-center justify-around px-4"
             style={{
-                height: 56,
-                borderTopWidth: 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-around',
-                paddingHorizontal: 16,
                 backgroundColor: railBg,
-                borderTopColor: borderColor,
             }}
         >
             <SkeletonBlock width={36} height={36} style={{ borderRadius: 10, opacity: 0.15 }} />
@@ -165,11 +153,10 @@ export function SkeletonLayout() {
 
 function SkeletonLayoutWeb() {
     const breakpoint = useBreakpoint()
-    const bgColor = useThemeColor('background')
 
     if (breakpoint === 'mobile') {
         return (
-            <View style={[{ flex: 1, backgroundColor: bgColor }, { height: '100vh' as never }]}>
+            <View className="flex-1 bg-background" style={{ height: '100vh' as never }}>
                 <SkeletonMain />
                 <SkeletonTabBar />
             </View>
@@ -178,10 +165,8 @@ function SkeletonLayoutWeb() {
 
     return (
         <View
-            style={[
-                { flex: 1, flexDirection: 'row', backgroundColor: bgColor },
-                { height: '100vh' as never },
-            ]}
+            className="flex-1 flex-row bg-background"
+            style={{ height: '100vh' as never }}
         >
             <SkeletonRail />
             <SkeletonSidebar width={SIDEBAR_WIDTH} />

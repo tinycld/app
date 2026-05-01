@@ -1,6 +1,6 @@
 import { Link } from 'expo-router'
 import { Building2, type LucideIcon, Settings } from 'lucide-react-native'
-import { StyleSheet, View } from 'react-native'
+import { View } from 'react-native'
 import { NotificationBell } from '@tinycld/core/components/NotificationBell'
 import { OrgLogo } from '@tinycld/core/components/OrgLogo'
 import { ImportIndicator } from '@tinycld/core/components/workspace/ImportIndicator'
@@ -24,17 +24,15 @@ export function PackageRail() {
 
     return (
         <View
-            style={{
-                width: 64,
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                paddingVertical: 12,
-                backgroundColor: railBg,
-                zIndex: 300,
-            }}
+            className="w-16 justify-between items-center py-3 z-[300]"
+            style={{ backgroundColor: railBg }}
         >
             <View className="items-center gap-1">
-                <Link href={orgHref('')} style={styles.railItem} aria-label="Organization home">
+                <Link
+                    href={orgHref('')}
+                    className="flex w-11 h-11 rounded-xl justify-center items-center relative"
+                    aria-label="Organization home"
+                >
                     <OrgLogo
                         org={org}
                         size={32}
@@ -43,13 +41,8 @@ export function PackageRail() {
                 </Link>
 
                 <View
-                    style={{
-                        width: 28,
-                        height: 1,
-                        opacity: 0.2,
-                        marginVertical: 8,
-                        backgroundColor: railText,
-                    }}
+                    className="w-7 h-px opacity-20 my-2"
+                    style={{ backgroundColor: railText }}
                 />
 
                 {sorted.map(pkg => {
@@ -73,7 +66,11 @@ export function PackageRail() {
                 <ImportIndicator />
                 <NotificationBell color={railText} />
 
-                <Link href={orgHref('settings')} style={styles.railItem} aria-label="Settings">
+                <Link
+                    href={orgHref('settings')}
+                    className="flex w-11 h-11 rounded-xl justify-center items-center relative"
+                    aria-label="Settings"
+                >
                     <Settings size={22} color={railText} />
                 </Link>
 
@@ -103,34 +100,17 @@ function PackageRailItem({
     return (
         <Link
             href={orgHref(slug as never)}
-            style={[styles.railItem, isActive && { backgroundColor: `${activeColor}22` }]}
+            className="flex w-11 h-11 rounded-xl justify-center items-center relative"
+            style={isActive ? { backgroundColor: `${activeColor}22` } : undefined}
             aria-label={label}
         >
             {isActive && (
                 <View
-                    style={{
-                        position: 'absolute',
-                        left: -8,
-                        width: 4,
-                        height: 20,
-                        borderRadius: 2,
-                        backgroundColor: activeColor,
-                    }}
+                    className="absolute -left-2 w-1 h-5 rounded-sm"
+                    style={{ backgroundColor: activeColor }}
                 />
             )}
             <Icon size={22} color={textColor} />
         </Link>
     )
 }
-
-const styles = StyleSheet.create({
-    railItem: {
-        display: 'flex',
-        width: 44,
-        height: 44,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        position: 'relative',
-    },
-})

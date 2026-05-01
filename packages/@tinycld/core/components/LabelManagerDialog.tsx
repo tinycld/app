@@ -75,12 +75,6 @@ function LabelRow({
 }) {
     const accentColor = useThemeColor('primary')
     const mutedColor = useThemeColor('muted-foreground')
-    const fgColor = useThemeColor('foreground')
-    const bgColor = useThemeColor('background')
-    const borderColor = useThemeColor('border')
-    const surfaceBg = useThemeColor('surface-secondary')
-    const dangerColor = useThemeColor('danger')
-    const dangerFgColor = useThemeColor('danger-foreground')
     const { updateLabel, deleteLabel } = useLabelMutations()
 
     const { setValue, watch, handleSubmit } = useForm({
@@ -108,27 +102,14 @@ function LabelRow({
 
     if (isEditing) {
         return (
-            <View style={{ backgroundColor: surfaceBg }}>
+            <View className="bg-surface-secondary">
                 <View className="flex-row items-center px-3 py-2 gap-2">
                     <View
-                        style={{
-                            width: 14,
-                            height: 14,
-                            borderRadius: 7,
-                            backgroundColor: editColor,
-                        }}
+                        className="w-3.5 h-3.5 rounded-full"
+                        style={{ backgroundColor: editColor }}
                     />
                     <TextInput
-                        style={{
-                            flex: 1,
-                            fontSize: 14,
-                            padding: 8,
-                            borderWidth: 1,
-                            borderRadius: 6,
-                            backgroundColor: bgColor,
-                            borderColor,
-                            color: fgColor,
-                        }}
+                        className="flex-1 text-sm p-2 border border-border rounded-md bg-background text-foreground"
                         value={editName}
                         onChangeText={v => setValue('name', v)}
                         placeholder="Label name"
@@ -151,25 +132,18 @@ function LabelRow({
         return (
             <View className="flex-row items-center px-3 py-2 gap-2">
                 <View
-                    style={{
-                        width: 14,
-                        height: 14,
-                        borderRadius: 7,
-                        backgroundColor: label.color,
-                    }}
+                    className="w-3.5 h-3.5 rounded-full"
+                    style={{ backgroundColor: label.color }}
                 />
-                <Text numberOfLines={1} className="flex-1 text-sm" style={{ color: dangerColor }}>
+                <Text numberOfLines={1} className="flex-1 text-sm text-danger">
                     Delete "{label.name}"?
                 </Text>
                 <Pressable
                     onPress={handleDelete}
                     disabled={deleteLabel.isPending}
-                    className="px-2.5 py-1 rounded"
-                    style={{
-                        backgroundColor: dangerColor,
-                    }}
+                    className="px-2.5 py-1 rounded bg-danger"
                 >
-                    <Text style={{ fontSize: 12, color: dangerFgColor }}>
+                    <Text className="text-xs text-danger-foreground">
                         {deleteLabel.isPending ? 'Deleting' : 'Delete'}
                     </Text>
                 </Pressable>
@@ -184,12 +158,8 @@ function LabelRow({
         <Pressable onPress={handleStartEdit}>
             <View className="flex-row items-center px-3 py-2 gap-2.5">
                 <View
-                    style={{
-                        width: 14,
-                        height: 14,
-                        borderRadius: 7,
-                        backgroundColor: label.color,
-                    }}
+                    className="w-3.5 h-3.5 rounded-full"
+                    style={{ backgroundColor: label.color }}
                 />
                 <Text numberOfLines={1} className="flex-1 text-sm text-foreground">
                     {label.name}
@@ -212,10 +182,6 @@ function LabelRow({
 function CreateLabelRow({ onCreated }: { onCreated: () => void }) {
     const accentColor = useThemeColor('primary')
     const mutedColor = useThemeColor('muted-foreground')
-    const fgColor = useThemeColor('foreground')
-    const bgColor = useThemeColor('background')
-    const borderColor = useThemeColor('border')
-    const surfaceBg = useThemeColor('surface-secondary')
     const { createLabel } = useLabelMutations()
     const [isCreating, setIsCreating] = useState(false)
 
@@ -268,27 +234,14 @@ function CreateLabelRow({ onCreated }: { onCreated: () => void }) {
     }
 
     return (
-        <View style={{ backgroundColor: surfaceBg }}>
+        <View className="bg-surface-secondary">
             <View className="flex-row items-center px-3 py-2 gap-2">
                 <View
-                    style={{
-                        width: 14,
-                        height: 14,
-                        borderRadius: 7,
-                        backgroundColor: color,
-                    }}
+                    className="w-3.5 h-3.5 rounded-full"
+                    style={{ backgroundColor: color }}
                 />
                 <TextInput
-                    style={{
-                        flex: 1,
-                        fontSize: 14,
-                        padding: 8,
-                        borderWidth: 1,
-                        borderRadius: 6,
-                        backgroundColor: bgColor,
-                        borderColor,
-                        color: fgColor,
-                    }}
+                    className="flex-1 text-sm p-2 border border-border rounded-md bg-background text-foreground"
                     value={name}
                     onChangeText={v => setValue('name', v)}
                     placeholder="Label name"

@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react-native'
 import type { ReactNode, RefObject } from 'react'
 import { createContext, useCallback, useContext, useRef } from 'react'
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Platform, Pressable, Text, View } from 'react-native'
 import type { SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable'
 
 export interface SwipeAction {
@@ -51,15 +51,16 @@ function RightActions({
     onActionPress: (action: SwipeAction) => void
 }) {
     return (
-        <View style={styles.actionsContainer}>
+        <View className="flex-row">
             {actions.map(action => (
                 <Pressable
                     key={action.label}
-                    style={[styles.actionButton, { backgroundColor: action.backgroundColor }]}
+                    className="w-[72px] justify-center items-center gap-1"
+                    style={{ backgroundColor: action.backgroundColor }}
                     onPress={() => onActionPress(action)}
                 >
                     <action.icon size={20} color="#ffffff" />
-                    <Text style={styles.actionLabel}>{action.label}</Text>
+                    <Text className="text-white text-[10px] font-semibold">{action.label}</Text>
                 </Pressable>
             ))}
         </View>
@@ -137,20 +138,3 @@ export function SwipeableRow({
 }
 
 const swipeContainerStyle = { overflow: 'hidden' as const }
-
-const styles = StyleSheet.create({
-    actionsContainer: {
-        flexDirection: 'row',
-    },
-    actionButton: {
-        width: 72,
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 4,
-    },
-    actionLabel: {
-        color: '#ffffff',
-        fontSize: 10,
-        fontWeight: '600',
-    },
-})

@@ -13,18 +13,12 @@ import { ThemedSwitch } from '@tinycld/core/ui/ThemedSwitch'
 import { ScrollView, Text, View } from 'react-native'
 
 export default function OrgPackageSettings() {
-    const bgColor = useThemeColor('background')
-    const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
     const { isAdmin } = useCurrentRole()
 
     if (!isAdmin) {
         return (
-            <View
-                className="flex-1 p-5 items-center justify-center"
-                style={{ backgroundColor: bgColor }}
-            >
-                <Text style={{ fontSize: 16, color: mutedColor }}>
+            <View className="flex-1 p-5 items-center justify-center bg-background">
+                <Text className="text-muted-foreground text-base">
                     Only admins can manage packages.
                 </Text>
             </View>
@@ -32,14 +26,10 @@ export default function OrgPackageSettings() {
     }
 
     return (
-        <ScrollView
-            className="flex-1"
-            style={{ backgroundColor: bgColor }}
-            contentContainerStyle={{ flexGrow: 1 }}
-        >
+        <ScrollView className="flex-1 bg-background" contentContainerStyle={{ flexGrow: 1 }}>
             <View className="p-5 max-w-[600px] w-full gap-4">
-                <Text style={{ fontSize: 22, fontWeight: 'bold', color: fgColor }}>Packages</Text>
-                <Text style={{ fontSize: 14, color: mutedColor }}>
+                <Text className="text-foreground text-[22px] font-bold">Packages</Text>
+                <Text className="text-muted-foreground text-sm">
                     Enable or disable packages for this organization. Disabled packages will be
                     hidden from all members.
                 </Text>
@@ -80,21 +70,14 @@ function PackageToggleList() {
         []
     )
 
-    const surfaceBg = useThemeColor('surface-secondary')
-    const borderColor = useThemeColor('border')
-    const mutedColor = useThemeColor('muted-foreground')
-
     const allPackages = [...(bundledPackages ?? []), ...(installedPackages ?? [])].sort(
         (a, b) => (a.nav_order ?? 0) - (b.nav_order ?? 0)
     )
 
     if (allPackages.length === 0) {
         return (
-            <View
-                className="p-5 items-center rounded-xl border"
-                style={{ backgroundColor: surfaceBg, borderColor }}
-            >
-                <Text style={{ fontSize: 14, color: mutedColor }}>No packages available.</Text>
+            <View className="p-5 items-center rounded-xl border border-border bg-surface-secondary">
+                <Text className="text-muted-foreground text-sm">No packages available.</Text>
             </View>
         )
     }
@@ -104,10 +87,7 @@ function PackageToggleList() {
     )
 
     return (
-        <View
-            className="rounded-xl border overflow-hidden"
-            style={{ backgroundColor: surfaceBg, borderColor }}
-        >
+        <View className="rounded-xl border border-border overflow-hidden bg-surface-secondary">
             {allPackages.map((pkg, i) => (
                 <View key={pkg.id}>
                     {i > 0 && <Divider />}
@@ -128,7 +108,6 @@ function PackageToggleRow({
     toggle?: { id: string; enabled: boolean }
 }) {
     const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
     const [orgPkgEnabledCollection] = useStore('org_pkg_enabled')
 
     const isEnabled = toggle ? toggle.enabled : true
@@ -160,11 +139,9 @@ function PackageToggleRow({
             <View className="flex-row items-center gap-3 flex-1">
                 <Icon size={20} color={fgColor} />
                 <View className="flex-1">
-                    <Text style={{ fontSize: 15, fontWeight: '500', color: fgColor }}>
-                        {pkg.name}
-                    </Text>
+                    <Text className="text-foreground text-[15px] font-medium">{pkg.name}</Text>
                     {pkg.description && (
-                        <Text style={{ fontSize: 12, color: mutedColor }}>{pkg.description}</Text>
+                        <Text className="text-muted-foreground text-xs">{pkg.description}</Text>
                     )}
                 </View>
             </View>

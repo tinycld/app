@@ -47,7 +47,6 @@ function ToastCard({ toast }: { toast: ToastType }) {
     const removeToast = useToastStore(s => s.removeToast)
     const bgColor = useThemeColor('surface-secondary')
     const borderColor = useThemeColor('border')
-    const foregroundColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
     const variantColor = useThemeColor(VARIANT_COLORS[toast.variant])
 
@@ -108,9 +107,7 @@ function ToastCard({ toast }: { toast: ToastType }) {
             <Icon size={18} color={variantColor} style={{ marginTop: 1 }} />
 
             <View style={{ flex: 1, gap: 2 }}>
-                <Text style={{ fontSize: 14, fontWeight: '600', color: foregroundColor }}>
-                    {toast.title}
-                </Text>
+                <Text className="text-sm font-semibold text-foreground">{toast.title}</Text>
                 <ToastBody isVisible={!!toast.body} body={toast.body} color={mutedColor} />
                 <ToastAction action={toast.action} color={variantColor} />
             </View>

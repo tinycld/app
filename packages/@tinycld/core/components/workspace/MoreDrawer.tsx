@@ -97,7 +97,10 @@ export function MoreDrawer() {
     }
 
     return (
-        <View style={styles.container} pointerEvents={isMoreOpen ? 'auto' : 'none'}>
+        <View
+            className="absolute top-0 left-0 right-0 bottom-0 z-[5]"
+            pointerEvents={isMoreOpen ? 'auto' : 'none'}
+        >
             <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
                 <Pressable
                     style={[StyleSheet.absoluteFill, { backgroundColor: overlayBg }]}
@@ -110,23 +113,28 @@ export function MoreDrawer() {
                     onLayout={e => {
                         drawerHeight.value = e.nativeEvent.layout.height
                     }}
-                    style={[styles.drawer, { backgroundColor: railBg }, drawerStyle]}
+                    className="absolute left-0 right-0 bottom-0 rounded-t-2xl"
+                    style={[{ backgroundColor: railBg }, drawerStyle]}
                 >
-                    <View style={styles.handleBar}>
-                        <View style={[styles.handle, { backgroundColor: borderColor }]} />
+                    <View className="items-center py-2.5">
+                        <View
+                            className="w-9 h-1 rounded-sm"
+                            style={{ backgroundColor: borderColor }}
+                        />
                     </View>
 
-                    <View style={styles.drawerHeader}>
-                        <View style={styles.drawerHeaderLeft}>
+                    <View className="flex-row items-center justify-between px-5 pb-3">
+                        <View className="flex-row items-center gap-3">
                             <View
-                                style={[
-                                    styles.avatar,
-                                    { backgroundColor: 'rgba(255,255,255,0.15)' },
-                                ]}
+                                className="w-9 h-9 rounded-full justify-center items-center"
+                                style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
                             >
                                 <User size={18} color={activeColor} />
                             </View>
-                            <Text style={[styles.userName, { color: activeColor }]}>
+                            <Text
+                                className="text-[17px] font-semibold"
+                                style={{ color: activeColor }}
+                            >
                                 {user.name}
                             </Text>
                         </View>
@@ -135,28 +143,34 @@ export function MoreDrawer() {
                         </Pressable>
                     </View>
 
-                    <View style={styles.drawerContent}>
+                    <View className="px-2 pb-4">
                         <Pressable
-                            style={styles.drawerItem}
+                            className="flex-row items-center gap-3.5 px-4 py-3.5 rounded-lg"
                             onPress={() => {
                                 close()
                                 setNotificationsOpen(true)
                             }}
                         >
                             <Bell size={20} color={textColor} />
-                            <Text style={[styles.drawerItemLabel, { color: textColor }]}>
+                            <Text
+                                className="text-base font-medium"
+                                style={{ color: textColor }}
+                            >
                                 Notifications
                             </Text>
                         </Pressable>
 
                         <Pressable
-                            style={styles.drawerItem}
+                            className="flex-row items-center gap-3.5 px-4 py-3.5 rounded-lg"
                             onPress={() =>
                                 handleNav(() => router.push(orgHref('settings/personal')))
                             }
                         >
                             <Settings size={20} color={textColor} />
-                            <Text style={[styles.drawerItemLabel, { color: textColor }]}>
+                            <Text
+                                className="text-base font-medium"
+                                style={{ color: textColor }}
+                            >
                                 Settings
                             </Text>
                         </Pressable>
@@ -164,9 +178,16 @@ export function MoreDrawer() {
                         {orgs.length > 1 ? (
                             <>
                                 <View
-                                    style={[styles.separator, { backgroundColor: borderColor }]}
+                                    className="my-2 mx-3"
+                                    style={{
+                                        height: StyleSheet.hairlineWidth,
+                                        backgroundColor: borderColor,
+                                    }}
                                 />
-                                <Text style={[styles.sectionLabel, { color: textColor }]}>
+                                <Text
+                                    className="text-xs font-semibold uppercase opacity-50 px-4 pt-1 pb-2"
+                                    style={{ color: textColor }}
+                                >
                                     Organizations
                                 </Text>
                                 {orgs.map(org => {
@@ -175,11 +196,14 @@ export function MoreDrawer() {
                                     return (
                                         <Pressable
                                             key={org.id}
-                                            style={styles.drawerItem}
+                                            className="flex-row items-center gap-3.5 px-4 py-3.5 rounded-lg"
                                             onPress={() => handleNav(() => navigateToOrg(org.slug))}
                                         >
                                             <OrgLogo org={org} size={20} />
-                                            <Text style={[styles.drawerItemLabel, { color }]}>
+                                            <Text
+                                                className="text-base font-medium"
+                                                style={{ color }}
+                                            >
                                                 {org.name}
                                             </Text>
                                         </Pressable>
@@ -188,11 +212,23 @@ export function MoreDrawer() {
                             </>
                         ) : null}
 
-                        <View style={[styles.separator, { backgroundColor: borderColor }]} />
+                        <View
+                            className="my-2 mx-3"
+                            style={{
+                                height: StyleSheet.hairlineWidth,
+                                backgroundColor: borderColor,
+                            }}
+                        />
 
-                        <Pressable style={styles.drawerItem} onPress={() => handleNav(logout)}>
+                        <Pressable
+                            className="flex-row items-center gap-3.5 px-4 py-3.5 rounded-lg"
+                            onPress={() => handleNav(logout)}
+                        >
                             <LogOut size={20} color={textColor} />
-                            <Text style={[styles.drawerItemLabel, { color: textColor }]}>
+                            <Text
+                                className="text-base font-medium"
+                                style={{ color: textColor }}
+                            >
                                 Sign out
                             </Text>
                         </Pressable>
@@ -200,7 +236,11 @@ export function MoreDrawer() {
                         {overflowPkgs.length > 0 ? (
                             <>
                                 <View
-                                    style={[styles.separator, { backgroundColor: borderColor }]}
+                                    className="my-2 mx-3"
+                                    style={{
+                                        height: StyleSheet.hairlineWidth,
+                                        backgroundColor: borderColor,
+                                    }}
                                 />
                                 {overflowPkgs.map(pkg => {
                                     const Icon = getIcon(pkg.nav?.icon ?? '')
@@ -209,7 +249,7 @@ export function MoreDrawer() {
                                     return (
                                         <Pressable
                                             key={pkg.slug}
-                                            style={styles.drawerItem}
+                                            className="flex-row items-center gap-3.5 px-4 py-3.5 rounded-lg"
                                             onPress={() =>
                                                 handleNav(() =>
                                                     router.push(`/a/${orgSlug}/${pkg.slug}`)
@@ -217,7 +257,10 @@ export function MoreDrawer() {
                                             }
                                         >
                                             <Icon size={20} color={color} />
-                                            <Text style={[styles.drawerItemLabel, { color }]}>
+                                            <Text
+                                                className="text-base font-medium"
+                                                style={{ color }}
+                                            >
                                                 {pkg.nav?.label}
                                             </Text>
                                         </Pressable>
@@ -231,80 +274,3 @@ export function MoreDrawer() {
         </View>
     )
 }
-
-const styles = StyleSheet.create({
-    container: {
-        ...StyleSheet.absoluteFillObject,
-        zIndex: 5,
-    },
-    drawer: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        borderTopLeftRadius: 16,
-        borderTopRightRadius: 16,
-    },
-    handleBar: {
-        alignItems: 'center',
-        paddingVertical: 10,
-    },
-    handle: {
-        width: 36,
-        height: 4,
-        borderRadius: 2,
-    },
-    drawerHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingBottom: 12,
-    },
-    drawerHeaderLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    avatar: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    userName: {
-        fontSize: 17,
-        fontWeight: '600',
-    },
-    drawerContent: {
-        paddingHorizontal: 8,
-        paddingBottom: 16,
-    },
-    separator: {
-        height: StyleSheet.hairlineWidth,
-        marginVertical: 8,
-        marginHorizontal: 12,
-    },
-    sectionLabel: {
-        fontSize: 12,
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        opacity: 0.5,
-        paddingHorizontal: 16,
-        paddingTop: 4,
-        paddingBottom: 8,
-    },
-    drawerItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 14,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        borderRadius: 10,
-    },
-    drawerItemLabel: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
-})

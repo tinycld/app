@@ -58,10 +58,6 @@ export function TextInput<T extends FieldValues = Record<string, unknown>>(
         fieldState: { error },
     } = useController({ name, control, rules })
 
-    const foregroundColor = useThemeColor('foreground')
-    const bgColor = useThemeColor('background')
-    const borderColor = useThemeColor('border')
-    const dangerColor = useThemeColor('danger')
     const placeholderColor = useThemeColor('field-placeholder')
 
     const hasError = !!error
@@ -85,13 +81,7 @@ export function TextInput<T extends FieldValues = Record<string, unknown>>(
                     autoCapitalize={inputProps.autoCapitalize}
                     secureTextEntry={inputProps.secureTextEntry}
                     placeholderTextColor={placeholderColor}
-                    className="flex-1 border rounded-lg px-3 py-2.5"
-                    style={{
-                        fontSize: 16,
-                        color: foregroundColor,
-                        backgroundColor: bgColor,
-                        borderColor: hasError ? dangerColor : borderColor,
-                    }}
+                    className={`flex-1 border rounded-lg px-3 py-2.5 text-base text-foreground bg-background ${hasError ? 'border-danger' : 'border-border'}`}
                 />
                 {addon}
             </View>

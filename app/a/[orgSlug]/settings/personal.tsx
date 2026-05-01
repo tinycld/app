@@ -48,27 +48,16 @@ const profileSchema = z.object({
 export default function PersonalSettings() {
     const router = useRouter()
     const foregroundColor = useThemeColor('foreground')
-    const bgColor = useThemeColor('background')
 
     return (
         <GestureHandlerRootView className="flex-1">
-            <ScrollView
-                className="flex-1"
-                style={{ backgroundColor: bgColor }}
-                contentContainerStyle={{ flexGrow: 1 }}
-            >
+            <ScrollView className="flex-1 bg-background" contentContainerStyle={{ flexGrow: 1 }}>
                 <View className="p-5 max-w-[600px] gap-6">
                     <View className="flex-row gap-3 items-center">
                         <Pressable onPress={() => router.back()}>
                             <ArrowLeft size={24} color={foregroundColor} />
                         </Pressable>
-                        <Text
-                            style={{
-                                fontSize: 22,
-                                fontWeight: 'bold',
-                                color: foregroundColor,
-                            }}
-                        >
+                        <Text className="text-foreground text-[22px] font-bold">
                             Personal Settings
                         </Text>
                     </View>
@@ -89,7 +78,6 @@ export default function PersonalSettings() {
 function ProfileSection() {
     const { user } = useAuth()
     const [usersCollection] = useStore('users')
-    const foregroundColor = useThemeColor('foreground')
 
     const {
         control,
@@ -120,9 +108,7 @@ function ProfileSection() {
 
     return (
         <View className="gap-3">
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: foregroundColor }}>
-                Profile
-            </Text>
+            <Text className="text-foreground text-xl font-bold">Profile</Text>
 
             <FormErrorSummary errors={errors} isEnabled={isSubmitted} />
 
@@ -141,17 +127,13 @@ const THEME_OPTIONS: { value: ThemePreference; label: string; description: strin
 ]
 
 function AppearanceSection() {
-    const foregroundColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
     const primaryColor = useThemeColor('primary')
     const { preference, setPreference, resolved } = useThemePreference()
     const { colorTheme, setColorTheme } = useColorTheme()
 
     return (
         <View className="gap-3">
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: foregroundColor }}>
-                Appearance
-            </Text>
+            <Text className="text-foreground text-xl font-bold">Appearance</Text>
             <SectionCard>
                 <View className="gap-4">
                     <View className="gap-1">
@@ -162,16 +144,10 @@ function AppearanceSection() {
                                 className="flex-row items-center py-2.5 px-1 rounded-lg"
                             >
                                 <View className="flex-1">
-                                    <Text
-                                        style={{
-                                            fontSize: 16,
-                                            fontWeight: '600',
-                                            color: foregroundColor,
-                                        }}
-                                    >
+                                    <Text className="text-foreground text-base font-semibold">
                                         {option.label}
                                     </Text>
-                                    <Text style={{ fontSize: 13, color: mutedColor }}>
+                                    <Text className="text-muted-foreground text-[13px]">
                                         {option.description}
                                     </Text>
                                 </View>
@@ -182,18 +158,10 @@ function AppearanceSection() {
                         ))}
                     </View>
 
-                    <View style={{ height: 1, backgroundColor: `${mutedColor}30` }} />
+                    <View className="h-px bg-muted-foreground/30" />
 
                     <View className="gap-2">
-                        <Text
-                            style={{
-                                fontSize: 14,
-                                fontWeight: '600',
-                                color: foregroundColor,
-                            }}
-                        >
-                            Accent Color
-                        </Text>
+                        <Text className="text-foreground text-sm font-semibold">Accent Color</Text>
                         <ColorThemePicker
                             selected={colorTheme}
                             onSelect={setColorTheme}
@@ -216,8 +184,6 @@ function ColorThemePicker({
     isDark: boolean
 }) {
     const borderColor = useThemeColor('border')
-    const foregroundColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
 
     return (
         <View className="flex-row gap-4 flex-wrap">
@@ -231,6 +197,7 @@ function ColorThemePicker({
                         className="items-center gap-1.5"
                     >
                         <View
+                            className="items-center justify-center"
                             style={{
                                 width: 40,
                                 height: 40,
@@ -238,18 +205,12 @@ function ColorThemePicker({
                                 backgroundColor: swatchColor,
                                 borderWidth: isActive ? 3 : 1,
                                 borderColor: isActive ? swatchColor : borderColor,
-                                justifyContent: 'center',
-                                alignItems: 'center',
                             }}
                         >
                             {isActive && <Check size={18} color="#fff" />}
                         </View>
                         <Text
-                            style={{
-                                fontSize: 11,
-                                fontWeight: isActive ? '600' : '400',
-                                color: isActive ? foregroundColor : mutedColor,
-                            }}
+                            className={`text-[11px] ${isActive ? 'font-semibold text-foreground' : 'font-normal text-muted-foreground'}`}
                         >
                             {theme.label}
                         </Text>
@@ -261,7 +222,6 @@ function ColorThemePicker({
 }
 
 function NotificationsSection() {
-    const foregroundColor = useThemeColor('foreground')
     const { isSupported, isSubscribed, subscribe, unsubscribe, isPending } = usePushSubscription()
 
     const handlePushToggle = () => {
@@ -274,9 +234,7 @@ function NotificationsSection() {
 
     return (
         <View className="gap-3">
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: foregroundColor }}>
-                Notifications
-            </Text>
+            <Text className="text-foreground text-xl font-bold">Notifications</Text>
             <PushToggle
                 isSupported={Platform.OS === 'web' && isSupported}
                 isNative={Platform.OS !== 'web'}
@@ -302,13 +260,10 @@ function PushToggle({
     isPending: boolean
     onToggle: () => void
 }) {
-    const foregroundColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
-
     if (isNative) {
         return (
             <SectionCard>
-                <Text style={{ fontSize: 16, color: foregroundColor }}>
+                <Text className="text-foreground text-base">
                     Push notifications are managed by your device settings.
                 </Text>
             </SectionCard>
@@ -318,7 +273,7 @@ function PushToggle({
     if (!isSupported) {
         return (
             <SectionCard>
-                <Text style={{ fontSize: 13, color: mutedColor }}>
+                <Text className="text-muted-foreground text-[13px]">
                     Your browser does not support push notifications.
                 </Text>
             </SectionCard>
@@ -330,16 +285,10 @@ function PushToggle({
             <Pressable onPress={onToggle} disabled={isPending}>
                 <View className="flex-row items-center gap-3">
                     <View className="flex-1 gap-0.5">
-                        <Text
-                            style={{
-                                fontSize: 16,
-                                fontWeight: '600',
-                                color: foregroundColor,
-                            }}
-                        >
+                        <Text className="text-foreground text-base font-semibold">
                             Browser Push Notifications
                         </Text>
-                        <Text style={{ fontSize: 13, color: mutedColor }}>
+                        <Text className="text-muted-foreground text-[13px]">
                             Receive calendar reminders even when the browser tab is closed.
                         </Text>
                     </View>
@@ -397,7 +346,6 @@ const MAIL_MODE_OPTIONS: { value: MailNotifyMode; label: string; description: st
 ]
 
 function NotificationTypeToggles() {
-    const mutedColor = useThemeColor('muted-foreground')
     const { prefs, setTypeEnabled, mailMode, setMailMode } = useNotificationPreferences()
 
     return (
@@ -406,13 +354,8 @@ function NotificationTypeToggles() {
                 {NOTIF_GROUPS.map(group => (
                     <View key={group.label} className="gap-1.5">
                         <Text
-                            style={{
-                                fontSize: 13,
-                                fontWeight: '600',
-                                color: mutedColor,
-                                textTransform: 'uppercase',
-                                letterSpacing: 0.5,
-                            }}
+                            className="text-muted-foreground text-[13px] font-semibold uppercase"
+                            style={{ letterSpacing: 0.5 }}
                         >
                             {group.label}
                         </Text>
@@ -445,10 +388,9 @@ function NotifTypeRow({
     enabled: boolean
     onToggle: (val: boolean) => void
 }) {
-    const foregroundColor = useThemeColor('foreground')
     return (
         <View className="flex-row items-center justify-between py-1.5">
-            <Text style={{ fontSize: 15, color: foregroundColor }}>{label}</Text>
+            <Text className="text-foreground text-[15px]">{label}</Text>
             <ThemedSwitch value={enabled} onValueChange={onToggle} />
         </View>
     )
@@ -463,8 +405,6 @@ function MailModeSelector({
     mailMode: MailNotifyMode
     onSelect: (mode: MailNotifyMode) => void
 }) {
-    const foregroundColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
     const primaryColor = useThemeColor('primary')
 
     if (!isVisible) return null
@@ -478,21 +418,13 @@ function MailModeSelector({
                     className="flex-row items-center py-1.5 gap-2"
                 >
                     <View
-                        style={{
-                            width: 16,
-                            height: 16,
-                            borderRadius: 8,
-                            borderWidth: 2,
-                            borderColor: mailMode === opt.value ? primaryColor : mutedColor,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                        }}
+                        className={`w-4 h-4 rounded-full border-2 items-center justify-center ${mailMode === opt.value ? 'border-primary' : 'border-muted-foreground'}`}
                     >
                         <RadioDot isVisible={mailMode === opt.value} color={primaryColor} />
                     </View>
                     <View>
-                        <Text style={{ fontSize: 14, color: foregroundColor }}>{opt.label}</Text>
-                        <Text style={{ fontSize: 12, color: mutedColor }}>{opt.description}</Text>
+                        <Text className="text-foreground text-sm">{opt.label}</Text>
+                        <Text className="text-muted-foreground text-xs">{opt.description}</Text>
                     </View>
                 </Pressable>
             ))}
@@ -515,19 +447,8 @@ function RadioDot({ isVisible, color }: { isVisible: boolean; color: string }) {
 }
 
 function SectionCard({ children }: { children: React.ReactNode }) {
-    const surfaceBg = useThemeColor('surface-secondary')
-    const borderColor = useThemeColor('border')
-
     return (
-        <View
-            className="rounded-xl border p-4"
-            style={{
-                backgroundColor: surfaceBg,
-                borderColor: borderColor,
-            }}
-        >
-            {children}
-        </View>
+        <View className="rounded-xl border p-4 bg-surface-secondary border-border">{children}</View>
     )
 }
 
@@ -548,8 +469,6 @@ function deriveOrder(packages: PackageManifest[], savedOrder: string[]): string[
 
 function NavigationSection() {
     const foregroundColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
-    const borderColor = useThemeColor('border')
     const surfaceBg = useThemeColor('surface-secondary')
     const accentColor = useThemeColor('accent')
     const packages = useAccessiblePackages()
@@ -578,20 +497,16 @@ function NavigationSection() {
         return (
             <ScaleDecorator>
                 <View
-                    style={[
-                        navStyles.row,
-                        {
-                            backgroundColor: isActive ? `${accentColor}20` : surfaceBg,
-                            borderColor: borderColor,
-                        },
-                    ]}
+                    className="flex-row items-center justify-between px-4 py-3.5 border-border"
+                    style={{
+                        borderBottomWidth: StyleSheet.hairlineWidth,
+                        backgroundColor: isActive ? `${accentColor}20` : surfaceBg,
+                    }}
                 >
-                    <View style={navStyles.rowLeft}>
+                    <View className="flex-row items-center gap-3">
                         <DragHandle drag={drag} disabled={isActive} />
                         <Icon size={20} color={foregroundColor} />
-                        <Text style={{ fontSize: 16, color: foregroundColor }}>
-                            {pkg.nav?.label}
-                        </Text>
+                        <Text className="text-base text-foreground">{pkg.nav?.label}</Text>
                     </View>
                 </View>
             </ScaleDecorator>
@@ -602,15 +517,13 @@ function NavigationSection() {
 
     return (
         <View className="gap-3">
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: foregroundColor }}>
-                Navigation
-            </Text>
+            <Text className="text-xl font-bold text-foreground">Navigation</Text>
 
-            <Text style={{ fontSize: 13, color: mutedColor }}>
+            <Text className="text-[13px] text-muted-foreground">
                 Drag to reorder your apps. The order is reflected in the sidebar and mobile tab bar.
             </Text>
 
-            <View style={[navStyles.listContainer, { borderColor: borderColor }]}>
+            <View className="rounded-xl border border-border overflow-hidden">
                 <DraggableFlatList
                     data={localOrder}
                     keyExtractor={keyExtractor}
@@ -627,41 +540,17 @@ function NavigationSection() {
 }
 
 function ResetButton({ isVisible, onPress }: { isVisible: boolean; onPress: () => void }) {
-    const foregroundColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
-    const borderColor = useThemeColor('border')
 
     if (!isVisible) return null
 
     return (
         <Pressable
             onPress={onPress}
-            className="flex-row items-center gap-1.5 px-3 py-2 rounded-lg border self-start"
-            style={{ borderColor: borderColor }}
+            className="flex-row items-center gap-1.5 px-3 py-2 rounded-lg border border-border self-start"
         >
             <RotateCcw size={14} color={mutedColor} />
-            <Text style={{ color: foregroundColor }}>Reset to Default</Text>
+            <Text className="text-foreground">Reset to Default</Text>
         </Pressable>
     )
 }
-
-const navStyles = StyleSheet.create({
-    listContainer: {
-        borderRadius: 12,
-        borderWidth: 1,
-        overflow: 'hidden',
-    },
-    row: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-    },
-    rowLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-})

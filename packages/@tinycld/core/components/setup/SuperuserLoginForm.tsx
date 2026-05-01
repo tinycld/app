@@ -16,12 +16,6 @@ interface SuperuserLoginFormProps {
 
 export function SuperuserLoginForm({ login, error, isLoading }: SuperuserLoginFormProps) {
     const fgColor = useThemeColor('foreground')
-    const surfaceBg = useThemeColor('surface-secondary')
-    const borderColor = useThemeColor('border')
-    const mutedColor = useThemeColor('muted-foreground')
-    const primaryBg = useThemeColor('primary')
-    const primaryFgColor = useThemeColor('primary-foreground')
-    const surfaceColor = useThemeColor('surface')
     const {
         control,
         handleSubmit,
@@ -36,27 +30,15 @@ export function SuperuserLoginForm({ login, error, isLoading }: SuperuserLoginFo
 
     return (
         <View
-            className="gap-4 p-5 self-center rounded-xl border"
-            style={{
-                maxWidth: 380,
-                width: '90%',
-                backgroundColor: surfaceBg,
-                borderColor,
-            }}
+            className="gap-4 p-5 self-center rounded-xl border border-border bg-surface-secondary"
+            style={{ maxWidth: 380, width: '90%' }}
         >
             <View className="gap-2 items-center">
-                <View
-                    className="size-10 rounded-lg items-center justify-center"
-                    style={{
-                        backgroundColor: surfaceColor,
-                    }}
-                >
+                <View className="size-10 rounded-lg items-center justify-center bg-surface">
                     <Lock size={18} color={fgColor} />
                 </View>
-                <Text style={{ fontSize: 20, fontWeight: 'bold', color: fgColor }}>
-                    Superuser Login
-                </Text>
-                <Text className="text-center" style={{ fontSize: 12, color: mutedColor }}>
+                <Text className="text-xl font-bold text-foreground">Superuser Login</Text>
+                <Text className="text-center text-xs text-muted-foreground">
                     Authenticate with PocketBase to manage organizations.
                 </Text>
             </View>
@@ -89,10 +71,9 @@ export function SuperuserLoginForm({ login, error, isLoading }: SuperuserLoginFo
             <Pressable
                 onPress={onSubmit}
                 disabled={isLoading}
-                className={`px-4 py-3 rounded-lg items-center ${isLoading ? 'opacity-60' : 'opacity-100'}`}
-                style={{ backgroundColor: primaryBg }}
+                className={`px-4 py-3 rounded-lg items-center bg-primary ${isLoading ? 'opacity-60' : 'opacity-100'}`}
             >
-                <Text style={{ fontWeight: '600', color: primaryFgColor }}>
+                <Text className="font-semibold text-primary-foreground">
                     {isLoading ? 'Signing in...' : 'Sign in'}
                 </Text>
             </Pressable>

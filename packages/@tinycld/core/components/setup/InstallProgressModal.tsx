@@ -25,8 +25,6 @@ export function InstallProgressModal({
     onClose,
     onComplete,
 }: InstallProgressModalProps) {
-    const surfaceBg = useThemeColor('surface-secondary')
-    const borderColor = useThemeColor('border')
     const fgColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
     const successColor = useThemeColor('success')
@@ -82,13 +80,10 @@ export function InstallProgressModal({
     const progress = latestStep?.progress ?? 0
 
     return (
-        <View
-            className="rounded-xl border overflow-hidden"
-            style={{ backgroundColor: surfaceBg, borderColor }}
-        >
+        <View className="rounded-xl border border-border bg-surface-secondary overflow-hidden">
             <View className="p-4 gap-4">
                 <View className="flex-row justify-between items-center">
-                    <Text style={{ fontSize: 16, fontWeight: '600', color: fgColor }}>
+                    <Text className="text-base font-semibold text-foreground">
                         {status === 'running'
                             ? 'Installing Package...'
                             : status === 'success'
@@ -112,8 +107,8 @@ export function InstallProgressModal({
 
                 <ScrollView
                     ref={scrollRef}
-                    className="rounded-lg border bg-surface-secondary"
-                    style={{ maxHeight: 300, borderColor }}
+                    className="rounded-lg border border-border bg-surface-secondary"
+                    style={{ maxHeight: 300 }}
                 >
                     <View className="p-3 gap-1">
                         {steps.map((step, i) => (
@@ -131,13 +126,9 @@ export function InstallProgressModal({
                     </View>
                 </ScrollView>
 
-                <ErrorDisplay error={error} dangerColor={dangerColor} />
+                <ErrorDisplay error={error} />
 
-                <CloseButton
-                    isVisible={status !== 'running'}
-                    onPress={onClose}
-                    mutedColor={mutedColor}
-                />
+                <CloseButton isVisible={status !== 'running'} onPress={onClose} />
             </View>
         </View>
     )
@@ -209,12 +200,8 @@ function StepLine({
     return (
         <View className="flex-row gap-2 items-start">
             <Text
-                style={{
-                    fontSize: 11,
-                    color: mutedColor,
-                    fontVariant: ['tabular-nums'],
-                    minWidth: 32,
-                }}
+                className="text-[11px] text-muted-foreground"
+                style={{ fontVariant: ['tabular-nums'], minWidth: 32 }}
             >
                 {step.progress}%
             </Text>
@@ -225,33 +212,27 @@ function StepLine({
                     <Check size={10} color={successColor} />
                 )}
             </View>
-            <Text style={{ fontSize: 12, color, flex: 1 }}>{step.message}</Text>
+            <Text className="text-xs flex-1" style={{ color }}>
+                {step.message}
+            </Text>
         </View>
     )
 }
 
-function ErrorDisplay({ error, dangerColor }: { error: string | null; dangerColor: string }) {
+function ErrorDisplay({ error }: { error: string | null }) {
     if (!error) return null
     return (
         <View className="rounded-lg p-3 bg-danger-soft">
-            <Text style={{ fontSize: 13, color: dangerColor }}>{error}</Text>
+            <Text className="text-[13px] text-danger">{error}</Text>
         </View>
     )
 }
 
-function CloseButton({
-    isVisible,
-    onPress,
-    mutedColor,
-}: {
-    isVisible: boolean
-    onPress: () => void
-    mutedColor: string
-}) {
+function CloseButton({ isVisible, onPress }: { isVisible: boolean; onPress: () => void }) {
     if (!isVisible) return null
     return (
         <Pressable onPress={onPress} className="self-end px-3 py-2 rounded-lg bg-border">
-            <Text style={{ fontSize: 13, fontWeight: '600', color: mutedColor }}>Close</Text>
+            <Text className="text-[13px] font-semibold text-muted-foreground">Close</Text>
         </Pressable>
     )
 }

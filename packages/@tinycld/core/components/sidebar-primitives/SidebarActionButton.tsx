@@ -34,15 +34,7 @@ export function SidebarActionButton({ label, icon: Icon, onPress }: SidebarActio
                     }}
                 >
                     {Icon ? <Icon size={16} color={accentFgColor} /> : null}
-                    <Text
-                        style={{
-                            fontSize: 14,
-                            fontWeight: '600',
-                            color: accentFgColor,
-                        }}
-                    >
-                        {label}
-                    </Text>
+                    <Text className="text-sm font-semibold text-accent-foreground">{label}</Text>
                 </View>
             </Pressable>
         </View>

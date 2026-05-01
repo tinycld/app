@@ -67,15 +67,14 @@ interface SetupDashboardProps {
 type SetupTab = 'organizations' | 'packages'
 
 export function SetupDashboard({ pb, defaultTab = 'packages' }: SetupDashboardProps) {
-    const fgColor = useThemeColor('foreground')
     const primaryBg = useThemeColor('primary')
     const mutedColor = useThemeColor('muted-foreground')
-    const borderColor = useThemeColor('border')
+    const fgColor = useThemeColor('foreground')
     const [activeTab, setActiveTab] = useState<SetupTab>(defaultTab)
 
     return (
         <View className="w-full self-center p-5 gap-5" style={{ maxWidth: 640 }}>
-            <View className="flex-row gap-4 mb-2" style={{ borderBottomWidth: 1, borderColor }}>
+            <View className="flex-row gap-4 mb-2 border-b border-border">
                 <TabButton
                     label="Organizations"
                     isActive={activeTab === 'organizations'}
@@ -143,9 +142,6 @@ function PackagesTab({ isVisible, pb }: { isVisible: boolean; pb: PocketBase }) 
 }
 
 function OrganizationsTab({ isVisible, pb }: { isVisible: boolean; pb: PocketBase }) {
-    const fgColor = useThemeColor('foreground')
-    const primaryBg = useThemeColor('primary')
-    const primaryFgColor = useThemeColor('primary-foreground')
     const [orgs, setOrgs] = useState<OrgEntry[]>([])
     const [isLoadingOrgs, setIsLoadingOrgs] = useState(true)
     const [expandedOrgId, setExpandedOrgId] = useState<string | null>(null)
@@ -207,17 +203,17 @@ function OrganizationsTab({ isVisible, pb }: { isVisible: boolean; pb: PocketBas
     return (
         <>
             <View className="flex-row justify-between items-center">
-                <Text style={{ fontSize: 24, fontWeight: 'bold', color: fgColor }}>
+                <Text className="text-foreground" style={{ fontSize: 24, fontWeight: 'bold' }}>
                     Organizations
                 </Text>
                 <Pressable
                     onPress={() => setShowCreateForm(v => !v)}
-                    className="px-3 py-2 rounded-lg self-start"
-                    style={{
-                        backgroundColor: primaryBg,
-                    }}
+                    className="px-3 py-2 rounded-lg self-start bg-primary"
                 >
-                    <Text style={{ fontWeight: '600', fontSize: 14, color: primaryFgColor }}>
+                    <Text
+                        className="text-primary-foreground"
+                        style={{ fontWeight: '600', fontSize: 14 }}
+                    >
                         {showCreateForm ? 'Cancel' : 'New Organization'}
                     </Text>
                 </Pressable>
@@ -259,8 +255,6 @@ function OrgList({
     pb: PocketBase
     onUpdated: () => void
 }) {
-    const surfaceBg = useThemeColor('surface-secondary')
-    const borderColor = useThemeColor('border')
     const mutedColor = useThemeColor('muted-foreground')
 
     if (isLoading) {
@@ -273,14 +267,8 @@ function OrgList({
 
     if (orgs.length === 0) {
         return (
-            <View
-                className="p-5 items-center rounded-xl border"
-                style={{
-                    backgroundColor: surfaceBg,
-                    borderColor,
-                }}
-            >
-                <Text style={{ fontSize: 16, color: mutedColor }}>
+            <View className="p-5 items-center rounded-xl border bg-surface-secondary border-border">
+                <Text className="text-muted-foreground" style={{ fontSize: 16 }}>
                     No organizations yet. Create one to get started.
                 </Text>
             </View>
@@ -288,13 +276,7 @@ function OrgList({
     }
 
     return (
-        <View
-            className="rounded-xl border overflow-hidden"
-            style={{
-                backgroundColor: surfaceBg,
-                borderColor,
-            }}
-        >
+        <View className="rounded-xl border overflow-hidden bg-surface-secondary border-border">
             {orgs.map((org, i) => (
                 <View key={org.id}>
                     {i > 0 && <Divider />}
@@ -324,7 +306,6 @@ function OrgRow({
     pb: PocketBase
     onUpdated: () => void
 }) {
-    const fgColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
     const primaryBg = useThemeColor('primary')
 
@@ -336,12 +317,17 @@ function OrgRow({
             >
                 <View className="flex-1 gap-1">
                     <View className="flex-row gap-2 items-center">
-                        <Text style={{ fontSize: 16, fontWeight: '600', color: fgColor }}>
+                        <Text
+                            className="text-foreground"
+                            style={{ fontSize: 16, fontWeight: '600' }}
+                        >
                             {org.name}
                         </Text>
-                        <Text style={{ fontSize: 12, color: mutedColor }}>{org.slug}</Text>
+                        <Text className="text-muted-foreground" style={{ fontSize: 12 }}>
+                            {org.slug}
+                        </Text>
                     </View>
-                    <Text style={{ fontSize: 12, color: mutedColor }}>
+                    <Text className="text-muted-foreground" style={{ fontSize: 12 }}>
                         {org.ownerEmail ?? 'No owner assigned'}
                     </Text>
                 </View>
@@ -367,7 +353,10 @@ function OrgRow({
                         }}
                     >
                         <View className="flex-row gap-1 items-center">
-                            <Text style={{ fontSize: 12, color: primaryBg, fontWeight: '600' }}>
+                            <Text
+                                className="text-primary"
+                                style={{ fontSize: 12, fontWeight: '600' }}
+                            >
                                 visit
                             </Text>
                             <ExternalLink size={12} color={primaryBg} />
@@ -397,10 +386,6 @@ function OrgExpandedDetails({
     pb: PocketBase
     onUpdated: () => void
 }) {
-    const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
-    const primaryBg = useThemeColor('primary')
-    const primaryFgColor = useThemeColor('primary-foreground')
     const [isSaving, setIsSaving] = useState(false)
     const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -469,10 +454,10 @@ function OrgExpandedDetails({
 
             <View className="gap-3">
                 <Text
+                    className="text-muted-foreground"
                     style={{
                         fontSize: 12,
                         fontWeight: '600',
-                        color: mutedColor,
                         textTransform: 'uppercase',
                         letterSpacing: 0.5,
                     }}
@@ -485,14 +470,20 @@ function OrgExpandedDetails({
                         <TextInput control={control} name="name" label="Name" />
                     </View>
                     <View className="flex-1 min-w-[200px] gap-1">
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: fgColor }}>
+                        <Text
+                            className="text-foreground"
+                            style={{ fontSize: 14, fontWeight: '600' }}
+                        >
                             Slug
                         </Text>
-                        <Text style={{ fontSize: 14, color: mutedColor, paddingVertical: 8 }}>
+                        <Text
+                            className="text-muted-foreground"
+                            style={{ fontSize: 14, paddingVertical: 8 }}
+                        >
                             {org.slug}
                         </Text>
                         {createdDate && (
-                            <Text style={{ fontSize: 12, color: mutedColor }}>
+                            <Text className="text-muted-foreground" style={{ fontSize: 12 }}>
                                 Created {createdDate}
                             </Text>
                         )}
@@ -504,10 +495,10 @@ function OrgExpandedDetails({
 
             <View className="gap-3">
                 <Text
+                    className="text-muted-foreground"
                     style={{
                         fontSize: 12,
                         fontWeight: '600',
-                        color: mutedColor,
                         textTransform: 'uppercase',
                         letterSpacing: 0.5,
                     }}
@@ -540,7 +531,7 @@ function OrgExpandedDetails({
                         </View>
                     </View>
                 ) : (
-                    <Text style={{ fontSize: 14, color: mutedColor }}>
+                    <Text className="text-muted-foreground" style={{ fontSize: 14 }}>
                         No owner assigned to this organization.
                     </Text>
                 )}
@@ -549,10 +540,12 @@ function OrgExpandedDetails({
             <Pressable
                 onPress={onSave}
                 disabled={!saveEnabled}
-                className={`px-3 py-2 rounded-lg self-start ${saveEnabled ? 'opacity-100' : 'opacity-50'}`}
-                style={{ backgroundColor: primaryBg }}
+                className={`px-3 py-2 rounded-lg self-start bg-primary ${saveEnabled ? 'opacity-100' : 'opacity-50'}`}
             >
-                <Text style={{ fontWeight: '600', fontSize: 14, color: primaryFgColor }}>
+                <Text
+                    className="text-primary-foreground"
+                    style={{ fontWeight: '600', fontSize: 14 }}
+                >
                     {isSaving ? 'Saving...' : 'Save Changes'}
                 </Text>
             </Pressable>
@@ -569,11 +562,6 @@ function CreateOrgSection({
     pb: PocketBase
     onCreated: () => void
 }) {
-    const surfaceBg = useThemeColor('surface-secondary')
-    const borderColor = useThemeColor('border')
-    const mutedColor = useThemeColor('muted-foreground')
-    const primaryBg = useThemeColor('primary')
-    const primaryFgColor = useThemeColor('primary-foreground')
     const [submitError, setSubmitError] = useState<string | null>(null)
     const [isCreating, setIsCreating] = useState(false)
 
@@ -673,19 +661,13 @@ function CreateOrgSection({
     if (!isVisible) return null
 
     return (
-        <View
-            className="rounded-xl border overflow-hidden"
-            style={{
-                backgroundColor: surfaceBg,
-                borderColor,
-            }}
-        >
+        <View className="rounded-xl border overflow-hidden bg-surface-secondary border-border">
             <View className="p-4 gap-4">
                 <Text
+                    className="text-muted-foreground"
                     style={{
                         fontSize: 12,
                         fontWeight: '600',
-                        color: mutedColor,
                         textTransform: 'uppercase',
                         letterSpacing: 0.5,
                     }}
@@ -775,10 +757,12 @@ function CreateOrgSection({
                 <Pressable
                     onPress={onSubmit}
                     disabled={isCreating}
-                    className={`px-3 py-2 rounded-lg self-start ${isCreating ? 'opacity-60' : 'opacity-100'}`}
-                    style={{ backgroundColor: primaryBg }}
+                    className={`px-3 py-2 rounded-lg self-start bg-primary ${isCreating ? 'opacity-60' : 'opacity-100'}`}
                 >
-                    <Text style={{ fontWeight: '600', fontSize: 14, color: primaryFgColor }}>
+                    <Text
+                        className="text-primary-foreground"
+                        style={{ fontWeight: '600', fontSize: 14 }}
+                    >
                         {isCreating ? 'Creating...' : 'Create Organization'}
                     </Text>
                 </Pressable>

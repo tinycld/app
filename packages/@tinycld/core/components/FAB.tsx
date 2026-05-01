@@ -19,21 +19,19 @@ export function FAB({
     size = 56,
     iconSize = 22,
 }: FABProps) {
-    const primaryBg = useThemeColor('primary')
     const primaryFg = useThemeColor('primary-foreground')
 
     if (!isVisible) return null
 
     return (
         <Pressable
-            className="absolute items-center justify-center"
+            className="absolute items-center justify-center bg-primary"
             style={{
                 bottom: 80,
                 right: 16,
                 width: size,
                 height: size,
                 borderRadius: size / 2,
-                backgroundColor: primaryBg,
                 elevation: 4,
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 2 },

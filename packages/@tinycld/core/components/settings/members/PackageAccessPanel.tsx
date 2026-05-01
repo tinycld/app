@@ -3,7 +3,6 @@ import { Pressable, Text, View } from 'react-native'
 import { mutation, useMutation } from '@tinycld/core/lib/mutations'
 import { usePackages } from '@tinycld/core/lib/packages/use-packages'
 import { useStore } from '@tinycld/core/lib/pocketbase'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
 import type { PackageAccessLevel } from '@tinycld/core/lib/use-pkg-access'
 
@@ -17,10 +16,6 @@ const ACCESS_OPTIONS: { label: string; value: PackageAccessLevel | 'default' }[]
 export function PackageAccessPanel({ userOrgId }: { userOrgId: string }) {
     const packages = usePackages()
     const [orgPkgAccessCollection] = useStore('org_pkg_access')
-
-    const mutedColor = useThemeColor('muted-foreground')
-    const fgColor = useThemeColor('foreground')
-    const borderColor = useThemeColor('border')
 
     const { data: overrides } = useOrgLiveQuery(
         query =>
@@ -71,7 +66,7 @@ export function PackageAccessPanel({ userOrgId }: { userOrgId: string }) {
 
     if (packages.length === 0) {
         return (
-            <Text style={{ fontSize: 12.5, color: mutedColor, fontStyle: 'italic' }}>
+            <Text className="text-[12.5px] text-muted-foreground italic">
                 No installed packages yet.
             </Text>
         )
@@ -81,37 +76,28 @@ export function PackageAccessPanel({ userOrgId }: { userOrgId: string }) {
         <View className="gap-2.5">
             <View className="gap-0.5">
                 <Text
-                    style={{
-                        fontSize: 11,
-                        fontWeight: '700',
-                        color: mutedColor,
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.8,
-                    }}
+                    className="text-[11px] font-bold text-muted-foreground uppercase"
+                    style={{ letterSpacing: 0.8 }}
                 >
                     Package access
                 </Text>
-                <Text style={{ fontSize: 12, color: mutedColor, lineHeight: 16 }}>
+                <Text className="text-xs text-muted-foreground leading-4">
                     Override what this person can do per package. “Default” inherits from their
                     role.
                 </Text>
             </View>
 
-            <View className="rounded-xl overflow-hidden" style={{ borderWidth: 1, borderColor }}>
+            <View className="rounded-xl overflow-hidden border border-border">
                 {packages.map((pkg, idx) => {
                     const override = overrideMap.get(pkg.slug)
                     const selected: PackageAccessLevel | 'default' = override?.access ?? 'default'
                     return (
                         <View
                             key={pkg.slug}
-                            className="flex-row items-center justify-between px-3 py-2.5"
-                            style={{
-                                borderTopWidth: idx === 0 ? 0 : 1,
-                                borderColor,
-                            }}
+                            className={`flex-row items-center justify-between px-3 py-2.5 ${idx === 0 ? '' : 'border-t border-border'}`}
                         >
                             <Text
-                                style={{ fontSize: 13, color: fgColor, fontWeight: '500', flex: 1 }}
+                                className="text-[13px] text-foreground font-medium flex-1"
                                 numberOfLines={1}
                             >
                                 {pkg.nav?.label ?? pkg.slug}
@@ -157,28 +143,13 @@ function AccessChip({
     active: boolean
     onPress: () => void
 }) {
-    const primary = useThemeColor('primary')
-    const primaryFg = useThemeColor('primary-foreground')
-    const mutedColor = useThemeColor('muted-foreground')
-    const borderColor = useThemeColor('border')
     return (
         <Pressable
             onPress={onPress}
-            style={{
-                paddingVertical: 4,
-                paddingHorizontal: 8,
-                borderRadius: 6,
-                backgroundColor: active ? primary : 'transparent',
-                borderWidth: 1,
-                borderColor: active ? primary : borderColor,
-            }}
+            className={`py-1 px-2 rounded-md border ${active ? 'bg-primary border-primary' : 'bg-transparent border-border'}`}
         >
             <Text
-                style={{
-                    fontSize: 11,
-                    fontWeight: '600',
-                    color: active ? primaryFg : mutedColor,
-                }}
+                className={`text-[11px] font-semibold ${active ? 'text-primary-foreground' : 'text-muted-foreground'}`}
             >
                 {label}
             </Text>

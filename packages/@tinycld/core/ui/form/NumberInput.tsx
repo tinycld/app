@@ -25,10 +25,6 @@ export function NumberInput<T extends FieldValues = Record<string, unknown>>({
     disabled = false,
     wrapperProps = {},
 }: NumberInputProps<T>) {
-    const foregroundColor = useThemeColor('foreground')
-    const bgColor = useThemeColor('background')
-    const borderColor = useThemeColor('border')
-    const dangerColor = useThemeColor('danger')
     const placeholderColor = useThemeColor('field-placeholder')
     const {
         field,
@@ -90,13 +86,7 @@ export function NumberInput<T extends FieldValues = Record<string, unknown>>({
                     accessibilityLabel={label}
                     testID={name}
                     placeholderTextColor={placeholderColor}
-                    className="flex-1 border rounded-lg px-3 py-2.5 text-center"
-                    style={{
-                        fontSize: 16,
-                        color: foregroundColor,
-                        backgroundColor: bgColor,
-                        borderColor: hasError ? dangerColor : borderColor,
-                    }}
+                    className={`flex-1 border rounded-lg px-3 py-2.5 text-center text-base text-foreground bg-background ${hasError ? 'border-danger' : 'border-border'}`}
                 />
                 <Pressable
                     onPress={handleIncrement}

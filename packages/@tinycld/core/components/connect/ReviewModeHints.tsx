@@ -14,25 +14,10 @@ export function ReviewModeHints({ onPrefill }: ReviewModeHintsProps) {
     const demoEmail = config?.demoEmail ?? FALLBACK_DEMO_EMAIL
     const demoPassword = config?.demoPassword ?? ''
     return (
-        <View
-            style={{
-                marginTop: 8,
-                borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.2)',
-                borderRadius: 8,
-                padding: 12,
-            }}
-        >
-            <Text style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
-                App Review build
-            </Text>
-            <Pressable
-                onPress={() => onPrefill(demoEmail, demoPassword)}
-                style={{ paddingVertical: 4 }}
-            >
-                <Text style={{ fontSize: 13, color: '#60a5fa', textDecorationLine: 'underline' }}>
-                    Fill demo credentials
-                </Text>
+        <View className="mt-2 border border-border rounded-lg p-3">
+            <Text className="text-[11px] text-muted-foreground mb-2">App Review build</Text>
+            <Pressable onPress={() => onPrefill(demoEmail, demoPassword)} className="py-1">
+                <Text className="text-[13px] text-info underline">Fill demo credentials</Text>
             </Pressable>
         </View>
     )

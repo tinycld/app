@@ -7,12 +7,7 @@ import { navigateToOrg } from '@tinycld/core/lib/org-url'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 
 export function LoginModal() {
-    const fgColor = useThemeColor('foreground')
-    const bgColor = useThemeColor('background')
-    const borderColor = useThemeColor('border')
-    const surfaceBg = useThemeColor('surface-secondary')
     const mutedColor = useThemeColor('muted-foreground')
-    const primaryBg = useThemeColor('primary')
     const primaryFg = useThemeColor('primary-foreground')
     const backdropColor = useThemeColor('overlay-backdrop')
     const { login } = useAuth({ throwIfAnon: false })
@@ -45,12 +40,10 @@ export function LoginModal() {
             }}
         >
             <View
-                className="rounded-2xl border p-8"
+                className="rounded-2xl border border-border p-8 bg-background"
                 style={{
                     width: 400,
                     maxWidth: '90%',
-                    backgroundColor: bgColor,
-                    borderColor,
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 8 },
                     shadowOpacity: 0.15,
@@ -58,10 +51,8 @@ export function LoginModal() {
                     elevation: 8,
                 }}
             >
-                <Text style={{ fontSize: 22, fontWeight: '700', marginBottom: 4, color: fgColor }}>
-                    Sign in
-                </Text>
-                <Text style={{ fontSize: 14, marginBottom: 24, color: mutedColor }}>
+                <Text className="text-[22px] font-bold mb-1 text-foreground">Sign in</Text>
+                <Text className="text-sm mb-6 text-muted-foreground">
                     Sign in to your account to continue
                 </Text>
 
@@ -72,20 +63,11 @@ export function LoginModal() {
                 )}
 
                 <View className="mb-4">
-                    <Text
-                        className="mb-1.5"
-                        style={{ fontSize: 14, fontWeight: '600', color: fgColor }}
-                    >
+                    <Text className="mb-1.5 text-sm font-semibold text-foreground">
                         Username or email
                     </Text>
                     <TextInput
-                        className="border rounded-lg p-3"
-                        style={{
-                            fontSize: 16,
-                            color: fgColor,
-                            borderColor,
-                            backgroundColor: surfaceBg,
-                        }}
+                        className="border border-border rounded-lg p-3 text-base text-foreground bg-surface-secondary"
                         testID="identifier"
                         value={identifier}
                         onChangeText={setIdentifier}
@@ -99,20 +81,9 @@ export function LoginModal() {
                 </View>
 
                 <View className="mb-4">
-                    <Text
-                        className="mb-1.5"
-                        style={{ fontSize: 14, fontWeight: '600', color: fgColor }}
-                    >
-                        Password
-                    </Text>
+                    <Text className="mb-1.5 text-sm font-semibold text-foreground">Password</Text>
                     <TextInput
-                        className="border rounded-lg p-3"
-                        style={{
-                            fontSize: 16,
-                            color: fgColor,
-                            borderColor,
-                            backgroundColor: surfaceBg,
-                        }}
+                        className="border border-border rounded-lg p-3 text-base text-foreground bg-surface-secondary"
                         value={password}
                         onChangeText={setPassword}
                         placeholder="Password"
@@ -125,15 +96,14 @@ export function LoginModal() {
                 </View>
 
                 <Pressable
-                    className={`rounded-lg items-center mt-2 p-3.5 ${canSubmit ? 'opacity-100' : 'opacity-50'}`}
-                    style={{ backgroundColor: primaryBg }}
+                    className={`rounded-lg items-center mt-2 p-3.5 bg-primary ${canSubmit ? 'opacity-100' : 'opacity-50'}`}
                     onPress={handleSubmit}
                     disabled={!canSubmit}
                 >
                     {isSubmitting ? (
                         <ActivityIndicator color={primaryFg} size="small" />
                     ) : (
-                        <Text style={{ fontSize: 16, fontWeight: '600', color: primaryFg }}>
+                        <Text className="text-base font-semibold text-primary-foreground">
                             Sign in
                         </Text>
                     )}
@@ -146,7 +116,7 @@ export function LoginModal() {
                     }}
                 />
 
-                <View style={{ marginTop: 16, alignItems: 'center' }}>
+                <View className="mt-4 items-center">
                     <ChangeServerLink />
                 </View>
             </View>

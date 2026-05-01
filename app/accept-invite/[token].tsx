@@ -86,30 +86,19 @@ function LoadingCard() {
 
 function InvalidCard({ message }: { message: string }) {
     const router = useRouter()
-    const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
-    const surfaceBg = useThemeColor('surface-secondary')
-    const borderColor = useThemeColor('border')
-    const primaryBg = useThemeColor('primary')
-    const primaryFgColor = useThemeColor('primary-foreground')
 
     return (
         <View
-            className="gap-4 p-6 rounded-xl border items-center"
-            style={{ maxWidth: 400, width: '100%', backgroundColor: surfaceBg, borderColor }}
+            className="gap-4 p-6 rounded-xl border border-border items-center bg-surface-secondary"
+            style={{ maxWidth: 400, width: '100%' }}
         >
-            <Text style={{ fontSize: 18, fontWeight: '600', color: fgColor }}>
-                Invitation unavailable
-            </Text>
-            <Text className="text-center" style={{ fontSize: 14, color: mutedColor }}>
-                {message}
-            </Text>
+            <Text className="text-lg font-semibold text-foreground">Invitation unavailable</Text>
+            <Text className="text-center text-sm text-muted-foreground">{message}</Text>
             <Pressable
                 onPress={() => router.replace('/')}
-                className="px-4 py-2 rounded-lg"
-                style={{ backgroundColor: primaryBg }}
+                className="px-4 py-2 rounded-lg bg-primary"
             >
-                <Text style={{ fontWeight: '600', color: primaryFgColor }}>Go to sign in</Text>
+                <Text className="font-semibold text-primary-foreground">Go to sign in</Text>
             </Pressable>
         </View>
     )
@@ -118,12 +107,7 @@ function InvalidCard({ message }: { message: string }) {
 function AcceptForm({ token, info }: { token: string; info: InviteInfo }) {
     const router = useRouter()
     const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
-    const surfaceBg = useThemeColor('surface-secondary')
-    const surfaceColor = useThemeColor('surface')
-    const borderColor = useThemeColor('border')
     const primaryBg = useThemeColor('primary')
-    const primaryFgColor = useThemeColor('primary-foreground')
 
     const [submitError, setSubmitError] = useState<string | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -172,42 +156,32 @@ function AcceptForm({ token, info }: { token: string; info: InviteInfo }) {
 
     return (
         <View
-            className="gap-4 p-6 rounded-xl border"
-            style={{ maxWidth: 440, width: '100%', backgroundColor: surfaceBg, borderColor }}
+            className="gap-4 p-6 rounded-xl border border-border bg-surface-secondary"
+            style={{ maxWidth: 440, width: '100%' }}
         >
             <View className="gap-2 items-center">
-                <View
-                    className="size-10 rounded-lg items-center justify-center"
-                    style={{ backgroundColor: surfaceColor }}
-                >
+                <View className="size-10 rounded-lg items-center justify-center bg-surface">
                     {isSuccess ? (
                         <CheckCircle2 size={20} color={primaryBg} />
                     ) : (
                         <KeyRound size={18} color={fgColor} />
                     )}
                 </View>
-                <Text
-                    style={{ fontSize: 20, fontWeight: '600', color: fgColor, textAlign: 'center' }}
-                >
+                <Text className="text-xl font-semibold text-foreground text-center">
                     Welcome to {info.orgName}
                 </Text>
                 <Text
-                    className="text-center"
-                    style={{ fontSize: 13, color: mutedColor, lineHeight: 18 }}
+                    className="text-center text-[13px] text-muted-foreground"
+                    style={{ lineHeight: 18 }}
                 >
                     Signing in as{' '}
-                    <Text style={{ fontWeight: '600', color: fgColor }}>@{info.username}</Text> ·{' '}
+                    <Text className="font-semibold text-foreground">@{info.username}</Text> ·{' '}
                     {info.role}
                 </Text>
                 {info.email ? (
-                    <Text className="text-center" style={{ fontSize: 12, color: mutedColor }}>
-                        {info.email}
-                    </Text>
+                    <Text className="text-center text-xs text-muted-foreground">{info.email}</Text>
                 ) : null}
-                <Text
-                    className="text-center"
-                    style={{ fontSize: 13, color: mutedColor, marginTop: 4 }}
-                >
+                <Text className="text-center text-[13px] text-muted-foreground mt-1">
                     Choose a password to finish setting up your account.
                 </Text>
             </View>
@@ -243,10 +217,9 @@ function AcceptForm({ token, info }: { token: string; info: InviteInfo }) {
             <Pressable
                 onPress={onSubmit}
                 disabled={isSubmitting || isSuccess}
-                className={`px-4 py-3 rounded-lg items-center ${isSubmitting || isSuccess ? 'opacity-60' : 'opacity-100'}`}
-                style={{ backgroundColor: primaryBg }}
+                className={`px-4 py-3 rounded-lg items-center bg-primary ${isSubmitting || isSuccess ? 'opacity-60' : 'opacity-100'}`}
             >
-                <Text style={{ fontWeight: '600', color: primaryFgColor }}>
+                <Text className="font-semibold text-primary-foreground">
                     {isSuccess
                         ? 'Signed in, redirecting...'
                         : isSubmitting

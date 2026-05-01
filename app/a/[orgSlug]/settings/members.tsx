@@ -31,11 +31,7 @@ export default function MembersSettings() {
 
     const fgColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
-    const bgColor = useThemeColor('background')
-    const borderColor = useThemeColor('border')
-    const primaryColor = useThemeColor('primary')
     const primaryFgColor = useThemeColor('primary-foreground')
-    const surfaceBg = useThemeColor('surface-secondary')
 
     const { data: memberRows } = useOrgLiveQuery((query, { orgId }) =>
         query
@@ -123,25 +119,22 @@ export default function MembersSettings() {
 
     if (!isAdmin) {
         return (
-            <View
-                className="flex-1 items-center justify-center p-5"
-                style={{ backgroundColor: bgColor }}
-            >
+            <View className="flex-1 items-center justify-center p-5 bg-background">
                 <View
-                    className="items-center gap-3 rounded-xl"
+                    className="items-center gap-3 rounded-xl bg-surface-secondary border border-border"
                     style={{
                         paddingVertical: 32,
                         paddingHorizontal: 24,
-                        backgroundColor: surfaceBg,
-                        borderWidth: 1,
-                        borderColor,
                     }}
                 >
                     <Users size={28} color={mutedColor} />
-                    <Text style={{ fontSize: 15, color: fgColor, fontWeight: '600' }}>
+                    <Text className="text-foreground" style={{ fontSize: 15, fontWeight: '600' }}>
                         Admin access required
                     </Text>
-                    <Text style={{ fontSize: 13, color: mutedColor, textAlign: 'center' }}>
+                    <Text
+                        className="text-muted-foreground"
+                        style={{ fontSize: 13, textAlign: 'center' }}
+                    >
                         Only admins and owners can manage organization members.
                     </Text>
                 </View>
@@ -160,10 +153,7 @@ export default function MembersSettings() {
 
     return (
         <>
-            <ScrollView
-                contentContainerStyle={{ flexGrow: 1 }}
-                style={{ backgroundColor: bgColor }}
-            >
+            <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="bg-background">
                 <View className="flex-1 gap-6 p-5" style={{ maxWidth: 820 }}>
                     <View className="flex-row items-center gap-3">
                         <Pressable
@@ -175,28 +165,33 @@ export default function MembersSettings() {
                             <ArrowLeft size={22} color={fgColor} />
                         </Pressable>
                         <View className="flex-1 gap-0.5">
-                            <Text style={{ fontSize: 11, color: mutedColor, letterSpacing: 0.6 }}>
+                            <Text
+                                className="text-muted-foreground"
+                                style={{ fontSize: 11, letterSpacing: 0.6 }}
+                            >
                                 Settings
                             </Text>
-                            <Text style={{ fontSize: 24, fontWeight: '800', color: fgColor }}>
+                            <Text
+                                className="text-foreground"
+                                style={{ fontSize: 24, fontWeight: '800' }}
+                            >
                                 Members
                             </Text>
                         </View>
                         <Pressable
                             onPress={() => setDrawerMode({ kind: 'invite' })}
-                            className="flex-row items-center gap-1.5 rounded-lg"
+                            className="flex-row items-center gap-1.5 rounded-lg bg-primary"
                             style={{
                                 paddingVertical: 9,
                                 paddingHorizontal: 14,
-                                backgroundColor: primaryColor,
                             }}
                         >
                             <UserPlus size={14} color={primaryFgColor} />
                             <Text
+                                className="text-primary-foreground"
                                 style={{
                                     fontSize: 13,
                                     fontWeight: '700',
-                                    color: primaryFgColor,
                                 }}
                             >
                                 Invite
@@ -219,13 +214,10 @@ export default function MembersSettings() {
 
                     <View className="gap-3">
                         <View
-                            className="flex-row items-center gap-2 rounded-xl"
+                            className="flex-row items-center gap-2 rounded-xl border border-border bg-surface-secondary"
                             style={{
                                 paddingHorizontal: 12,
                                 paddingVertical: 8,
-                                borderWidth: 1,
-                                borderColor,
-                                backgroundColor: surfaceBg,
                             }}
                         >
                             <Search size={15} color={mutedColor} />
@@ -236,9 +228,8 @@ export default function MembersSettings() {
                                 placeholderTextColor={mutedColor}
                                 autoCapitalize="none"
                                 autoCorrect={false}
+                                className="flex-1 text-foreground"
                                 style={{
-                                    flex: 1,
-                                    color: fgColor,
                                     fontSize: 14,
                                     paddingVertical: 2,
                                 }}
@@ -308,17 +299,15 @@ function MemberGroup({
     onSelect: (member: MemberRow) => void
 }) {
     const mutedColor = useThemeColor('muted-foreground')
-    const borderColor = useThemeColor('border')
-    const surfaceBg = useThemeColor('surface-secondary')
 
     return (
         <View className="gap-2">
             <View className="flex-row items-center gap-2" style={{ paddingHorizontal: 2 }}>
                 <Text
+                    className="text-muted-foreground"
                     style={{
                         fontSize: 10.5,
                         fontWeight: '800',
-                        color: mutedColor,
                         textTransform: 'uppercase',
                         letterSpacing: 1,
                     }}
@@ -334,16 +323,16 @@ function MemberGroup({
                         backgroundColor: `${mutedColor}1F`,
                     }}
                 >
-                    <Text style={{ fontSize: 10.5, fontWeight: '700', color: mutedColor }}>
+                    <Text
+                        className="text-muted-foreground"
+                        style={{ fontSize: 10.5, fontWeight: '700' }}
+                    >
                         {rows.length}
                     </Text>
                 </View>
             </View>
 
-            <View
-                className="rounded-xl overflow-hidden"
-                style={{ backgroundColor: surfaceBg, borderWidth: 1, borderColor }}
-            >
+            <View className="rounded-xl overflow-hidden bg-surface-secondary border border-border">
                 {rows.map((member, idx) => (
                     <MemberRowItem
                         key={member.userOrgId}
@@ -367,9 +356,7 @@ function MemberRowItem({
     onPress: () => void
 }) {
     const { user } = useAuth()
-    const fgColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
-    const borderColor = useThemeColor('border')
 
     const isSelf = member.userId === user.id
     const displayName = member.name || member.username || member.email
@@ -377,12 +364,11 @@ function MemberRowItem({
     return (
         <Pressable
             onPress={onPress}
-            className="flex-row items-center gap-3"
+            className="flex-row items-center gap-3 border-border"
             style={{
                 paddingVertical: 12,
                 paddingHorizontal: 14,
                 borderTopWidth: isFirst ? 0 : 1,
-                borderColor,
             }}
         >
             <MemberAvatar
@@ -395,14 +381,19 @@ function MemberRowItem({
             <View className="flex-1" style={{ minWidth: 0 }}>
                 <View className="flex-row items-center gap-1.5" style={{ flexWrap: 'wrap' }}>
                     <Text
-                        style={{ fontSize: 14, fontWeight: '600', color: fgColor }}
+                        className="text-foreground"
+                        style={{ fontSize: 14, fontWeight: '600' }}
                         numberOfLines={1}
                     >
                         {displayName}
                     </Text>
                     {isSelf && <YouBadge />}
                 </View>
-                <Text style={{ fontSize: 12.5, color: mutedColor }} numberOfLines={1}>
+                <Text
+                    className="text-muted-foreground"
+                    style={{ fontSize: 12.5 }}
+                    numberOfLines={1}
+                >
                     @{member.username}
                     {member.email ? ` · ${member.email}` : ''}
                 </Text>
@@ -429,37 +420,29 @@ function FilterChip({
     active: boolean
     onPress: () => void
 }) {
-    const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
-    const borderColor = useThemeColor('border')
-    const surfaceBg = useThemeColor('surface-secondary')
-
     return (
         <Pressable
             onPress={onPress}
-            className="flex-row items-center gap-1.5 rounded-full"
+            className={`flex-row items-center gap-1.5 rounded-full border ${active ? 'border-foreground bg-foreground' : 'border-border bg-surface-secondary'}`}
             style={{
                 paddingVertical: 5,
                 paddingHorizontal: 11,
-                borderWidth: 1,
-                borderColor: active ? fgColor : borderColor,
-                backgroundColor: active ? fgColor : surfaceBg,
             }}
         >
             <Text
+                className={active ? 'text-surface-secondary' : 'text-foreground'}
                 style={{
                     fontSize: 12.5,
                     fontWeight: '600',
-                    color: active ? surfaceBg : fgColor,
                 }}
             >
                 {label}
             </Text>
             <Text
+                className={active ? 'text-surface-secondary' : 'text-muted-foreground'}
                 style={{
                     fontSize: 11,
                     fontWeight: '700',
-                    color: active ? surfaceBg : mutedColor,
                 }}
             >
                 {count}
@@ -517,23 +500,16 @@ function StatChip({
 }
 
 function EmptyState({ query, onClear }: { query: string; onClear: () => void }) {
-    const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
-    const borderColor = useThemeColor('border')
-    const surfaceBg = useThemeColor('surface-secondary')
     const primaryColor = useThemeColor('primary')
 
     const isSearching = query.trim().length > 0
 
     return (
         <View
-            className="items-center gap-3 rounded-xl"
+            className="items-center gap-3 rounded-xl bg-surface-secondary border border-border"
             style={{
                 paddingVertical: 32,
                 paddingHorizontal: 24,
-                backgroundColor: surfaceBg,
-                borderWidth: 1,
-                borderColor,
                 borderStyle: 'dashed',
             }}
         >
@@ -547,17 +523,17 @@ function EmptyState({ query, onClear }: { query: string; onClear: () => void }) 
             >
                 <Users size={20} color={primaryColor} />
             </View>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: fgColor }}>
+            <Text className="text-foreground" style={{ fontSize: 14, fontWeight: '600' }}>
                 {isSearching ? 'No members match that search' : 'No members yet'}
             </Text>
-            <Text style={{ fontSize: 12.5, color: mutedColor, textAlign: 'center' }}>
+            <Text className="text-muted-foreground" style={{ fontSize: 12.5, textAlign: 'center' }}>
                 {isSearching
                     ? 'Try a different name, email, or clear the filters.'
                     : 'Invite your first teammate to get started.'}
             </Text>
             {isSearching && (
                 <Pressable onPress={onClear}>
-                    <Text style={{ fontSize: 12.5, fontWeight: '700', color: primaryColor }}>
+                    <Text className="text-primary" style={{ fontSize: 12.5, fontWeight: '700' }}>
                         Clear filters
                     </Text>
                 </Pressable>

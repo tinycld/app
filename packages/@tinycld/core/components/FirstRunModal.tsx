@@ -62,10 +62,6 @@ export function FirstRunModal({
 }: FirstRunModalProps) {
     const [phase, setPhase] = useState<'pending' | 'show' | 'hide'>('pending')
 
-    const fg = useThemeColor('foreground')
-    const muted = useThemeColor('muted-foreground')
-    const bg = useThemeColor('background')
-    const border = useThemeColor('border')
     const backdrop = useThemeColor('overlay-backdrop')
     const accent = useThemeColor(accentToken)
     const accentFg = useThemeColor(`${accentToken}-foreground` as 'primary-foreground')
@@ -103,18 +99,13 @@ export function FirstRunModal({
 
     return (
         <View
-            className="absolute top-0 left-0 right-0 bottom-0 justify-center items-center"
-            style={{ zIndex: 250, backgroundColor: backdrop, padding: 24 }}
+            className="absolute top-0 left-0 right-0 bottom-0 justify-center items-center z-[250] p-6"
+            style={{ backgroundColor: backdrop }}
         >
             <View
+                className="max-w-full border border-border bg-background rounded-[20px] overflow-hidden"
                 style={{
                     width: 460,
-                    maxWidth: '100%',
-                    backgroundColor: bg,
-                    borderColor: border,
-                    borderWidth: 1,
-                    borderRadius: 20,
-                    overflow: 'hidden',
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 12 },
                     shadowOpacity: 0.2,
@@ -125,68 +116,42 @@ export function FirstRunModal({
                 {/* Accent edge along the top — same role as the SVG draw-on
                     in the marketing CTA: a small cue that this surface is
                     distinct from the rest of the chrome. */}
-                <View style={{ height: 3, backgroundColor: accent }} />
+                <View className="h-[3px]" style={{ backgroundColor: accent }} />
 
-                <View style={{ padding: 28 }}>
+                <View className="p-7">
                     <View
-                        style={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: 12,
-                            backgroundColor: accent,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: 18,
-                        }}
+                        className="w-11 h-11 rounded-xl items-center justify-center mb-[18px]"
+                        style={{ backgroundColor: accent }}
                     >
                         <Icon size={22} color={accentFg} />
                     </View>
 
-                    <Text style={{ fontSize: 22, fontWeight: '700', color: fg, marginBottom: 8 }}>
-                        {title}
-                    </Text>
+                    <Text className="text-[22px] font-bold text-foreground mb-2">{title}</Text>
                     <Text
-                        style={{
-                            fontSize: 14,
-                            lineHeight: 20,
-                            color: muted,
-                            marginBottom: children ? 20 : 24,
-                        }}
+                        className={`text-sm leading-5 text-muted-foreground ${children ? 'mb-5' : 'mb-6'}`}
                     >
                         {intro}
                     </Text>
 
-                    {children ? (
-                        <View style={{ gap: 12, marginBottom: 24 }}>{children}</View>
-                    ) : null}
+                    {children ? <View className="gap-3 mb-6">{children}</View> : null}
 
-                    <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'flex-end' }}>
+                    <View className="flex-row gap-2.5 justify-end">
                         {secondaryLabel ? (
                             <Pressable
                                 onPress={() => dismiss('secondary')}
-                                style={{
-                                    paddingVertical: 10,
-                                    paddingHorizontal: 16,
-                                    borderRadius: 10,
-                                }}
+                                className="py-2.5 px-4 rounded-[10px]"
                             >
-                                <Text style={{ fontSize: 14, fontWeight: '600', color: muted }}>
+                                <Text className="text-sm font-semibold text-muted-foreground">
                                     {secondaryLabel}
                                 </Text>
                             </Pressable>
                         ) : null}
                         <Pressable
                             onPress={() => dismiss('primary')}
-                            style={{
-                                paddingVertical: 10,
-                                paddingHorizontal: 18,
-                                borderRadius: 10,
-                                backgroundColor: accent,
-                            }}
+                            className="py-2.5 px-[18px] rounded-[10px]"
+                            style={{ backgroundColor: accent }}
                         >
-                            <Text
-                                style={{ fontSize: 14, fontWeight: '700', color: accentFg }}
-                            >
+                            <Text className="text-sm font-bold" style={{ color: accentFg }}>
                                 {primaryLabel}
                             </Text>
                         </Pressable>
@@ -208,26 +173,12 @@ export interface FirstRunModalBulletProps {
 }
 
 export function FirstRunModalBullet({ label, detail }: FirstRunModalBulletProps) {
-    const fg = useThemeColor('foreground')
-    const muted = useThemeColor('muted-foreground')
-    const accent = useThemeColor('primary')
-
     return (
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-            <View
-                style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: 3,
-                    marginTop: 7,
-                    backgroundColor: accent,
-                }}
-            />
-            <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14, fontWeight: '600', color: fg, marginBottom: 1 }}>
-                    {label}
-                </Text>
-                <Text style={{ fontSize: 13, lineHeight: 18, color: muted }}>{detail}</Text>
+        <View className="flex-row items-start gap-2.5">
+            <View className="w-1.5 h-1.5 rounded-full mt-[7px] bg-primary" />
+            <View className="flex-1">
+                <Text className="text-sm font-semibold text-foreground mb-px">{label}</Text>
+                <Text className="text-[13px] leading-[18px] text-muted-foreground">{detail}</Text>
             </View>
         </View>
     )

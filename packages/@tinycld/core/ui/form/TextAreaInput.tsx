@@ -57,10 +57,6 @@ export function TextAreaInput<T extends FieldValues = Record<string, unknown>>(
         fieldState: { error },
     } = useController({ name, control, rules })
 
-    const foregroundColor = useThemeColor('foreground')
-    const bgColor = useThemeColor('background')
-    const borderColor = useThemeColor('border')
-    const dangerColor = useThemeColor('danger')
     const placeholderColor = useThemeColor('field-placeholder')
 
     const hasError = !!error
@@ -79,14 +75,8 @@ export function TextAreaInput<T extends FieldValues = Record<string, unknown>>(
                 placeholder={inputProps.placeholder}
                 placeholderTextColor={placeholderColor}
                 textAlignVertical="top"
-                className="border rounded-lg px-3 py-2.5"
-                style={{
-                    fontSize: 16,
-                    minHeight: numberOfLines * 24,
-                    color: foregroundColor,
-                    backgroundColor: bgColor,
-                    borderColor: hasError ? dangerColor : borderColor,
-                }}
+                className={`border rounded-lg px-3 py-2.5 text-base text-foreground bg-background ${hasError ? 'border-danger' : 'border-border'}`}
+                style={{ minHeight: numberOfLines * 24 }}
             />
             {hint && !hasError ? <Text className="text-xs text-muted">{hint}</Text> : null}
             {hasError ? <Text className="text-xs text-danger">{error.message}</Text> : null}

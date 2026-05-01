@@ -15,7 +15,6 @@ export function PackageSidebar({ width }: PackageSidebarProps) {
     const { activePkgSlug, isSidebarOpen } = useWorkspaceLayout()
     const pkg = usePackage(activePkgSlug ?? '')
     const sidebarBg = useThemeColor('sidebar-background')
-    const borderColor = useThemeColor('border')
 
     if (!pkg) return null
 
@@ -24,14 +23,9 @@ export function PackageSidebar({ width }: PackageSidebarProps) {
 
     return (
         <View
-            className="overflow-hidden"
+            className={`overflow-hidden border-border ${isSidebarOpen ? 'border-r' : ''}`}
             style={[
-                {
-                    width: targetWidth,
-                    backgroundColor: sidebarBg,
-                    borderRightColor: borderColor,
-                    borderRightWidth: isSidebarOpen ? 1 : 0,
-                },
+                { width: targetWidth, backgroundColor: sidebarBg },
                 Platform.OS === 'web'
                     ? ({
                           transition:

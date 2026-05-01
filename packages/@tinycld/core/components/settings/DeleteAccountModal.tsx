@@ -17,13 +17,8 @@ export function DeleteAccountModal({ isVisible, onClose }: DeleteAccountModalPro
     const [typed, setTyped] = useState('')
     const [error, setError] = useState<string | null>(null)
 
-    const fgColor = useThemeColor('foreground')
-    const bgColor = useThemeColor('background')
-    const borderColor = useThemeColor('border')
-    const surfaceBg = useThemeColor('surface-secondary')
     const mutedColor = useThemeColor('muted-foreground')
     const backdropColor = useThemeColor('overlay-backdrop')
-    const dangerBg = useThemeColor('danger')
     const dangerFg = useThemeColor('danger-foreground')
 
     const mutation = useMutation({
@@ -61,12 +56,10 @@ export function DeleteAccountModal({ isVisible, onClose }: DeleteAccountModalPro
             style={{ zIndex: 200, backgroundColor: backdropColor }}
         >
             <View
-                className="rounded-2xl border p-8"
+                className="rounded-2xl border border-border p-8 bg-background"
                 style={{
                     width: 400,
                     maxWidth: '90%',
-                    backgroundColor: bgColor,
-                    borderColor,
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 8 },
                     shadowOpacity: 0.15,
@@ -74,15 +67,13 @@ export function DeleteAccountModal({ isVisible, onClose }: DeleteAccountModalPro
                     elevation: 8,
                 }}
             >
-                <Text style={{ fontSize: 22, fontWeight: '700', marginBottom: 4, color: fgColor }}>
-                    Delete account
-                </Text>
-                <Text style={{ fontSize: 14, marginBottom: 8, color: mutedColor }}>
+                <Text className="text-[22px] font-bold mb-1 text-foreground">Delete account</Text>
+                <Text className="text-sm mb-2 text-muted-foreground">
                     This action is permanent and cannot be undone. All your data will be deleted.
                 </Text>
-                <Text style={{ fontSize: 14, marginBottom: 24, color: mutedColor }}>
+                <Text className="text-sm mb-6 text-muted-foreground">
                     Signed in as{' '}
-                    <Text style={{ fontWeight: '600', color: fgColor }}>{user.email}</Text>
+                    <Text className="font-semibold text-foreground">{user.email}</Text>
                 </Text>
 
                 {error && (
@@ -92,20 +83,11 @@ export function DeleteAccountModal({ isVisible, onClose }: DeleteAccountModalPro
                 )}
 
                 <View className="mb-6">
-                    <Text
-                        className="mb-1.5"
-                        style={{ fontSize: 14, fontWeight: '600', color: fgColor }}
-                    >
+                    <Text className="mb-1.5 text-sm font-semibold text-foreground">
                         Type your email to confirm
                     </Text>
                     <TextInput
-                        className="border rounded-lg p-3"
-                        style={{
-                            fontSize: 16,
-                            color: fgColor,
-                            borderColor,
-                            backgroundColor: surfaceBg,
-                        }}
+                        className="border border-border rounded-lg p-3 text-base text-foreground bg-surface-secondary"
                         value={typed}
                         onChangeText={setTyped}
                         placeholder={user.email}
@@ -119,27 +101,25 @@ export function DeleteAccountModal({ isVisible, onClose }: DeleteAccountModalPro
                 </View>
 
                 <Pressable
-                    className={`rounded-lg items-center p-3.5 mb-3 ${canSubmit ? 'opacity-100' : 'opacity-50'}`}
-                    style={{ backgroundColor: dangerBg }}
+                    className={`rounded-lg items-center p-3.5 mb-3 bg-danger ${canSubmit ? 'opacity-100' : 'opacity-50'}`}
                     onPress={handleSubmit}
                     disabled={!canSubmit}
                 >
                     {mutation.isPending ? (
                         <ActivityIndicator color={dangerFg} size="small" />
                     ) : (
-                        <Text style={{ fontSize: 16, fontWeight: '600', color: dangerFg }}>
+                        <Text className="text-base font-semibold text-danger-foreground">
                             Delete account
                         </Text>
                     )}
                 </Pressable>
 
                 <Pressable
-                    className={`rounded-lg items-center p-3.5 border ${mutation.isPending ? 'opacity-50' : 'opacity-100'}`}
-                    style={{ borderColor }}
+                    className={`rounded-lg items-center p-3.5 border border-border ${mutation.isPending ? 'opacity-50' : 'opacity-100'}`}
                     onPress={handleCancel}
                     disabled={mutation.isPending}
                 >
-                    <Text style={{ fontSize: 16, fontWeight: '600', color: fgColor }}>Cancel</Text>
+                    <Text className="text-base font-semibold text-foreground">Cancel</Text>
                 </Pressable>
             </View>
         </View>

@@ -44,8 +44,6 @@ interface PackageManagerProps {
 }
 
 export function PackageManager({ pb }: PackageManagerProps) {
-    const fgColor = useThemeColor('foreground')
-    const primaryBg = useThemeColor('primary')
     const primaryFgColor = useThemeColor('primary-foreground')
     const mutedColor = useThemeColor('muted-foreground')
     const [packages, setPackages] = useState<PkgRecord[]>([])
@@ -85,18 +83,22 @@ export function PackageManager({ pb }: PackageManagerProps) {
     return (
         <View className="gap-5">
             <View className="flex-row justify-between items-center">
-                <Text style={{ fontSize: 24, fontWeight: 'bold', color: fgColor }}>Packages</Text>
+                <Text className="text-foreground" style={{ fontSize: 24, fontWeight: 'bold' }}>
+                    Packages
+                </Text>
                 <View className="flex-row gap-2">
                     <Pressable
                         onPress={() => {
                             setShowInstall(v => !v)
                             setShowRegister(false)
                         }}
-                        className="flex-row gap-1.5 items-center px-3 py-2 rounded-lg"
-                        style={{ backgroundColor: primaryBg }}
+                        className="flex-row gap-1.5 items-center px-3 py-2 rounded-lg bg-primary"
                     >
                         <Download size={14} color={primaryFgColor} />
-                        <Text style={{ fontWeight: '600', fontSize: 14, color: primaryFgColor }}>
+                        <Text
+                            className="text-primary-foreground"
+                            style={{ fontWeight: '600', fontSize: 14 }}
+                        >
                             {showInstall ? 'Cancel' : 'Install'}
                         </Text>
                     </Pressable>
@@ -105,11 +107,13 @@ export function PackageManager({ pb }: PackageManagerProps) {
                             setShowRegister(v => !v)
                             setShowInstall(false)
                         }}
-                        className="flex-row gap-1.5 items-center px-3 py-2 rounded-lg border"
-                        style={{ borderColor: `${mutedColor}40` }}
+                        className="flex-row gap-1.5 items-center px-3 py-2 rounded-lg border border-muted-foreground/25"
                     >
                         <Package size={14} color={mutedColor} />
-                        <Text style={{ fontWeight: '500', fontSize: 14, color: mutedColor }}>
+                        <Text
+                            className="text-muted-foreground"
+                            style={{ fontWeight: '500', fontSize: 14 }}
+                        >
                             {showRegister ? 'Cancel' : 'New Package'}
                         </Text>
                     </Pressable>
@@ -221,7 +225,11 @@ function PackageList({
                                 <PackageStatusBadge status={pkg.status} />
                             </View>
                             {pkg.description ? (
-                                <Text style={{ fontSize: 13, color: mutedColor }} numberOfLines={1}>
+                                <Text
+                                    className="text-muted-foreground"
+                                    style={{ fontSize: 13 }}
+                                    numberOfLines={1}
+                                >
                                     {pkg.description}
                                 </Text>
                             ) : (
@@ -264,21 +272,17 @@ function PackageList({
 
     if (packages.length === 0) {
         return (
-            <View
-                className="p-8 items-center rounded-xl border gap-2"
-                style={{ backgroundColor: surfaceBg, borderColor }}
-            >
+            <View className="p-8 items-center rounded-xl border gap-2 bg-surface-secondary border-border">
                 <Package size={32} color={`${mutedColor}60`} />
-                <Text style={{ fontSize: 15, color: mutedColor }}>No packages installed yet</Text>
+                <Text className="text-muted-foreground" style={{ fontSize: 15 }}>
+                    No packages installed yet
+                </Text>
             </View>
         )
     }
 
     return (
-        <View
-            className="rounded-xl border overflow-hidden"
-            style={{ backgroundColor: surfaceBg, borderColor }}
-        >
+        <View className="rounded-xl border overflow-hidden bg-surface-secondary border-border">
             <DraggableFlatList
                 data={packages}
                 keyExtractor={keyExtractor}
@@ -439,11 +443,8 @@ function EditPackageForm({
     onClose: () => void
     onUpdated: () => void
 }) {
-    const primaryBg = useThemeColor('primary')
-    const primaryFgColor = useThemeColor('primary-foreground')
     const mutedColor = useThemeColor('muted-foreground')
     const dangerColor = useThemeColor('danger')
-    const dangerFgColor = useThemeColor('danger-foreground')
     const borderColor = useThemeColor('border')
     const [isSaving, setIsSaving] = useState(false)
     const [saveError, setSaveError] = useState<string | null>(null)
@@ -508,10 +509,10 @@ function EditPackageForm({
         >
             <View className="flex-row items-center justify-between">
                 <Text
+                    className="text-muted-foreground"
                     style={{
                         fontSize: 12,
                         fontWeight: '600',
-                        color: mutedColor,
                         textTransform: 'uppercase',
                         letterSpacing: 0.5,
                     }}
@@ -555,10 +556,12 @@ function EditPackageForm({
                     <View className="flex-row gap-1.5 items-center">
                         <Pressable
                             onPress={handleRemove}
-                            className="px-3 py-1.5 rounded-md"
-                            style={{ backgroundColor: dangerColor }}
+                            className="px-3 py-1.5 rounded-md bg-danger"
                         >
-                            <Text style={{ fontWeight: '600', fontSize: 13, color: dangerFgColor }}>
+                            <Text
+                                className="text-danger-foreground"
+                                style={{ fontWeight: '600', fontSize: 13 }}
+                            >
                                 Confirm Remove
                             </Text>
                         </Pressable>
@@ -572,7 +575,7 @@ function EditPackageForm({
                         className="flex-row gap-1 items-center px-2.5 py-1.5 rounded-md"
                     >
                         <Trash2 size={13} color={dangerColor} />
-                        <Text style={{ fontWeight: '500', fontSize: 13, color: dangerColor }}>
+                        <Text className="text-danger" style={{ fontWeight: '500', fontSize: 13 }}>
                             Remove
                         </Text>
                     </Pressable>
@@ -580,17 +583,22 @@ function EditPackageForm({
                 <View className="flex-1" />
                 <View className="flex-row gap-2 items-center">
                     <Pressable onPress={onClose} className="px-3 py-1.5 rounded-md">
-                        <Text style={{ fontWeight: '500', fontSize: 13, color: mutedColor }}>
+                        <Text
+                            className="text-muted-foreground"
+                            style={{ fontWeight: '500', fontSize: 13 }}
+                        >
                             Cancel
                         </Text>
                     </Pressable>
                     <Pressable
                         onPress={onSave}
                         disabled={!saveEnabled}
-                        className={`px-4 py-1.5 rounded-md ${saveEnabled ? 'opacity-100' : 'opacity-40'}`}
-                        style={{ backgroundColor: primaryBg }}
+                        className={`px-4 py-1.5 rounded-md bg-primary ${saveEnabled ? 'opacity-100' : 'opacity-40'}`}
                     >
-                        <Text style={{ fontWeight: '600', fontSize: 13, color: primaryFgColor }}>
+                        <Text
+                            className="text-primary-foreground"
+                            style={{ fontWeight: '600', fontSize: 13 }}
+                        >
                             {isSaving ? 'Saving...' : 'Save'}
                         </Text>
                     </Pressable>
@@ -609,11 +617,6 @@ function RegisterPackageForm({
     pb: PocketBase
     onCreated: () => void
 }) {
-    const surfaceBg = useThemeColor('surface-secondary')
-    const borderColor = useThemeColor('border')
-    const mutedColor = useThemeColor('muted-foreground')
-    const primaryBg = useThemeColor('primary')
-    const primaryFgColor = useThemeColor('primary-foreground')
     const [submitError, setSubmitError] = useState<string | null>(null)
     const [isCreating, setIsCreating] = useState(false)
 
@@ -649,16 +652,13 @@ function RegisterPackageForm({
     if (!isVisible) return null
 
     return (
-        <View
-            className="rounded-xl border overflow-hidden"
-            style={{ backgroundColor: surfaceBg, borderColor }}
-        >
+        <View className="rounded-xl border overflow-hidden bg-surface-secondary border-border">
             <View className="p-4 gap-4">
                 <Text
+                    className="text-muted-foreground"
                     style={{
                         fontSize: 12,
                         fontWeight: '600',
-                        color: mutedColor,
                         textTransform: 'uppercase',
                         letterSpacing: 0.5,
                     }}
@@ -716,10 +716,12 @@ function RegisterPackageForm({
                 <Pressable
                     onPress={onSubmit}
                     disabled={isCreating}
-                    className={`px-4 py-2 rounded-lg self-start ${isCreating ? 'opacity-60' : 'opacity-100'}`}
-                    style={{ backgroundColor: primaryBg }}
+                    className={`px-4 py-2 rounded-lg self-start bg-primary ${isCreating ? 'opacity-60' : 'opacity-100'}`}
                 >
-                    <Text style={{ fontWeight: '600', fontSize: 14, color: primaryFgColor }}>
+                    <Text
+                        className="text-primary-foreground"
+                        style={{ fontWeight: '600', fontSize: 14 }}
+                    >
                         {isCreating ? 'Creating...' : 'Create'}
                     </Text>
                 </Pressable>
@@ -741,11 +743,6 @@ function InstallPackageForm({
     pb: PocketBase
     onStarted: (jobId: string) => void
 }) {
-    const surfaceBg = useThemeColor('surface-secondary')
-    const borderColor = useThemeColor('border')
-    const mutedColor = useThemeColor('muted-foreground')
-    const primaryBg = useThemeColor('primary')
-    const primaryFgColor = useThemeColor('primary-foreground')
     const warningColor = useThemeColor('warning')
     const [submitError, setSubmitError] = useState<string | null>(null)
     const [isInstalling, setIsInstalling] = useState(false)
@@ -794,16 +791,13 @@ function InstallPackageForm({
     if (!isVisible) return null
 
     return (
-        <View
-            className="rounded-xl border overflow-hidden"
-            style={{ backgroundColor: surfaceBg, borderColor }}
-        >
+        <View className="rounded-xl border overflow-hidden bg-surface-secondary border-border">
             <View className="p-4 gap-4">
                 <Text
+                    className="text-muted-foreground"
                     style={{
                         fontSize: 12,
                         fontWeight: '600',
-                        color: mutedColor,
                         textTransform: 'uppercase',
                         letterSpacing: 0.5,
                     }}
@@ -834,10 +828,12 @@ function InstallPackageForm({
                     <Pressable
                         onPress={onSubmit}
                         disabled={isInstalling}
-                        className={`px-4 py-2.5 rounded-lg ${isInstalling ? 'opacity-60' : 'opacity-100'}`}
-                        style={{ backgroundColor: primaryBg }}
+                        className={`px-4 py-2.5 rounded-lg bg-primary ${isInstalling ? 'opacity-60' : 'opacity-100'}`}
                     >
-                        <Text style={{ fontWeight: '600', fontSize: 14, color: primaryFgColor }}>
+                        <Text
+                            className="text-primary-foreground"
+                            style={{ fontWeight: '600', fontSize: 14 }}
+                        >
                             {isInstalling ? 'Starting...' : 'Install'}
                         </Text>
                     </Pressable>
@@ -864,7 +860,7 @@ function SecurityWarning({
                 borderWidth: 1,
             }}
         >
-            <Text style={{ fontSize: 13, color: warningColor }}>
+            <Text className="text-warning" style={{ fontSize: 13 }}>
                 This package is not in the @tinycld/ scope. Only install packages you trust.
             </Text>
         </View>

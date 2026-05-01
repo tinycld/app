@@ -34,10 +34,6 @@ export default function ConnectWeb() {
     const fg = useThemeColor('foreground')
     const bg = useThemeColor('background')
     const muted = useThemeColor('muted-foreground')
-    const accent = useThemeColor('primary')
-    const border = useThemeColor('border')
-    const surface = useThemeColor('surface')
-    const surfaceSecondary = useThemeColor('surface-secondary')
 
     const { control, handleSubmit } = useForm({
         resolver: zodResolver(urlSchema),
@@ -91,77 +87,39 @@ export default function ConnectWeb() {
             }}
         >
             <View
-                style={{
-                    width: '100%',
-                    maxWidth: 880,
-                    borderRadius: 20,
-                    backgroundColor: surface,
-                    borderWidth: 1,
-                    borderColor: border,
-                    overflow: 'hidden',
-                    flexDirection: 'row',
-                    flexWrap: 'wrap',
-                }}
+                className="w-full rounded-[20px] bg-surface border border-border overflow-hidden flex-row flex-wrap"
+                style={{ maxWidth: 880 }}
             >
                 <View
-                    style={{
-                        flex: 1,
-                        minWidth: 320,
-                        padding: 40,
-                        backgroundColor: surfaceSecondary,
-                        borderRightWidth: 1,
-                        borderRightColor: border,
-                        position: 'relative',
-                    }}
+                    className="flex-1 p-10 bg-surface-secondary border-r border-border relative"
+                    style={{ minWidth: 320 }}
                 >
-                    <View
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            bottom: 0,
-                            left: 0,
-                            width: 3,
-                            backgroundColor: accent,
-                        }}
-                    />
+                    <View className="absolute top-0 bottom-0 left-0 w-[3px] bg-primary" />
 
-                    <BrandMark name={brandName} accent={accent} />
+                    <BrandMark name={brandName} />
 
-                    <View
-                        className="flex-row items-center gap-2"
-                        style={{ marginTop: 28, marginBottom: 10 }}
-                    >
-                        <View style={{ width: 18, height: 1, backgroundColor: accent }} />
+                    <View className="flex-row items-center gap-2 mt-7 mb-2.5">
+                        <View className="w-[18px] h-px bg-primary" />
                         <Text
-                            style={{
-                                fontSize: 11,
-                                letterSpacing: 2,
-                                color: accent,
-                                fontWeight: '600',
-                            }}
+                            className="text-[11px] font-semibold text-primary"
+                            style={{ letterSpacing: 2 }}
                         >
                             WELCOME
                         </Text>
                     </View>
 
                     <Text
-                        className="text-foreground"
+                        className="text-foreground text-4xl font-semibold"
                         style={{
-                            fontSize: 36,
                             lineHeight: 40,
-                            fontWeight: '600',
                             letterSpacing: -1,
                             fontFamily: 'Georgia',
                         }}
                     >
                         Pick where your{' '}
                         <Text
-                            style={{
-                                fontStyle: 'italic',
-                                fontWeight: '400',
-                                color: accent,
-                                fontFamily: 'Georgia',
-                            }}
+                            className="italic font-normal text-primary"
+                            style={{ fontFamily: 'Georgia' }}
                         >
                             stuff
                         </Text>{' '}
@@ -169,10 +127,8 @@ export default function ConnectWeb() {
                     </Text>
 
                     <Text
-                        className="text-foreground"
+                        className="text-foreground text-[15px] mt-4"
                         style={{
-                            marginTop: 16,
-                            fontSize: 15,
                             lineHeight: 24,
                             opacity: 0.78,
                             maxWidth: 380,
@@ -183,68 +139,33 @@ export default function ConnectWeb() {
                         stays on the box you point to.
                     </Text>
 
-                    <View style={{ flex: 1 }} />
+                    <View className="flex-1" />
 
-                    <View style={{ marginTop: 32 }}>
+                    <View className="mt-8">
                         <ConnectIllustration height={130} />
                     </View>
                 </View>
 
-                <View
-                    style={{
-                        flex: 1,
-                        minWidth: 320,
-                        padding: 40,
-                        gap: 16,
-                    }}
-                >
+                <View className="flex-1 p-10 gap-4" style={{ minWidth: 320 }}>
                     <Pressable
                         onPress={onUseDefault}
                         disabled={busy}
-                        style={{
-                            borderWidth: 1.5,
-                            borderColor: fg,
-                            backgroundColor: fg,
-                            borderRadius: 14,
-                            padding: 18,
-                            flexDirection: 'row',
-                            alignItems: 'flex-start',
-                            gap: 14,
-                            opacity: busy ? 0.6 : 1,
-                        }}
+                        className={`border-[1.5px] border-foreground bg-foreground rounded-2xl p-[18px] flex-row items-start gap-3.5 ${busy ? 'opacity-60' : 'opacity-100'}`}
                     >
                         <View
-                            style={{
-                                width: 36,
-                                height: 36,
-                                borderRadius: 10,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                backgroundColor: 'rgba(255,255,255,0.12)',
-                            }}
+                            className="w-9 h-9 rounded-[10px] items-center justify-center"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.12)' }}
                         >
                             <Globe size={18} color={bg} />
                         </View>
-                        <View style={{ flex: 1 }}>
+                        <View className="flex-1">
                             <Text
-                                style={{
-                                    color: bg,
-                                    fontSize: 15,
-                                    fontWeight: '600',
-                                    letterSpacing: -0.2,
-                                }}
+                                className="text-background text-[15px] font-semibold"
+                                style={{ letterSpacing: -0.2 }}
                             >
                                 {busyDefault ? 'Connecting…' : `Use ${defaultServerLabel}`}
                             </Text>
-                            <Text
-                                style={{
-                                    color: bg,
-                                    opacity: 0.7,
-                                    fontSize: 13,
-                                    lineHeight: 19,
-                                    marginTop: 3,
-                                }}
-                            >
+                            <Text className="text-background opacity-70 text-[13px] leading-[19px] mt-[3px]">
                                 Hosted by us. Free to start — fully encrypted, fully yours, no setup
                                 required.
                             </Text>
@@ -252,72 +173,39 @@ export default function ConnectWeb() {
                     </Pressable>
 
                     <View className="flex-row items-center gap-3">
-                        <View style={{ flex: 1, height: 1, backgroundColor: border }} />
+                        <View className="flex-1 h-px bg-border" />
                         <Text
-                            style={{
-                                fontSize: 11,
-                                letterSpacing: 2,
-                                color: muted,
-                                fontWeight: '600',
-                            }}
+                            className="text-[11px] text-muted-foreground font-semibold"
+                            style={{ letterSpacing: 2 }}
                         >
                             OR
                         </Text>
-                        <View style={{ flex: 1, height: 1, backgroundColor: border }} />
+                        <View className="flex-1 h-px bg-border" />
                     </View>
 
-                    <View
-                        style={{
-                            borderWidth: 1.5,
-                            borderColor: border,
-                            borderRadius: 14,
-                            backgroundColor: surface,
-                            overflow: 'hidden',
-                        }}
-                    >
+                    <View className="border-[1.5px] border-border rounded-2xl bg-surface overflow-hidden">
                         <Pressable
                             onPress={() => setExpanded(open => !open)}
                             disabled={busy}
-                            style={{
-                                padding: 18,
-                                flexDirection: 'row',
-                                alignItems: 'flex-start',
-                                gap: 14,
-                            }}
+                            className="p-[18px] flex-row items-start gap-3.5"
                         >
-                            <View
-                                style={{
-                                    width: 36,
-                                    height: 36,
-                                    borderRadius: 10,
-                                    backgroundColor: surfaceSecondary,
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                }}
-                            >
+                            <View className="w-9 h-9 rounded-[10px] bg-surface-secondary items-center justify-center">
                                 <Server size={18} color={fg} />
                             </View>
-                            <View style={{ flex: 1 }}>
+                            <View className="flex-1">
                                 <Text
-                                    className="text-foreground"
-                                    style={{ fontSize: 15, fontWeight: '600', letterSpacing: -0.2 }}
+                                    className="text-foreground text-[15px] font-semibold"
+                                    style={{ letterSpacing: -0.2 }}
                                 >
                                     I run my own server
                                 </Text>
-                                <Text
-                                    style={{
-                                        color: muted,
-                                        fontSize: 13,
-                                        lineHeight: 19,
-                                        marginTop: 3,
-                                    }}
-                                >
+                                <Text className="text-muted-foreground text-[13px] leading-[19px] mt-[3px]">
                                     Self-hosted, on your machine or somewhere you rent.
                                 </Text>
                             </View>
                             <View
+                                className="mt-2"
                                 style={{
-                                    marginTop: 8,
                                     transform: [{ rotate: expanded ? '180deg' : '0deg' }],
                                 }}
                             >
@@ -326,16 +214,7 @@ export default function ConnectWeb() {
                         </Pressable>
 
                         {expanded ? (
-                            <View
-                                style={{
-                                    paddingHorizontal: 18,
-                                    paddingBottom: 18,
-                                    borderTopWidth: 1,
-                                    borderTopColor: border,
-                                    paddingTop: 16,
-                                    gap: 12,
-                                }}
-                            >
+                            <View className="px-[18px] pb-[18px] border-t border-border pt-4 gap-3">
                                 <TextInput
                                     control={control}
                                     name="url"
@@ -356,16 +235,9 @@ export default function ConnectWeb() {
                                 <Pressable
                                     onPress={onSubmitCustom}
                                     disabled={busy}
-                                    style={{
-                                        alignSelf: 'flex-start',
-                                        backgroundColor: fg,
-                                        borderRadius: 11,
-                                        paddingVertical: 11,
-                                        paddingHorizontal: 18,
-                                        opacity: busy ? 0.55 : 1,
-                                    }}
+                                    className={`self-start bg-foreground rounded-[11px] py-[11px] px-[18px] ${busy ? 'opacity-[0.55]' : 'opacity-100'}`}
                                 >
-                                    <Text style={{ color: bg, fontSize: 14, fontWeight: '600' }}>
+                                    <Text className="text-background text-sm font-semibold">
                                         {busyCustom ? 'Connecting…' : 'Connect'}
                                     </Text>
                                 </Pressable>
@@ -384,61 +256,29 @@ export default function ConnectWeb() {
     )
 }
 
-function BrandMark({ name, accent }: { name: string; accent: string }) {
-    const fg = useThemeColor('foreground')
-    const bg = useThemeColor('background')
-    const muted = useThemeColor('muted-foreground')
+function BrandMark({ name }: { name: string }) {
     const initial = name.charAt(0).toUpperCase()
     return (
         <View className="flex-row items-center gap-2.5">
-            <View
-                style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 9,
-                    backgroundColor: fg,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                }}
-            >
+            <View className="w-8 h-8 rounded-[9px] bg-foreground items-center justify-center relative">
                 <Text
-                    style={{
-                        color: bg,
-                        fontSize: 16,
-                        fontWeight: '700',
-                        fontFamily: 'Georgia',
-                    }}
+                    className="text-background text-base font-bold"
+                    style={{ fontFamily: 'Georgia' }}
                 >
                     {initial}
                 </Text>
-                <View
-                    style={{
-                        position: 'absolute',
-                        top: 4,
-                        right: 4,
-                        width: 5,
-                        height: 5,
-                        borderRadius: 2.5,
-                        backgroundColor: accent,
-                    }}
-                />
+                <View className="absolute top-1 right-1 w-[5px] h-[5px] rounded-full bg-primary" />
             </View>
             <View>
                 <Text
-                    className="text-foreground"
-                    style={{ fontSize: 15, fontWeight: '600', fontFamily: 'Georgia' }}
+                    className="text-foreground text-[15px] font-semibold"
+                    style={{ fontFamily: 'Georgia' }}
                 >
                     {name}
                 </Text>
                 <Text
-                    style={{
-                        fontSize: 9,
-                        letterSpacing: 1.6,
-                        color: muted,
-                        marginTop: 1,
-                        fontWeight: '600',
-                    }}
+                    className="text-[9px] text-muted-foreground mt-px font-semibold"
+                    style={{ letterSpacing: 1.6 }}
                 >
                     YOUR DATA, AT HOME
                 </Text>
