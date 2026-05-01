@@ -10,7 +10,6 @@ import '~/global.css'
 import { MinimalProviders } from '@tinycld/core/components/MinimalProviders'
 import { NewVersionToast } from '@tinycld/core/components/NewVersionToast'
 import { initSentry } from '@tinycld/core/lib/sentry'
-import { useVersionCheck } from '@tinycld/core/lib/use-version-check'
 import {
     getResolvedAddress,
     readCached,
@@ -18,6 +17,7 @@ import {
     setResolvedAddress,
     subscribeResolvedAddress,
 } from '@tinycld/core/lib/server-address'
+import { useVersionCheck } from '@tinycld/core/lib/use-version-check'
 import { router, Slot, usePathname } from 'expo-router'
 import { type ComponentType, type ReactNode, useEffect, useState } from 'react'
 import { View } from 'react-native'
