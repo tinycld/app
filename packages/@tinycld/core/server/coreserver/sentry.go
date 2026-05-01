@@ -1,10 +1,14 @@
 package coreserver
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"log"
+	"net"
+	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -74,6 +78,9 @@ func sentryMiddleware(re *core.RequestEvent) error {
 		hub.Scope().SetUser(sentry.User{ID: re.Auth.Id})
 	}
 
+	sniff := &errorBodySniffer{ResponseWriter: re.Response}
+	re.Response = sniff
+
 	defer func() {
 		if r := recover(); r != nil {
 			hub.RecoverWithContext(ctx, r)
@@ -116,9 +123,92 @@ func sentryMiddleware(re *core.RequestEvent) error {
 		hub.WithScope(func(scope *sentry.Scope) {
 			scope.SetLevel(sentry.LevelError)
 			scope.SetTag("http.status", fmt.Sprintf("%d", status))
+			if body := sniff.Body(); body != "" {
+				scope.SetContext("response", map[string]any{"body": body})
+			}
 			hub.CaptureMessage(fmt.Sprintf("HTTP %d %s %s", status, method, path))
 		})
 	}
 
 	return nil
+}
+
+// errorBodySniffer wraps an http.ResponseWriter to capture the first chunk
+// of the response body when status is >= 500. Handlers that call
+// http.Error or write a short text/plain message directly to the writer
+// (the go-webdav CalDAV path is one) bypass PB's error mapping, so the
+// only signal a router-level middleware can attach to is the body itself.
+//
+// We only retain the body when status >= 500 — error responses are short,
+// and capturing successful responses would waste memory and risk PII.
+//
+// All Write/WriteHeader calls pass through to the underlying writer
+// unchanged; this is purely an observer.
+type errorBodySniffer struct {
+	http.ResponseWriter
+	status  int
+	capture bool
+	buf     strings.Builder
+}
+
+const errorBodyCaptureLimit = 4096
+
+func (w *errorBodySniffer) WriteHeader(code int) {
+	w.status = code
+	w.capture = code >= 500
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *errorBodySniffer) Write(p []byte) (int, error) {
+	if w.status == 0 {
+		w.WriteHeader(http.StatusOK)
+	}
+	if w.capture && w.buf.Len() < errorBodyCaptureLimit {
+		remaining := errorBodyCaptureLimit - w.buf.Len()
+		chunk := p
+		if len(chunk) > remaining {
+			chunk = chunk[:remaining]
+		}
+		w.buf.Write(chunk)
+	}
+	return w.ResponseWriter.Write(p)
+}
+
+// Body returns the captured response body when status was >= 500, with
+// trailing whitespace trimmed (http.Error appends a trailing newline).
+// Returns the empty string when nothing was captured.
+func (w *errorBodySniffer) Body() string {
+	return strings.TrimRight(w.buf.String(), "\r\n")
+}
+
+// Unwrap exposes the underlying ResponseWriter so PB's getStatus and
+// getWritten helpers (and http.ResponseController) can walk past this
+// wrapper to PB's own status/write tracker. Without it, re.Status()
+// would return 0 even after a 500 was written.
+func (w *errorBodySniffer) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
+}
+
+// Flush, Hijack, and Push forward to the underlying ResponseWriter when it
+// implements the corresponding optional interface. PB's own ResponseWriter
+// supports all three; without these passthroughs, handlers like the SSE
+// event stream would silently lose flush/hijack capability.
+func (w *errorBodySniffer) Flush() {
+	if f, ok := w.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+func (w *errorBodySniffer) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h, ok := w.ResponseWriter.(http.Hijacker); ok {
+		return h.Hijack()
+	}
+	return nil, nil, http.ErrNotSupported
+}
+
+func (w *errorBodySniffer) Push(target string, opts *http.PushOptions) error {
+	if p, ok := w.ResponseWriter.(http.Pusher); ok {
+		return p.Push(target, opts)
+	}
+	return http.ErrNotSupported
 }

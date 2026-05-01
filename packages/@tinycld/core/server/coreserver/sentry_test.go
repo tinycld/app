@@ -3,6 +3,7 @@ package coreserver
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"sync"
 	"testing"
 
@@ -212,14 +213,17 @@ func TestSentryMiddlewareSkipsDirectWriteClientError(t *testing.T) {
 // TestSentryMiddlewareCapturesDirectWriteServerError covers the case that
 // motivated this middleware: a handler that writes a 5xx directly to the
 // ResponseWriter (e.g. the go-webdav CalDAV library), returns nil, and so
-// produces no error value for PB's normal path to capture.
+// produces no error value for PB's normal path to capture. The captured
+// body should appear under the "response" context so the Sentry event
+// surfaces the actual error message that http.Error wrote, not just the
+// status code.
 func TestSentryMiddlewareCapturesDirectWriteServerError(t *testing.T) {
 	get, cleanup := captureSentry(t)
 	defer cleanup()
 
 	mount := func(g *router.RouterGroup[*core.RequestEvent]) {
 		g.GET("/test/raw500", func(re *core.RequestEvent) error {
-			http.Error(re.Response, "raw 500", http.StatusInternalServerError)
+			http.Error(re.Response, "underlying db connection refused", http.StatusInternalServerError)
 			return nil
 		})
 	}
@@ -228,7 +232,7 @@ func TestSentryMiddlewareCapturesDirectWriteServerError(t *testing.T) {
 		Method:          http.MethodGet,
 		URL:             "/test/raw500",
 		ExpectedStatus:  http.StatusInternalServerError,
-		ExpectedContent: []string{"raw 500"},
+		ExpectedContent: []string{"underlying db connection refused"},
 	})
 
 	events := get()
@@ -237,5 +241,16 @@ func TestSentryMiddlewareCapturesDirectWriteServerError(t *testing.T) {
 	}
 	if events[0].Message == "" {
 		t.Errorf("expected a non-empty message for the captured 500, got %+v", events[0])
+	}
+	respCtx, ok := events[0].Contexts["response"]
+	if !ok {
+		t.Fatalf("expected a 'response' context with the captured body, got contexts=%+v", events[0].Contexts)
+	}
+	body, ok := respCtx["body"].(string)
+	if !ok {
+		t.Fatalf("expected response.body to be a string, got %T (%+v)", respCtx["body"], respCtx["body"])
+	}
+	if !strings.Contains(body, "underlying db connection refused") {
+		t.Errorf("expected captured body to contain the http.Error message, got %q", body)
 	}
 }
