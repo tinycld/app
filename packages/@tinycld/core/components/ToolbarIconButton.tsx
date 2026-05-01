@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react-native'
-import { Platform, Pressable } from 'react-native'
+import { forwardRef } from 'react'
+import { Platform, Pressable, type View } from 'react-native'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 
 interface ToolbarIconButtonProps {
@@ -11,19 +12,16 @@ interface ToolbarIconButtonProps {
     disabled?: boolean
 }
 
-export function ToolbarIconButton({
-    icon: Icon,
-    label,
-    onPress,
-    size = 18,
-    color,
-    disabled,
-}: ToolbarIconButtonProps) {
+export const ToolbarIconButton = forwardRef<View, ToolbarIconButtonProps>(function ToolbarIconButton(
+    { icon: Icon, label, onPress, size = 18, color, disabled },
+    ref
+) {
     const mutedColor = useThemeColor('muted-foreground')
     const iconColor = color ?? mutedColor
 
     const button = (
         <Pressable
+            ref={ref}
             className={`p-2 rounded-full ${disabled ? 'opacity-40' : 'opacity-100'}`}
             onPress={onPress}
             accessibilityLabel={label}
@@ -40,4 +38,4 @@ export function ToolbarIconButton({
             {button}
         </div>
     )
-}
+})

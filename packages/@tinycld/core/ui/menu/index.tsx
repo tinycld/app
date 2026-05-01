@@ -121,11 +121,21 @@ function Trigger({ children, disableClick }: TriggerProps) {
         )
     }
 
-    return (
-        <Pressable ref={triggerRef} onPress={handleClick}>
-            {children}
-        </Pressable>
-    )
+    // Wrapping a Pressable child in another Pressable swallows touches on native — the inner responder wins. Clone the child to inject onPress + ref.
+    type PressableChildProps = {
+        onPress?: (e: unknown) => void
+        ref?: React.Ref<View>
+    }
+    const child = children as React.ReactElement<PressableChildProps>
+    const childOnPress = child.props.onPress
+    const composedOnPress = (e: unknown) => {
+        childOnPress?.(e)
+        handleClick()
+    }
+    return React.cloneElement(child, {
+        ref: triggerRef as React.Ref<View>,
+        onPress: composedOnPress,
+    })
 }
 
 // ── Portal ──
