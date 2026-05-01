@@ -75,43 +75,6 @@ func runVersionedAssetsScenario(t *testing.T, releasesDir string, scenario *test
 	scenario.Test(t)
 }
 
-// callVersionedAssets is a convenience wrapper: builds a tiny router bound to
-// VersionedAssets, fires a GET for the given releaseId + path, and returns the
-// HTTP status and the Cache-Control header from the response.
-//
-// Used by tests that need to inspect headers directly (ApiScenario only
-// supports body / status assertions).
-func callVersionedAssets(t *testing.T, releasesDir, releaseId, path string) *http.Response {
-	t.Helper()
-
-	app, err := tests.NewTestApp()
-	if err != nil {
-		t.Fatalf("NewTestApp: %v", err)
-	}
-	defer app.Cleanup()
-
-	var captured *http.Response
-
-	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
-		e.Router.RouterGroup.GET("/v/{releaseId}/{path...}", VersionedAssets(releasesDir))
-		return e.Next()
-	})
-
-	scenario := &tests.ApiScenario{
-		Method:                http.MethodGet,
-		URL:                   "/v/" + releaseId + "/" + path,
-		ExpectedStatus:        http.StatusOK,
-		TestAppFactory:        func(_ testing.TB) *tests.TestApp { return app },
-		DisableTestAppCleanup: true,
-		AfterTestFunc: func(_ testing.TB, _ *tests.TestApp, res *http.Response) {
-			captured = res
-		},
-	}
-	scenario.Test(t)
-
-	return captured
-}
-
 func TestVersionedAssets_ServesExistingFile(t *testing.T) {
 	releasesDir, firstRelease := setupReleasesDir(t)
 
@@ -148,10 +111,11 @@ func TestVersionedAssets_404OnMissingRelease(t *testing.T) {
 	releasesDir, _ := setupReleasesDir(t)
 
 	runVersionedAssetsScenario(t, releasesDir, &tests.ApiScenario{
-		Name:           "unknown release id returns 404",
-		Method:         http.MethodGet,
-		URL:            "/v/2099-01-01-000000-aaa0000/_expo/static/js/web/bundle.js",
-		ExpectedStatus: http.StatusNotFound,
+		Name:            "unknown release id returns 404",
+		Method:          http.MethodGet,
+		URL:             "/v/2099-01-01-000000-aaa0000/_expo/static/js/web/bundle.js",
+		ExpectedStatus:  http.StatusNotFound,
+		ExpectedContent: []string{`"status":404`},
 	})
 }
 
@@ -159,25 +123,56 @@ func TestVersionedAssets_404OnMissingFile(t *testing.T) {
 	releasesDir, firstRelease := setupReleasesDir(t)
 
 	runVersionedAssetsScenario(t, releasesDir, &tests.ApiScenario{
-		Name:           "release exists but file is absent returns 404",
-		Method:         http.MethodGet,
-		URL:            "/v/" + firstRelease + "/_expo/static/js/web/does-not-exist.js",
-		ExpectedStatus: http.StatusNotFound,
+		Name:            "release exists but file is absent returns 404",
+		Method:          http.MethodGet,
+		URL:             "/v/" + firstRelease + "/_expo/static/js/web/does-not-exist.js",
+		ExpectedStatus:  http.StatusNotFound,
+		ExpectedContent: []string{`"status":404`},
 	})
 }
 
 func TestVersionedAssets_RejectsInvalidReleaseId(t *testing.T) {
 	releasesDir, _ := setupReleasesDir(t)
 
-	// ".." is the canonical path-traversal probe. The handler must reject it
-	// before touching the filesystem — otherwise an attacker could read files
-	// outside the releases directory.
+	// The HTTP router collapses "/v/../foo" to "/foo" via RFC 3986 path
+	// normalization before the handler runs, so a literal ".." can't reach
+	// our regex. We exercise the regex by sending a syntactically valid
+	// path segment that fails the format check — defending against any
+	// future caller that bypasses normalization (direct handler invocation,
+	// an unwrapped ServeMux, etc.) and reaches the handler with a value
+	// that os.DirFS would happily turn into a path-traversal.
 	runVersionedAssetsScenario(t, releasesDir, &tests.ApiScenario{
-		Name:           "path traversal probe is rejected with 404",
-		Method:         http.MethodGet,
-		URL:            "/v/../_expo/static/js/web/bundle.js",
-		ExpectedStatus: http.StatusNotFound,
+		Name:            "malformed release id is rejected with 404",
+		Method:          http.MethodGet,
+		URL:             "/v/not-a-real-id/_expo/static/js/web/bundle.js",
+		ExpectedStatus:  http.StatusNotFound,
+		ExpectedContent: []string{`"status":404`},
 	})
+}
+
+func TestVersionedAssets_RegexRejectsTraversal(t *testing.T) {
+	// Direct unit test on releaseIdRegex — the layer that defends against
+	// path traversal regardless of router behavior. If anything ever
+	// reaches the regex with "..", it must be rejected.
+	cases := []struct {
+		input string
+		valid bool
+	}{
+		{"2026-05-01-143022-abc1234", true},
+		{"2026-05-01-143022-deadbeef", true},
+		{"..", false},
+		{"../etc/passwd", false},
+		{"2026-05-01-143022-../1234", false},
+		{"2026-05-01-143022-ZZZZZZ", false},
+		{"", false},
+		{"2026-05-01", false},
+	}
+	for _, c := range cases {
+		got := releaseIdRegex.MatchString(c.input)
+		if got != c.valid {
+			t.Errorf("releaseIdRegex.MatchString(%q) = %v, want %v", c.input, got, c.valid)
+		}
+	}
 }
 
 // Compile-time assertion: VersionedAssets must have the correct signature.
