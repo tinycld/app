@@ -1,6 +1,21 @@
 @import 'tailwindcss';
 @import 'uniwind';
 
+/*
+ * Tailwind v4's scanner respects .gitignore, and tinycld/.gitignore lists
+ * `/packages/@tinycld/*` (only `core` un-ignored). That hides the symlinks
+ * to linked feature packages — including any third-party package installed
+ * via `bun run packages:install` or under node_modules — so any utility
+ * class used ONLY inside a linked package silently produces no CSS.
+ *
+ * The generator (scripts/generate-packages.ts) emits one absolute @source
+ * line per linked package into the file below, scoped to that package's
+ * real on-disk location. The list regenerates on every packages:link /
+ * packages:unlink, so the CSS bundle stays in sync with whatever the user
+ * has linked.
+ */
+@import './lib/generated/uniwind-sources.css';
+
 @layer theme {
     :root {
         @variant light {
