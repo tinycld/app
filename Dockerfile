@@ -51,11 +51,25 @@ RUN find server/pb_migrations server/pb_hooks -type l -exec sh -c 'target=$(read
 # via `docker build --build-arg`.
 ARG EXPO_PUBLIC_SENTRY_DSN=
 ARG EXPO_PUBLIC_GIT_COMMIT=
+ARG RELEASE_ID
 ENV EXPO_PUBLIC_ENV=web
 ENV EXPO_PUBLIC_SENTRY_DSN=$EXPO_PUBLIC_SENTRY_DSN
 ENV EXPO_PUBLIC_GIT_COMMIT=$EXPO_PUBLIC_GIT_COMMIT
+ENV EXPO_PUBLIC_RELEASE_ID=$RELEASE_ID
 ENV NODE_OPTIONS="--max-old-space-size=2048"
-RUN bunx expo export --platform web
+
+# --base-url rewrites every asset URL to /v/<RELEASE_ID>/... so stale tabs
+# resolve their old asset URLs as long as that release directory exists on
+# the host volume.
+RUN bunx expo export --platform web --base-url=/v/$RELEASE_ID
+
+# Stage the dist tree under release-staging/<id>/. The runtime entrypoint
+# copies this to the persistent volume at /app/releases/<id>/ on container
+# start. index.html is renamed to app.html (used as the SPA fallback file).
+RUN mkdir -p /app/release-staging \
+    && mv /app/dist /app/release-staging/$RELEASE_ID \
+    && echo "$RELEASE_ID" > /app/release-staging/$RELEASE_ID/release-id.txt \
+    && mv /app/release-staging/$RELEASE_ID/index.html /app/release-staging/$RELEASE_ID/app.html
 
 
 # Build stage for Go server.
@@ -113,9 +127,12 @@ WORKDIR /app
 # Compiled server binary.
 COPY --from=go-builder /app/server/tinycld ./tinycld
 
-# Built web app (Expo exports to dist/); rename index.html to app.html for SPA fallback.
-COPY --from=web-builder /app/dist ./public
-RUN mv ./public/index.html ./public/app.html
+# Per-release web bundle, staged by the web-builder. The entrypoint promotes
+# this to the persistent volume mounted at /app/releases/ on container start.
+# The /app/public/ directory is reserved for the marketing website (populated
+# by deploy/Dockerfile.tail).
+COPY --from=web-builder /app/release-staging /app/release-staging
+RUN mkdir -p /app/public /app/releases
 
 # Migrations with symlinks already resolved in web-builder.
 COPY --from=web-builder /app/server/pb_migrations ./pb_migrations
