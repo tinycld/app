@@ -34,10 +34,6 @@ export default function Connect() {
 
     const fg = useThemeColor('foreground')
     const muted = useThemeColor('muted-foreground')
-    const accent = useThemeColor('primary')
-    const border = useThemeColor('border')
-    const surface = useThemeColor('surface')
-    const bg = useThemeColor('background')
 
     const { control, handleSubmit, reset } = useForm({
         resolver: zodResolver(urlSchema),
@@ -92,14 +88,14 @@ export default function Connect() {
     const busy = busyDefault || busyCustom
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: bg }} edges={['top', 'bottom']}>
+        <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
             <ScrollView
                 className="flex-1"
                 contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 28, paddingBottom: 32 }}
                 showsVerticalScrollIndicator={false}
             >
                 <View className="flex-row items-center gap-3 mt-4">
-                    <BrandMark name={brandName} accent={accent} />
+                    <BrandMark name={brandName} />
                 </View>
 
                 <View className="mt-8 mb-6">
@@ -107,47 +103,35 @@ export default function Connect() {
                 </View>
 
                 <View className="flex-row items-center gap-2 mb-2">
-                    <View style={{ width: 18, height: 1, backgroundColor: accent }} />
+                    <View className="w-[18px] h-px bg-primary" />
                     <Text
-                        style={{
-                            fontSize: 11,
-                            letterSpacing: 2,
-                            color: accent,
-                            fontWeight: '600',
-                        }}
+                        className="text-[11px] font-semibold text-primary"
+                        style={{ letterSpacing: 2 }}
                     >
                         WELCOME
                     </Text>
                 </View>
 
                 <Text
-                    className="text-foreground"
+                    className="text-foreground text-[32px] font-semibold"
                     style={{
-                        fontSize: 32,
                         lineHeight: 36,
-                        fontWeight: '600',
                         letterSpacing: -0.8,
                         fontFamily: 'Georgia',
                     }}
                 >
                     Pick a place to keep{' '}
                     <Text
-                        style={{
-                            fontStyle: 'italic',
-                            fontWeight: '400',
-                            color: accent,
-                            fontFamily: 'Georgia',
-                        }}
+                        className="italic font-normal text-primary"
+                        style={{ fontFamily: 'Georgia' }}
                     >
                         your stuff.
                     </Text>
                 </Text>
 
                 <Text
-                    className="text-foreground"
+                    className="text-foreground text-[15px] mt-3.5"
                     style={{
-                        marginTop: 14,
-                        fontSize: 15,
                         lineHeight: 22,
                         opacity: 0.78,
                         maxWidth: 360,
@@ -163,9 +147,9 @@ export default function Connect() {
                     </View>
                 ) : null}
 
-                <View style={{ flex: 1 }} />
+                <View className="flex-1" />
 
-                <View style={{ gap: 10, marginTop: 28 }}>
+                <View className="gap-2.5 mt-7">
                     <PrimaryCta
                         label={busyDefault ? 'Connecting…' : `Use ${defaultServerLabel}`}
                         onPress={onUseDefault}
@@ -174,19 +158,11 @@ export default function Connect() {
                     <Pressable
                         onPress={openSheet}
                         disabled={busy}
-                        className="rounded-xl border flex-row items-center justify-between px-4 py-3.5"
-                        style={{
-                            borderColor: border,
-                            backgroundColor: surface,
-                            opacity: busy ? 0.5 : 1,
-                        }}
+                        className={`rounded-xl border border-border bg-surface flex-row items-center justify-between px-4 py-3.5 ${busy ? 'opacity-50' : 'opacity-100'}`}
                     >
                         <View className="flex-row items-center gap-3">
                             <Server size={16} color={fg} />
-                            <Text
-                                className="text-foreground"
-                                style={{ fontSize: 14, fontWeight: '500' }}
-                            >
+                            <Text className="text-foreground text-sm font-medium">
                                 I host my own server
                             </Text>
                         </View>
@@ -201,39 +177,26 @@ export default function Connect() {
                 animationType="slide"
                 onRequestClose={closeSheet}
             >
-                <View style={{ flex: 1 }}>
+                <View className="flex-1">
                     <Pressable
                         onPress={closeSheet}
-                        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' }}
+                        className="flex-1"
+                        style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
                     />
                     <View
-                        className="bg-background"
+                        className="bg-background px-6 pt-3 pb-8"
                         style={{
                             borderTopLeftRadius: 24,
                             borderTopRightRadius: 24,
-                            paddingHorizontal: 24,
-                            paddingTop: 12,
-                            paddingBottom: 32,
                         }}
                     >
                         <SafeAreaView edges={['bottom']}>
-                            <View
-                                style={{
-                                    width: 38,
-                                    height: 4,
-                                    borderRadius: 2,
-                                    backgroundColor: border,
-                                    alignSelf: 'center',
-                                    marginBottom: 18,
-                                }}
-                            />
+                            <View className="w-[38px] h-1 rounded-sm bg-border self-center mb-[18px]" />
                             <View className="flex-row items-start justify-between mb-3">
-                                <View style={{ flex: 1, paddingRight: 12 }}>
+                                <View className="flex-1 pr-3">
                                     <Text
-                                        className="text-foreground"
+                                        className="text-foreground text-[22px] font-semibold"
                                         style={{
-                                            fontSize: 22,
-                                            fontWeight: '600',
                                             letterSpacing: -0.4,
                                             fontFamily: 'Georgia',
                                         }}
@@ -241,12 +204,8 @@ export default function Connect() {
                                         Connect your server
                                     </Text>
                                     <Text
-                                        style={{
-                                            marginTop: 6,
-                                            fontSize: 13,
-                                            lineHeight: 19,
-                                            color: muted,
-                                        }}
+                                        className="mt-1.5 text-[13px] text-muted-foreground"
+                                        style={{ lineHeight: 19 }}
                                     >
                                         Enter the address where your {brandName} server is running.
                                         We'll check it and remember it for next time.
@@ -255,15 +214,7 @@ export default function Connect() {
                                 <Pressable
                                     onPress={closeSheet}
                                     accessibilityLabel="Close"
-                                    style={{
-                                        width: 32,
-                                        height: 32,
-                                        borderRadius: 16,
-                                        borderWidth: 1,
-                                        borderColor: border,
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                    }}
+                                    className="w-8 h-8 rounded-full border border-border items-center justify-center"
                                 >
                                     <X size={14} color={fg} />
                                 </Pressable>
@@ -300,61 +251,29 @@ export default function Connect() {
     )
 }
 
-function BrandMark({ name, accent }: { name: string; accent: string }) {
-    const fg = useThemeColor('foreground')
-    const bg = useThemeColor('background')
-    const muted = useThemeColor('muted-foreground')
+function BrandMark({ name }: { name: string }) {
     const initial = name.charAt(0).toUpperCase()
     return (
         <View className="flex-row items-center gap-2.5">
-            <View
-                style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    backgroundColor: fg,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                }}
-            >
+            <View className="w-9 h-9 rounded-[10px] bg-foreground items-center justify-center relative">
                 <Text
-                    style={{
-                        color: bg,
-                        fontSize: 18,
-                        fontWeight: '700',
-                        fontFamily: 'Georgia',
-                    }}
+                    className="text-background text-lg font-bold"
+                    style={{ fontFamily: 'Georgia' }}
                 >
                     {initial}
                 </Text>
-                <View
-                    style={{
-                        position: 'absolute',
-                        top: 5,
-                        right: 5,
-                        width: 6,
-                        height: 6,
-                        borderRadius: 3,
-                        backgroundColor: accent,
-                    }}
-                />
+                <View className="absolute top-[5px] right-[5px] w-1.5 h-1.5 rounded-full bg-primary" />
             </View>
             <View>
                 <Text
-                    className="text-foreground"
-                    style={{ fontSize: 15, fontWeight: '600', fontFamily: 'Georgia' }}
+                    className="text-foreground text-[15px] font-semibold"
+                    style={{ fontFamily: 'Georgia' }}
                 >
                     {name}
                 </Text>
                 <Text
-                    style={{
-                        fontSize: 9,
-                        letterSpacing: 1.6,
-                        color: muted,
-                        marginTop: 1,
-                        fontWeight: '600',
-                    }}
+                    className="text-[9px] text-muted-foreground mt-px font-semibold"
+                    style={{ letterSpacing: 1.6 }}
                 >
                     YOUR DATA, AT HOME
                 </Text>
@@ -372,38 +291,17 @@ function PrimaryCta({
     onPress: () => void
     disabled?: boolean
 }) {
-    const fg = useThemeColor('foreground')
     const bg = useThemeColor('background')
-    const accent = useThemeColor('primary')
     return (
         <Pressable
             onPress={onPress}
             disabled={disabled}
-            style={{
-                backgroundColor: fg,
-                borderRadius: 14,
-                paddingVertical: 16,
-                paddingHorizontal: 20,
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
-                overflow: 'hidden',
-                opacity: disabled ? 0.55 : 1,
-            }}
+            className={`bg-foreground rounded-2xl py-4 px-5 items-center justify-center relative overflow-hidden ${disabled ? 'opacity-[0.55]' : 'opacity-100'}`}
         >
-            <View
-                style={{
-                    position: 'absolute',
-                    top: 0,
-                    bottom: 0,
-                    left: 0,
-                    width: 4,
-                    backgroundColor: accent,
-                }}
-            />
+            <View className="absolute top-0 bottom-0 left-0 w-1 bg-primary" />
             <View className="flex-row items-center gap-2">
                 <Globe size={16} color={bg} />
-                <Text style={{ fontSize: 15, fontWeight: '600', color: bg }}>{label}</Text>
+                <Text className="text-[15px] font-semibold text-background">{label}</Text>
             </View>
         </Pressable>
     )

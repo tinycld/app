@@ -69,11 +69,6 @@ export default function OrganizationSettings() {
     const [orgsCollection] = useStore('orgs')
 
     const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
-    const bgColor = useThemeColor('background')
-    const primaryColor = useThemeColor('primary')
-    const primaryFgColor = useThemeColor('primary-foreground')
-    const accentLabelColor = useThemeColor('primary')
 
     const { data: orgs } = useOrgLiveQuery((query, { orgId }) =>
         query.from({ orgs: orgsCollection }).where(({ orgs }) => eq(orgs.id, orgId))
@@ -108,11 +103,8 @@ export default function OrganizationSettings() {
 
     if (!isAdmin) {
         return (
-            <View
-                className="flex-1 p-5 items-center justify-center"
-                style={{ backgroundColor: bgColor }}
-            >
-                <Text style={{ fontSize: 16, color: mutedColor }}>
+            <View className="flex-1 p-5 items-center justify-center bg-background">
+                <Text className="text-muted-foreground" style={{ fontSize: 16 }}>
                     Only admins can manage organization settings.
                 </Text>
             </View>
@@ -120,24 +112,26 @@ export default function OrganizationSettings() {
     }
 
     return (
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ backgroundColor: bgColor }}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="bg-background">
             <View className="flex-1 p-5 max-w-[600px]">
                 <View className="flex-row justify-between items-center mb-5">
                     <View className="flex-row gap-3 items-center">
                         <Pressable onPress={() => router.back()}>
                             <ArrowLeft size={24} color={fgColor} />
                         </Pressable>
-                        <Text style={{ fontSize: 22, fontWeight: 'bold', color: fgColor }}>
+                        <Text
+                            className="text-foreground"
+                            style={{ fontSize: 22, fontWeight: 'bold' }}
+                        >
                             Organization
                         </Text>
                     </View>
                     <Pressable
                         onPress={onSubmit}
                         disabled={!canSubmit}
-                        className={`px-4 py-2 rounded-lg self-start ${canSubmit ? 'opacity-100' : 'opacity-50'}`}
-                        style={{ backgroundColor: primaryColor }}
+                        className={`px-4 py-2 rounded-lg self-start bg-primary ${canSubmit ? 'opacity-100' : 'opacity-50'}`}
                     >
-                        <Text style={{ fontWeight: '600', color: primaryFgColor }}>
+                        <Text className="text-primary-foreground" style={{ fontWeight: '600' }}>
                             {updateOrg.isPending ? 'Saving...' : 'Save'}
                         </Text>
                     </Pressable>
@@ -149,8 +143,10 @@ export default function OrganizationSettings() {
                     <TextInput control={control} name="name" label="Organization Name" />
 
                     <View className="gap-1">
-                        <Text style={{ fontSize: 13, color: accentLabelColor }}>Slug</Text>
-                        <Text style={{ fontSize: 16, color: mutedColor }}>
+                        <Text className="text-primary" style={{ fontSize: 13 }}>
+                            Slug
+                        </Text>
+                        <Text className="text-muted-foreground" style={{ fontSize: 16 }}>
                             {org?.slug ?? '\u2014'}
                         </Text>
                     </View>
@@ -173,15 +169,9 @@ function StorageSection({ orgId }: { orgId: string }) {
     const [settingsCollection] = useStore('settings')
     const [showBreakdown, setShowBreakdown] = useState(false)
 
-    const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
-    const primaryColor = useThemeColor('primary')
-    const primaryFgColor = useThemeColor('primary-foreground')
-    const accentLabelColor = useThemeColor('primary')
     const dangerColor = useThemeColor('danger')
     const warningColor = useThemeColor('warning')
     const successColor = useThemeColor('success')
-    const surfaceColor = useThemeColor('surface-secondary')
 
     const { data: storageInfo, isLoading } = useQuery({
         queryKey: ['storage-usage', orgId],
@@ -248,8 +238,12 @@ function StorageSection({ orgId }: { orgId: string }) {
     if (isLoading) {
         return (
             <View className="gap-3">
-                <Text style={{ fontSize: 18, fontWeight: 'bold', color: fgColor }}>Storage</Text>
-                <Text style={{ fontSize: 13, color: mutedColor }}>Loading...</Text>
+                <Text className="text-foreground" style={{ fontSize: 18, fontWeight: 'bold' }}>
+                    Storage
+                </Text>
+                <Text className="text-muted-foreground" style={{ fontSize: 13 }}>
+                    Loading...
+                </Text>
             </View>
         )
     }
@@ -270,31 +264,30 @@ function StorageSection({ orgId }: { orgId: string }) {
 
     return (
         <View className="gap-4">
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: fgColor }}>Storage</Text>
+            <Text className="text-foreground" style={{ fontSize: 18, fontWeight: 'bold' }}>
+                Storage
+            </Text>
 
             <View className="gap-2">
-                <Text style={{ fontSize: 13, color: accentLabelColor }}>Your Usage</Text>
+                <Text className="text-primary" style={{ fontSize: 13 }}>
+                    Your Usage
+                </Text>
                 <View className="flex-row justify-between items-center">
-                    <Text style={{ fontSize: 15, color: fgColor }}>
+                    <Text className="text-foreground" style={{ fontSize: 15 }}>
                         {formatStorageBytes(userUsed)}
                         {hasLimit ? ` of ${formatStorageBytes(limitBytes)}` : ''}
                     </Text>
                     {hasLimit && (
                         <Text
-                            style={{
-                                fontSize: 13,
-                                color: usagePercent > 90 ? dangerColor : mutedColor,
-                            }}
+                            className={usagePercent > 90 ? 'text-danger' : 'text-muted-foreground'}
+                            style={{ fontSize: 13 }}
                         >
                             {usagePercent.toFixed(1)}%
                         </Text>
                     )}
                 </View>
                 {hasLimit && (
-                    <View
-                        className="h-2 rounded overflow-hidden"
-                        style={{ backgroundColor: surfaceColor }}
-                    >
+                    <View className="h-2 rounded overflow-hidden bg-surface-secondary">
                         <View
                             className="h-full rounded"
                             style={{
@@ -307,17 +300,23 @@ function StorageSection({ orgId }: { orgId: string }) {
             </View>
 
             <View className="gap-2">
-                <Text style={{ fontSize: 13, color: accentLabelColor }}>Organization Total</Text>
+                <Text className="text-primary" style={{ fontSize: 13 }}>
+                    Organization Total
+                </Text>
                 <View className="flex-row gap-4">
                     <View>
-                        <Text style={{ fontSize: 13, color: mutedColor }}>Drive</Text>
-                        <Text style={{ fontSize: 15, color: fgColor }}>
+                        <Text className="text-muted-foreground" style={{ fontSize: 13 }}>
+                            Drive
+                        </Text>
+                        <Text className="text-foreground" style={{ fontSize: 15 }}>
                             {formatStorageBytes(orgDriveBytes)}
                         </Text>
                     </View>
                     <View>
-                        <Text style={{ fontSize: 13, color: mutedColor }}>Mail</Text>
-                        <Text style={{ fontSize: 15, color: fgColor }}>
+                        <Text className="text-muted-foreground" style={{ fontSize: 13 }}>
+                            Mail
+                        </Text>
+                        <Text className="text-foreground" style={{ fontSize: 15 }}>
                             {formatStorageBytes(orgMailBytes)}
                         </Text>
                     </View>
@@ -327,10 +326,10 @@ function StorageSection({ orgId }: { orgId: string }) {
             <Divider />
 
             <View className="gap-3">
-                <Text style={{ fontSize: 15, fontWeight: '600', color: fgColor }}>
+                <Text className="text-foreground" style={{ fontSize: 15, fontWeight: '600' }}>
                     Per-User Storage Limit
                 </Text>
-                <Text style={{ fontSize: 12, color: mutedColor }}>
+                <Text className="text-muted-foreground" style={{ fontSize: 12 }}>
                     Set to 0 for unlimited storage. Applies to drive uploads only.
                 </Text>
 
@@ -343,10 +342,9 @@ function StorageSection({ orgId }: { orgId: string }) {
                     <Pressable
                         onPress={onSaveLimit}
                         disabled={!canSaveLimit}
-                        className={`px-4 py-2 rounded-lg self-start ${canSaveLimit ? 'opacity-100' : 'opacity-50'}`}
-                        style={{ backgroundColor: primaryColor }}
+                        className={`px-4 py-2 rounded-lg self-start bg-primary ${canSaveLimit ? 'opacity-100' : 'opacity-50'}`}
                     >
-                        <Text style={{ fontWeight: '600', color: primaryFgColor }}>
+                        <Text className="text-primary-foreground" style={{ fontWeight: '600' }}>
                             {saveLimit.isPending ? 'Saving...' : 'Save Limit'}
                         </Text>
                     </Pressable>
@@ -358,7 +356,10 @@ function StorageSection({ orgId }: { orgId: string }) {
                     <Divider />
                     <View className="gap-3">
                         <Pressable onPress={() => setShowBreakdown(v => !v)}>
-                            <Text style={{ fontSize: 15, fontWeight: '600', color: fgColor }}>
+                            <Text
+                                className="text-foreground"
+                                style={{ fontSize: 15, fontWeight: '600' }}
+                            >
                                 Per-User Breakdown {showBreakdown ? '\u25BE' : '\u25B8'}
                             </Text>
                         </Pressable>
@@ -383,10 +384,6 @@ function UserBreakdownTable({
     limitBytes: number
     isVisible: boolean
 }) {
-    const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
-    const dangerColor = useThemeColor('danger')
-
     if (!isVisible) return null
 
     return (
@@ -400,20 +397,18 @@ function UserBreakdownTable({
                         className="flex-row justify-between items-center py-1"
                     >
                         <View className="flex-1">
-                            <Text style={{ fontSize: 13, color: fgColor }}>
+                            <Text className="text-foreground" style={{ fontSize: 13 }}>
                                 {user.user_name || user.user_email}
                             </Text>
                             {user.user_name && (
-                                <Text style={{ fontSize: 12, color: mutedColor }}>
+                                <Text className="text-muted-foreground" style={{ fontSize: 12 }}>
                                     {user.user_email}
                                 </Text>
                             )}
                         </View>
                         <Text
-                            style={{
-                                fontSize: 13,
-                                color: percent > 90 ? dangerColor : mutedColor,
-                            }}
+                            className={percent > 90 ? 'text-danger' : 'text-muted-foreground'}
+                            style={{ fontSize: 13 }}
                         >
                             {formatStorageBytes(user.drive_used)}
                         </Text>
@@ -425,12 +420,6 @@ function UserBreakdownTable({
 }
 
 function LogoSection({ org }: { org: { id: string; name: string; logo?: string } | null }) {
-    const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
-    const primaryColor = useThemeColor('primary')
-    const primaryFgColor = useThemeColor('primary-foreground')
-    const dangerColor = useThemeColor('danger')
-    const borderColor = useThemeColor('border')
     const [error, setError] = useState<string | null>(null)
 
     const upload = useRawMutation({
@@ -463,19 +452,20 @@ function LogoSection({ org }: { org: { id: string; name: string; logo?: string }
 
     return (
         <View className="gap-3">
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: fgColor }}>Logo</Text>
-            <Text style={{ fontSize: 12, color: mutedColor }}>
+            <Text className="text-foreground" style={{ fontSize: 18, fontWeight: 'bold' }}>
+                Logo
+            </Text>
+            <Text className="text-muted-foreground" style={{ fontSize: 12 }}>
                 Up to 5 MB. PNG, JPEG, SVG, or WEBP.
             </Text>
 
             <View className="flex-row items-center gap-4">
                 <View
+                    className="border border-border"
                     style={{
                         width: 96,
                         height: 96,
                         borderRadius: 48,
-                        borderWidth: 1,
-                        borderColor,
                         alignItems: 'center',
                         justifyContent: 'center',
                         overflow: 'hidden',
@@ -488,10 +478,9 @@ function LogoSection({ org }: { org: { id: string; name: string; logo?: string }
                     <Pressable
                         onPress={() => upload.mutate()}
                         disabled={upload.isPending}
-                        className={`px-4 py-2 rounded-lg ${upload.isPending ? 'opacity-50' : ''}`}
-                        style={{ backgroundColor: primaryColor }}
+                        className={`px-4 py-2 rounded-lg bg-primary ${upload.isPending ? 'opacity-50' : ''}`}
                     >
-                        <Text style={{ fontWeight: '600', color: primaryFgColor }}>
+                        <Text className="text-primary-foreground" style={{ fontWeight: '600' }}>
                             {upload.isPending ? 'Uploading…' : hasLogo ? 'Replace' : 'Upload'}
                         </Text>
                     </Pressable>
@@ -499,10 +488,9 @@ function LogoSection({ org }: { org: { id: string; name: string; logo?: string }
                         <Pressable
                             onPress={() => remove.mutate()}
                             disabled={remove.isPending}
-                            className={`px-4 py-2 rounded-lg border ${remove.isPending ? 'opacity-50' : ''}`}
-                            style={{ borderColor }}
+                            className={`px-4 py-2 rounded-lg border border-border ${remove.isPending ? 'opacity-50' : ''}`}
                         >
-                            <Text style={{ fontWeight: '600', color: fgColor }}>
+                            <Text className="text-foreground" style={{ fontWeight: '600' }}>
                                 {remove.isPending ? 'Removing…' : 'Remove'}
                             </Text>
                         </Pressable>
@@ -510,7 +498,11 @@ function LogoSection({ org }: { org: { id: string; name: string; logo?: string }
                 </View>
             </View>
 
-            {error ? <Text style={{ fontSize: 13, color: dangerColor }}>{error}</Text> : null}
+            {error ? (
+                <Text className="text-danger" style={{ fontSize: 13 }}>
+                    {error}
+                </Text>
+            ) : null}
         </View>
     )
 }

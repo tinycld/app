@@ -43,16 +43,11 @@ export default function AuditLogSettings() {
     const [resourceFilter, setResourceFilter] = useState('')
 
     const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
-    const bgColor = useThemeColor('background')
 
     if (!isAdmin) {
         return (
-            <View
-                className="flex-1 p-5 items-center justify-center"
-                style={{ backgroundColor: bgColor }}
-            >
-                <Text style={{ fontSize: 16, color: mutedColor }}>
+            <View className="flex-1 p-5 items-center justify-center bg-background">
+                <Text className="text-muted-foreground text-base">
                     Only admins can view audit logs.
                 </Text>
             </View>
@@ -60,15 +55,13 @@ export default function AuditLogSettings() {
     }
 
     return (
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ backgroundColor: bgColor }}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="bg-background">
             <View className="flex-1 p-5 max-w-[700px]">
                 <View className="flex-row gap-3 items-center mb-5">
                     <Pressable onPress={() => router.back()}>
                         <ArrowLeft size={24} color={fgColor} />
                     </Pressable>
-                    <Text style={{ fontSize: 22, fontWeight: 'bold', color: fgColor }}>
-                        Audit Log
-                    </Text>
+                    <Text className="text-foreground text-[22px] font-bold">Audit Log</Text>
                 </View>
 
                 <FilterBar
@@ -95,10 +88,6 @@ function FilterBar({
     resourceFilter: string
     onResourceChange: (v: string) => void
 }) {
-    const primaryColor = useThemeColor('primary')
-    const primaryFgColor = useThemeColor('primary-foreground')
-    const borderColor = useThemeColor('border')
-
     return (
         <View className="mb-4 gap-3">
             <View className="gap-1.5">
@@ -110,9 +99,6 @@ function FilterBar({
                             label={opt.label}
                             isActive={actionFilter === opt.value}
                             onPress={() => onActionChange(opt.value)}
-                            activeColor={primaryColor}
-                            activeFgColor={primaryFgColor}
-                            borderColor={borderColor}
                         />
                     ))}
                 </View>
@@ -126,9 +112,6 @@ function FilterBar({
                             label={opt.label}
                             isActive={resourceFilter === opt.value}
                             onPress={() => onResourceChange(opt.value)}
-                            activeColor={primaryColor}
-                            activeFgColor={primaryFgColor}
-                            borderColor={borderColor}
                         />
                     ))}
                 </View>
@@ -138,41 +121,24 @@ function FilterBar({
 }
 
 function FilterLabel({ text }: { text: string }) {
-    const mutedColor = useThemeColor('muted-foreground')
-    return <Text style={{ fontSize: 12, fontWeight: '600', color: mutedColor }}>{text}</Text>
+    return <Text className="text-muted-foreground text-xs font-semibold">{text}</Text>
 }
 
 function FilterChip({
     label,
     isActive,
     onPress,
-    activeColor,
-    activeFgColor,
-    borderColor,
 }: {
     label: string
     isActive: boolean
     onPress: () => void
-    activeColor: string
-    activeFgColor: string
-    borderColor: string
 }) {
     return (
         <Pressable
             onPress={onPress}
-            className="px-2.5 py-1 rounded-md"
-            style={{
-                backgroundColor: isActive ? activeColor : 'transparent',
-                borderWidth: isActive ? 0 : 1,
-                borderColor,
-            }}
+            className={`px-2.5 py-1 rounded-md ${isActive ? 'bg-primary' : 'border border-border'}`}
         >
-            <Text
-                style={{
-                    fontSize: 12,
-                    color: isActive ? activeFgColor : activeColor,
-                }}
-            >
+            <Text className={`text-xs ${isActive ? 'text-primary-foreground' : 'text-primary'}`}>
                 {label}
             </Text>
         </Pressable>
@@ -209,23 +175,14 @@ function AuditLogList({
         [actionFilter, resourceFilter]
     )
 
-    const mutedColor = useThemeColor('muted-foreground')
-    const surfaceBg = useThemeColor('surface-secondary')
-    const borderColor = useThemeColor('border')
-
     if (!logs || logs.length === 0) {
         return (
-            <Text style={{ fontSize: 14, color: mutedColor, marginTop: 8 }}>
-                No audit log entries found.
-            </Text>
+            <Text className="text-muted-foreground text-sm mt-2">No audit log entries found.</Text>
         )
     }
 
     return (
-        <View
-            className="rounded-xl border overflow-hidden"
-            style={{ backgroundColor: surfaceBg, borderColor }}
-        >
+        <View className="rounded-xl border border-border overflow-hidden bg-surface-secondary">
             {logs.map(entry => (
                 <AuditLogRow key={entry.id} entry={entry} />
             ))}
@@ -247,9 +204,7 @@ interface AuditEntry {
 
 function AuditLogRow({ entry }: { entry: AuditEntry }) {
     const [expanded, setExpanded] = useState(false)
-    const fgColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
-    const borderColor = useThemeColor('border')
 
     const actorName = entry.expand?.actor?.name || entry.expand?.actor?.email || 'System'
     const actionColors = ACTION_BADGE_COLORS[entry.action as keyof typeof ACTION_BADGE_COLORS]
@@ -261,21 +216,19 @@ function AuditLogRow({ entry }: { entry: AuditEntry }) {
     const resourceLabel = formatResourceType(entry.resource_type)
 
     return (
-        <View style={{ borderBottomWidth: 1, borderBottomColor: borderColor }}>
+        <View className="border-b border-border">
             <Pressable
                 className="px-4 py-3 flex-row items-center gap-3"
                 onPress={() => hasDetails && setExpanded(!expanded)}
             >
                 <View className="flex-1 gap-1">
                     <View className="flex-row gap-2 items-center flex-wrap">
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: fgColor }}>
-                            {actorName}
-                        </Text>
+                        <Text className="text-foreground text-sm font-semibold">{actorName}</Text>
                         <ActionBadge action={entry.action} colors={actionColors} />
-                        <Text style={{ fontSize: 13, color: mutedColor }}>{resourceLabel}</Text>
+                        <Text className="text-muted-foreground text-[13px]">{resourceLabel}</Text>
                     </View>
                     <EntryLabel isVisible={!!entry.resource_label} label={entry.resource_label} />
-                    <Text style={{ fontSize: 12, color: mutedColor }}>
+                    <Text className="text-muted-foreground text-xs">
                         {formatRelativeTime(entry.created)}
                     </Text>
                 </View>
@@ -293,9 +246,8 @@ function AuditLogRow({ entry }: { entry: AuditEntry }) {
 }
 
 function EntryLabel({ isVisible, label }: { isVisible: boolean; label: string }) {
-    const fgColor = useThemeColor('foreground')
     if (!isVisible) return null
-    return <Text style={{ fontSize: 13, color: fgColor }}>{label}</Text>
+    return <Text className="text-foreground text-[13px]">{label}</Text>
 }
 
 function ExpandIcon({
@@ -318,7 +270,9 @@ function ExpandIcon({
 function ActionBadge({ action, colors }: { action: string; colors: { bg: string; text: string } }) {
     return (
         <View className="rounded px-1.5 py-0.5" style={{ backgroundColor: colors.bg }}>
-            <Text style={{ fontSize: 11, fontWeight: '600', color: colors.text }}>{action}</Text>
+            <Text className="text-[11px] font-semibold" style={{ color: colors.text }}>
+                {action}
+            </Text>
         </View>
     )
 }
@@ -334,24 +288,14 @@ function AuditDetails({
     changes: Record<string, { before?: unknown; after?: unknown; redacted?: boolean }> | null
     snapshot: Record<string, unknown> | null
 }) {
-    const fgColor = useThemeColor('foreground')
-    const mutedColor = useThemeColor('muted-foreground')
-    const surfaceBg = useThemeColor('surface-secondary')
-
     if (!isVisible) return null
 
     if (action === 'updated' && changes) {
         return (
             <View className="px-4 pb-3 gap-1.5">
                 {Object.entries(changes).map(([field, change]) => (
-                    <View
-                        key={field}
-                        className="rounded-md p-2"
-                        style={{ backgroundColor: surfaceBg }}
-                    >
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: fgColor }}>
-                            {field}
-                        </Text>
+                    <View key={field} className="rounded-md p-2 bg-surface-secondary">
+                        <Text className="text-foreground text-xs font-semibold">{field}</Text>
                         <ChangeDetail isVisible={!change.redacted} change={change} />
                         <RedactedLabel isVisible={!!change.redacted} />
                     </View>
@@ -365,12 +309,10 @@ function AuditDetails({
             <View className="px-4 pb-3 gap-1.5">
                 {Object.entries(snapshot).map(([field, value]) => (
                     <View key={field} className="flex-row gap-2">
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: mutedColor }}>
+                        <Text className="text-muted-foreground text-xs font-semibold">
                             {field}:
                         </Text>
-                        <Text className="flex-1" style={{ fontSize: 12, color: fgColor }}>
-                            {formatValue(value)}
-                        </Text>
+                        <Text className="flex-1 text-foreground text-xs">{formatValue(value)}</Text>
                     </View>
                 ))}
             </View>
@@ -387,23 +329,19 @@ function ChangeDetail({
     isVisible: boolean
     change: { before?: unknown; after?: unknown }
 }) {
-    const dangerColor = useThemeColor('danger')
-    const successColor = '#22c55e'
-
     if (!isVisible) return null
 
     return (
         <View className="gap-0.5 mt-1">
-            <Text style={{ fontSize: 11, color: dangerColor }}>- {formatValue(change.before)}</Text>
-            <Text style={{ fontSize: 11, color: successColor }}>+ {formatValue(change.after)}</Text>
+            <Text className="text-danger text-[11px]">- {formatValue(change.before)}</Text>
+            <Text className="text-success text-[11px]">+ {formatValue(change.after)}</Text>
         </View>
     )
 }
 
 function RedactedLabel({ isVisible }: { isVisible: boolean }) {
-    const mutedColor = useThemeColor('muted-foreground')
     if (!isVisible) return null
-    return <Text style={{ fontSize: 11, fontStyle: 'italic', color: mutedColor }}>[redacted]</Text>
+    return <Text className="text-muted-foreground text-[11px] italic">[redacted]</Text>
 }
 
 function formatResourceType(resourceType: string): string {

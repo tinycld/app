@@ -9,28 +9,14 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 
 export default function SettingsIndex() {
     const foregroundColor = useThemeColor('foreground')
-    const bgColor = useThemeColor('background')
     const { isAdmin } = useCurrentRole()
     const orgHref = useOrgHref()
     const router = useRouter()
 
     return (
-        <ScrollView
-            className="flex-1"
-            style={{ backgroundColor: bgColor }}
-            contentContainerStyle={{ flexGrow: 1 }}
-        >
+        <ScrollView className="flex-1 bg-background" contentContainerStyle={{ flexGrow: 1 }}>
             <View className="p-5 max-w-[600px] w-full">
-                <Text
-                    className="mb-4"
-                    style={{
-                        fontSize: 28,
-                        fontWeight: 'bold',
-                        color: foregroundColor,
-                    }}
-                >
-                    Settings
-                </Text>
+                <Text className="mb-4 text-foreground text-[28px] font-bold">Settings</Text>
 
                 <SettingsGroup label="Account">
                     <SettingsLink
@@ -109,31 +95,15 @@ function AdminSettings({ isVisible }: { isVisible: boolean }) {
 }
 
 function SettingsGroup({ label, children }: { label: string; children: React.ReactNode }) {
-    const primaryColor = useThemeColor('primary')
-    const surfaceBg = useThemeColor('surface-secondary')
-    const borderColor = useThemeColor('border')
-
     return (
         <View className="mb-5">
             <Text
-                className="mb-2"
-                style={{
-                    fontSize: 13,
-                    fontWeight: '600',
-                    color: primaryColor,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.5,
-                }}
+                className="mb-2 text-primary text-[13px] font-semibold uppercase"
+                style={{ letterSpacing: 0.5 }}
             >
                 {label}
             </Text>
-            <View
-                className="rounded-xl border overflow-hidden"
-                style={{
-                    backgroundColor: surfaceBg,
-                    borderColor: borderColor,
-                }}
-            >
+            <View className="rounded-xl border overflow-hidden bg-surface-secondary border-border">
                 {children}
             </View>
         </View>
@@ -149,7 +119,6 @@ function SettingsLink({
     onPress: () => void
     icon: React.ReactNode
 }) {
-    const foregroundColor = useThemeColor('foreground')
     const mutedColor = useThemeColor('muted-foreground')
 
     return (
@@ -160,7 +129,7 @@ function SettingsLink({
         >
             <View className="flex-row items-center gap-3">
                 {icon}
-                <Text style={{ fontSize: 16, color: foregroundColor }}>{label}</Text>
+                <Text className="text-foreground text-base">{label}</Text>
             </View>
             <ChevronRight size={18} color={mutedColor} />
         </Pressable>
