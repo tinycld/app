@@ -21,7 +21,7 @@ RUN bun install --frozen-lockfile --ignore-scripts
 COPY scripts/ ./scripts/
 COPY server/ ./server/
 COPY tinycld.packages.ts ./
-COPY app.json tsconfig.json ./
+COPY app.json app.config.js tsconfig.json ./
 COPY app/ ./app/
 COPY lib/ ./lib/
 COPY public/ ./public/
@@ -56,12 +56,15 @@ ENV EXPO_PUBLIC_ENV=web
 ENV EXPO_PUBLIC_SENTRY_DSN=$EXPO_PUBLIC_SENTRY_DSN
 ENV EXPO_PUBLIC_GIT_COMMIT=$EXPO_PUBLIC_GIT_COMMIT
 ENV EXPO_PUBLIC_RELEASE_ID=$RELEASE_ID
+
+# EXPO_BASE_URL rewrites every asset URL in the bundle to /v/<RELEASE_ID>/...
+# so stale tabs resolve their old asset URLs as long as that release directory
+# exists on the host volume. Read by expo-router at bundle time
+# (process.env.EXPO_BASE_URL).
+ENV EXPO_BASE_URL=/v/$RELEASE_ID
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 
-# --base-url rewrites every asset URL to /v/<RELEASE_ID>/... so stale tabs
-# resolve their old asset URLs as long as that release directory exists on
-# the host volume.
-RUN bunx expo export --platform web --base-url=/v/$RELEASE_ID
+RUN bunx expo export --platform web
 
 # Stage the dist tree under release-staging/<id>/. The runtime entrypoint
 # copies this to the persistent volume at /app/releases/<id>/ on container
