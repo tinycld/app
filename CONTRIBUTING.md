@@ -190,6 +190,7 @@ side runs `cd server && go test ./...` plus
 - `lib/generated/`, `app/a/[orgSlug]/*/`, and `/app/share/` are gitignored; `app/a/[orgSlug]/_layout.tsx` and `app/a/[orgSlug]/settings/*` are app files (force-add to git).
 - **Do NOT `bun install` inside a feature sibling repo** — bun auto-installs peer deps, which duplicates `react`, `react-native`, `pbtsdb`, etc. and causes hundreds of "Type X is not assignable to type X" errors. Siblings inherit peer deps through this repo's `node_modules/` via the link symlink.
 - Metro bundler reads sibling packages via `watchFolders` + `nodeModulesPaths` in `metro.config.cjs`, computed dynamically by scanning `tinycld/packages/`.
+- **Tailwind/Uniwind class scanning across linked packages is wired up by the generator.** Tailwind v4's scanner respects `.gitignore`, and the symlinks (and `node_modules` installs) for linked packages live inside gitignored paths. Without help, any utility class used **only** inside a linked package (e.g. `mr-3`, `bg-green-500`) silently produces no CSS rule — the className lands on the DOM element but has no styles. The generator writes one absolute `@source "<package-real-path>";` line per linked package into `lib/generated/uniwind-sources.css`, which `global.css` imports. The file regenerates on every `packages:link` / `packages:unlink`, so newly-linked packages (siblings, `node_modules`-installed third-party, or arbitrary checkouts) work automatically. Diagnose missing styles by checking `document.styleSheets` in DevTools for a `.your-class { ... }` rule; if missing, run `bun run packages:generate` and inspect `lib/generated/uniwind-sources.css`.
 - Sibling-package tests (vitest) are discovered via `packages/@*/*/tests/**/*.test.ts` in `vitest.config.ts`; Playwright discovers them via a matching glob in `playwright.config.ts`.
 - Runtime hooks: `usePackages()` and `usePackage(slug)` from `@tinycld/core/lib/packages/use-packages`.
 - Full documentation: `docs/packages.md` (in this repo, or in core's docs subtree).
@@ -233,6 +234,11 @@ side runs `cd server && go test ./...` plus
   - Tuple form for multiple colors: `const [fg, bg] = useThemeColor(['foreground', 'background'])`.
   - Custom theme tokens are defined in `global.css` under `@variant light` / `@variant dark`.
   - Do not use `StyleSheet.create` — prefer `className` or inline `style` objects.
+  - **Prefer `className` over `useThemeColor` + inline `style`.** When both work, the className form is shorter, declarative, and survives token renames. Reach for `useThemeColor` only when className isn't an option:
+    - Props that take a literal color string (Lucide icons' `color`, `<RefreshControl tintColor>`, gradient stops, `shadowColor`).
+    - Computed colors with opacity, e.g. `` `${activeIndicator}12` `` for a semi-transparent overlay (NativeWind's `bg-primary/10` covers many cases — use it when it does).
+    - Style-callback APIs that don't accept className (`Pressable`'s `style={({ pressed }) => …}`).
+    - Animated styles via reanimated where the value must be a JS string.
 
 ## Documentation & Support
 - Gluestack UI: https://v5.gluestack.io/llms.txt
