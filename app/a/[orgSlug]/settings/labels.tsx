@@ -1,17 +1,19 @@
 import { LabelManagerPanel } from '@tinycld/core/components/LabelManagerDialog'
+import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
-import { useRouter } from 'expo-router'
+import { useNavigateBack } from '@tinycld/core/lib/use-navigate-back'
 import { ArrowLeft, Tag } from 'lucide-react-native'
 import { Pressable, Text, View } from 'react-native'
 
 export default function LabelsSettings() {
-    const router = useRouter()
+    const orgHref = useOrgHref()
+    const navigateBack = useNavigateBack(() => orgHref('settings'))
     const fgColor = useThemeColor('foreground')
 
     return (
         <View className="flex-1 bg-background">
             <View className="flex-row gap-3 items-center p-5 pb-0">
-                <Pressable onPress={() => router.back()}>
+                <Pressable onPress={navigateBack}>
                     <ArrowLeft size={24} color={fgColor} />
                 </Pressable>
                 <Tag size={24} color={fgColor} />

@@ -7,11 +7,13 @@ import { useAuth } from '@tinycld/core/lib/auth'
 import { COLOR_THEMES, type ColorThemeSlug } from '@tinycld/core/lib/color-themes'
 import { handleMutationErrorsWithForm } from '@tinycld/core/lib/errors'
 import { mutation, useMutation } from '@tinycld/core/lib/mutations'
+import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import type { PackageManifest } from '@tinycld/core/lib/packages/types'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useAccessiblePackages } from '@tinycld/core/lib/use-accessible-packages'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useColorTheme } from '@tinycld/core/lib/use-color-theme'
+import { useNavigateBack } from '@tinycld/core/lib/use-navigate-back'
 import {
     type MailNotifyMode,
     type NotificationPreferences,
@@ -22,7 +24,6 @@ import { type ThemePreference, useThemePreference } from '@tinycld/core/lib/use-
 import { useUserPreference } from '@tinycld/core/lib/use-user-preference'
 import { FormErrorSummary, TextInput, useForm, z, zodResolver } from '@tinycld/core/ui/form'
 import { ThemedSwitch } from '@tinycld/core/ui/ThemedSwitch'
-import { useRouter } from 'expo-router'
 import { ArrowLeft, Check, RotateCcw } from 'lucide-react-native'
 import { useCallback, useMemo } from 'react'
 import {
@@ -46,7 +47,8 @@ const profileSchema = z.object({
 })
 
 export default function PersonalSettings() {
-    const router = useRouter()
+    const orgHref = useOrgHref()
+    const navigateBack = useNavigateBack(() => orgHref('settings'))
     const foregroundColor = useThemeColor('foreground')
 
     return (
@@ -54,7 +56,7 @@ export default function PersonalSettings() {
             <ScrollView className="flex-1 bg-background" contentContainerStyle={{ flexGrow: 1 }}>
                 <View className="p-5 max-w-[600px] gap-6">
                     <View className="flex-row gap-3 items-center">
-                        <Pressable onPress={() => router.back()}>
+                        <Pressable onPress={navigateBack}>
                             <ArrowLeft size={24} color={foregroundColor} />
                         </Pressable>
                         <Text className="text-foreground text-[22px] font-bold">

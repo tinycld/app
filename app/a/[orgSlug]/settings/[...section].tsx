@@ -2,6 +2,7 @@ import { packageSettings } from '@tinycld/app-generated/package-settings'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useCurrentRole } from '@tinycld/core/lib/use-current-role'
+import { useNavigateBack } from '@tinycld/core/lib/use-navigate-back'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeft } from 'lucide-react-native'
 import { Suspense, useMemo } from 'react'
@@ -11,6 +12,7 @@ export default function PackageSettingsSection() {
     const router = useRouter()
     const { isAdmin } = useCurrentRole()
     const orgHref = useOrgHref()
+    const navigateBack = useNavigateBack(() => orgHref('settings'))
     const params = useLocalSearchParams<{ section: string[] }>()
     const segments = params.section ?? []
     const [pkgSlug, panelSlug] = segments
@@ -64,7 +66,7 @@ export default function PackageSettingsSection() {
     return (
         <View className="flex-1" style={{ backgroundColor: bgColor }}>
             <View className="flex-row gap-3 items-center p-5 pb-0">
-                <Pressable onPress={() => router.back()}>
+                <Pressable onPress={navigateBack}>
                     <ArrowLeft size={24} color={fgColor} />
                 </Pressable>
                 <Text style={{ fontSize: 22, fontWeight: 'bold', color: fgColor }}>

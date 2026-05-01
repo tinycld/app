@@ -4,9 +4,11 @@ import { OrgLogo } from '@tinycld/core/components/OrgLogo'
 import { handleMutationErrorsWithForm } from '@tinycld/core/lib/errors'
 import { formatBytes } from '@tinycld/core/lib/format-utils'
 import { mutation, useMutation } from '@tinycld/core/lib/mutations'
+import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { pb, useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useCurrentRole } from '@tinycld/core/lib/use-current-role'
+import { useNavigateBack } from '@tinycld/core/lib/use-navigate-back'
 import { useOrgInfo } from '@tinycld/core/lib/use-org-info'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
 import { Divider } from '@tinycld/core/ui/divider'
@@ -19,7 +21,6 @@ import {
     zodResolver,
 } from '@tinycld/core/ui/form'
 import * as DocumentPicker from 'expo-document-picker'
-import { useRouter } from 'expo-router'
 import { ArrowLeft } from 'lucide-react-native'
 import { newRecordId } from 'pbtsdb/core'
 import { useState } from 'react'
@@ -63,7 +64,8 @@ function formatStorageBytes(bytes: number): string {
 }
 
 export default function OrganizationSettings() {
-    const router = useRouter()
+    const orgHref = useOrgHref()
+    const navigateBack = useNavigateBack(() => orgHref('settings'))
     const { isAdmin } = useCurrentRole()
     const { orgId } = useOrgInfo()
     const [orgsCollection] = useStore('orgs')
@@ -94,7 +96,7 @@ export default function OrganizationSettings() {
                 draft.name = data.name.trim()
             })
         }),
-        onSuccess: () => router.back(),
+        onSuccess: navigateBack,
         onError: handleMutationErrorsWithForm({ setError, getValues }),
     })
 
@@ -116,7 +118,7 @@ export default function OrganizationSettings() {
             <View className="flex-1 p-5 max-w-[600px]">
                 <View className="flex-row justify-between items-center mb-5">
                     <View className="flex-row gap-3 items-center">
-                        <Pressable onPress={() => router.back()}>
+                        <Pressable onPress={navigateBack}>
                             <ArrowLeft size={24} color={fgColor} />
                         </Pressable>
                         <Text
