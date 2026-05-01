@@ -69,13 +69,8 @@ const PROPFIND_EVENT_BODY = `<?xml version="1.0" encoding="utf-8" ?>
  */
 function parseMultistatusResponses(
     xml: string
-): { href: string; displayname?: string; etag?: string; isCollection: boolean }[] {
-    const responses: {
-        href: string
-        displayname?: string
-        etag?: string
-        isCollection: boolean
-    }[] = []
+): { href: string; displayname?: string; etag?: string }[] {
+    const responses: { href: string; displayname?: string; etag?: string }[] = []
     const responseRe = /<(?:\w+:)?response\b[^>]*>([\s\S]*?)<\/(?:\w+:)?response>/g
     for (const m of xml.matchAll(responseRe)) {
         const block = m[1]
@@ -86,13 +81,10 @@ function parseMultistatusResponses(
             block
         )
         const etagMatch = /<(?:\w+:)?getetag\b[^>]*>([\s\S]*?)<\/(?:\w+:)?getetag>/.exec(block)
-        const isCollection =
-            /<(?:\w+:)?collection\b/.test(block) || /<(?:\w+:)?calendar\b/.test(block)
         responses.push({
             href,
             displayname: dnMatch?.[1].trim(),
             etag: etagMatch?.[1].trim().replace(/^"|"$/g, ''),
-            isCollection,
         })
     }
     return responses
@@ -110,20 +102,11 @@ export async function propfindCalendars(): Promise<CalDAVCalendar[]> {
     const xml = await res.text()
     const responses = parseMultistatusResponses(xml)
 
-    return responses
-        .filter(r => {
-            const m = /\/caldav\/u\/cal\/([^/]+)\/?$/.exec(r.href)
-            return m !== null && m[1] !== ''
-        })
-        .map(r => {
-            const m = /\/caldav\/u\/cal\/([^/]+)\/?$/.exec(r.href)
-            const id = m![1]
-            return {
-                id,
-                name: r.displayname ?? '',
-                path: r.href,
-            }
-        })
+    return responses.flatMap(r => {
+        const m = /\/caldav\/u\/cal\/([^/]+)\/?$/.exec(r.href)
+        if (!m?.[1]) return []
+        return [{ id: m[1], name: r.displayname ?? '', path: r.href }]
+    })
 }
 
 export async function propfindEvents(calendarId: string): Promise<CalDAVEventRef[]> {
