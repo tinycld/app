@@ -51,28 +51,36 @@ RUN find server/pb_migrations server/pb_hooks -type l -exec sh -c 'target=$(read
 # via `docker build --build-arg`.
 ARG EXPO_PUBLIC_SENTRY_DSN=
 ARG EXPO_PUBLIC_GIT_COMMIT=
-ARG RELEASE_ID
+# RELEASE_ID is supplied by deploy/build.sh as <date>-<sha>. When Dokku
+# builds directly (no build.sh), we fall back to a date-only id derived
+# inside the build below — the format must still match the regex enforced
+# by the Go server (^\d{4}-\d{2}-\d{2}-\d{6}-[a-f0-9]+$).
+ARG RELEASE_ID=
 ENV EXPO_PUBLIC_ENV=web
 ENV EXPO_PUBLIC_SENTRY_DSN=$EXPO_PUBLIC_SENTRY_DSN
 ENV EXPO_PUBLIC_GIT_COMMIT=$EXPO_PUBLIC_GIT_COMMIT
-ENV EXPO_PUBLIC_RELEASE_ID=$RELEASE_ID
-
-# EXPO_BASE_URL rewrites every asset URL in the bundle to /v/<RELEASE_ID>/...
-# so stale tabs resolve their old asset URLs as long as that release directory
-# exists on the host volume. Read by expo-router at bundle time
-# (process.env.EXPO_BASE_URL).
-ENV EXPO_BASE_URL=/v/$RELEASE_ID
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 
-RUN bunx expo export --platform web
-
-# Stage the dist tree under release-staging/<id>/. The runtime entrypoint
-# copies this to the persistent volume at /app/releases/<id>/ on container
-# start. index.html is renamed to app.html (used as the SPA fallback file).
-RUN mkdir -p /app/release-staging \
-    && mv /app/dist /app/release-staging/$RELEASE_ID \
-    && echo "$RELEASE_ID" > /app/release-staging/$RELEASE_ID/release-id.txt \
-    && mv /app/release-staging/$RELEASE_ID/index.html /app/release-staging/$RELEASE_ID/app.html
+# Resolve effective release id, build the bundle with EXPO_BASE_URL pointing
+# at /v/<id>/, and stage the dist tree under release-staging/<id>/. Done in
+# one shell so the resolved id is consistent across all four steps. The
+# entrypoint promotes this directory to the persistent volume on container
+# start, and renames the SPA shell from index.html to app.html.
+RUN set -eu \
+    && rid="$RELEASE_ID" \
+    && if [ -z "$rid" ]; then \
+        sha="${EXPO_PUBLIC_GIT_COMMIT:-deadbeef}"; \
+        sha=$(printf '%s' "$sha" | cut -c1-7); \
+        case "$sha" in *[!a-f0-9]*) sha=deadbeef;; esac; \
+        rid="$(date -u +%Y-%m-%d-%H%M%S)-$sha"; \
+    fi \
+    && export EXPO_PUBLIC_RELEASE_ID="$rid" \
+    && export EXPO_BASE_URL="/v/$rid" \
+    && bunx expo export --platform web \
+    && mkdir -p /app/release-staging \
+    && mv /app/dist "/app/release-staging/$rid" \
+    && printf '%s' "$rid" > "/app/release-staging/$rid/release-id.txt" \
+    && mv "/app/release-staging/$rid/index.html" "/app/release-staging/$rid/app.html"
 
 
 # Build stage for Go server.
