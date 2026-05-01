@@ -1,1 +1,8 @@
-{}
+{
+    "cron": [
+        {
+            "command": "/app/bin/prune-releases.sh",
+            "schedule": "0 3 * * *"
+        }
+    ]
+}
