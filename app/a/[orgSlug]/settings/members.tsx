@@ -14,17 +14,19 @@ import {
     ROLE_ORDER,
 } from '@tinycld/core/components/settings/members/types'
 import { useAuth } from '@tinycld/core/lib/auth'
+import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useCurrentRole } from '@tinycld/core/lib/use-current-role'
+import { useNavigateBack } from '@tinycld/core/lib/use-navigate-back'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
-import { useRouter } from 'expo-router'
 import { ArrowLeft, ChevronRight, Search, UserPlus, Users } from 'lucide-react-native'
 import { useMemo, useState } from 'react'
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 
 export default function MembersSettings() {
-    const router = useRouter()
+    const orgHref = useOrgHref()
+    const navigateBack = useNavigateBack(() => orgHref('settings'))
     const { isAdmin, isOwner } = useCurrentRole()
     const { user } = useAuth()
     const [userOrgCollection, usersCollection] = useStore('user_org', 'users')
@@ -157,7 +159,7 @@ export default function MembersSettings() {
                 <View className="flex-1 gap-6 p-5" style={{ maxWidth: 820 }}>
                     <View className="flex-row items-center gap-3">
                         <Pressable
-                            onPress={() => router.back()}
+                            onPress={navigateBack}
                             hitSlop={12}
                             className="rounded-full"
                             style={{ padding: 6 }}

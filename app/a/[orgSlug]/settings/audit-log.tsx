@@ -1,9 +1,10 @@
 import { and, eq } from '@tanstack/db'
+import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useCurrentRole } from '@tinycld/core/lib/use-current-role'
+import { useNavigateBack } from '@tinycld/core/lib/use-navigate-back'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
-import { useRouter } from 'expo-router'
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react-native'
 import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
@@ -37,7 +38,8 @@ const ACTION_BADGE_COLORS = {
 } as const
 
 export default function AuditLogSettings() {
-    const router = useRouter()
+    const orgHref = useOrgHref()
+    const navigateBack = useNavigateBack(() => orgHref('settings'))
     const { isAdmin } = useCurrentRole()
     const [actionFilter, setActionFilter] = useState('')
     const [resourceFilter, setResourceFilter] = useState('')
@@ -58,7 +60,7 @@ export default function AuditLogSettings() {
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="bg-background">
             <View className="flex-1 p-5 max-w-[700px]">
                 <View className="flex-row gap-3 items-center mb-5">
-                    <Pressable onPress={() => router.back()}>
+                    <Pressable onPress={navigateBack}>
                         <ArrowLeft size={24} color={fgColor} />
                     </Pressable>
                     <Text className="text-foreground text-[22px] font-bold">Audit Log</Text>

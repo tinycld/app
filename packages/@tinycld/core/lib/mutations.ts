@@ -87,11 +87,12 @@ export function mutation<TData = void, TVariables = void>(
  *
  * @example Generator-based (recommended for pbtsdb operations)
  * ```ts
+ * const navigateBack = useNavigateBack(() => orgHref('contacts'))
  * const create = useMutation({
  *     mutationFn: function* (data: FormData) {
  *         yield contactsCollection.insert({ id: newRecordId(), ...data })
  *     },
- *     onSuccess: () => router.back(),
+ *     onSuccess: navigateBack,
  *     onError: handleMutationErrorsWithForm({ setError, getValues }),
  * })
  * ```
