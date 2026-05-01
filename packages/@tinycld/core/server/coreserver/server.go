@@ -21,6 +21,13 @@ type Options struct {
 	PublicDir    string
 	FallbackFile string
 
+	// ReleasesDir is the directory containing per-deploy web bundle
+	// subdirectories (e.g. /app/releases/2026-05-01-143022-abc1234/) plus
+	// a `current` symlink. Used by the /v/<id>/... handler and by the SPA
+	// fallback. When empty or missing on disk, the server falls back to
+	// the legacy single-PublicDir behavior (used in dev).
+	ReleasesDir string
+
 	// Schema generation
 	TypesDir string
 
@@ -129,6 +136,8 @@ func registerFlags(app *pocketbase.PocketBase, opts *Options) {
 	f.StringVar(&opts.PublicDir, "publicDir", opts.PublicDir, "the directory to serve static files")
 	f.StringVar(&opts.FallbackFile, "fallbackFile", opts.FallbackFile,
 		"fallback to this file on missing static path for SPA routes")
+	f.StringVar(&opts.ReleasesDir, "releasesDir", opts.ReleasesDir,
+		"the directory containing per-release web bundle subdirectories")
 	f.StringVar(&opts.TypesDir, "typesDir", opts.TypesDir,
 		"the directory to write generated TypeScript schema files")
 }

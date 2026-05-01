@@ -19,6 +19,18 @@ func DefaultPublicDir() string {
 	return filepath.Join(os.Args[0], "../public")
 }
 
+// DefaultReleasesDir returns the default releases dir relative to the
+// running executable — "./releases" when running via `go run` (tempdir
+// binary) or next to the installed binary otherwise. The runtime
+// entrypoint promotes per-deploy bundles into this directory; a `current`
+// symlink there points at the active release.
+func DefaultReleasesDir() string {
+	if strings.HasPrefix(os.Args[0], os.TempDir()) {
+		return "./releases"
+	}
+	return filepath.Join(os.Args[0], "../releases")
+}
+
 // DefaultTypesDir returns the default location the server writes generated
 // pbSchema.ts / pbZodSchema.ts to, relative to the running executable.
 // Writes into core's types/ alongside app-generated.d.ts.
