@@ -50,6 +50,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/jdeng/goheif v0.0.0-20260407171156-9bf5264f67af // indirect
 	github.com/jupiterrider/ffi v0.2.0 // indirect
 	github.com/ledongthuc/pdf v0.0.0-20240201131950-da5b75280b06 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect

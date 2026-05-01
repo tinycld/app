@@ -6,9 +6,11 @@ require (
 	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/gen2brain/go-fitz v1.24.14
+	github.com/jdeng/goheif v0.0.0-20260407171156-9bf5264f67af
 	github.com/ledongthuc/pdf v0.0.0-20240201131950-da5b75280b06
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mrz1836/postmark v1.9.0
+	github.com/pocketbase/dbx v1.12.0
 	github.com/pocketbase/pocketbase v0.36.8
 )
 
@@ -37,7 +39,6 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
-	github.com/pocketbase/dbx v1.12.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
