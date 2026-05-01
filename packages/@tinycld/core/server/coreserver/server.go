@@ -174,8 +174,19 @@ func registerStaticServe(app *pocketbase.PocketBase, opts Options) {
 			GenerateSchemas(e.App, opts.TypesDir)
 			SyncBundledPackages(e.App)
 
+			// Per-release versioned asset handler. Registered before the
+			// catch-all so /v/<id>/... wins for matching paths.
+			if opts.ReleasesDir != "" {
+				e.Router.GET("/v/{releaseId}/{path...}", VersionedAssets(opts.ReleasesDir))
+				e.Router.GET("/api/version", VersionHandler(opts.ReleasesDir))
+			}
+
 			if !e.Router.HasRoute(http.MethodGet, "/{path...}") {
-				e.Router.Any("/{path...}", StaticWithFallback(opts.PublicDir, opts.FallbackFile))
+				if opts.ReleasesDir != "" {
+					e.Router.Any("/{path...}", StaticWithDynamicFallback(opts.PublicDir, opts.ReleasesDir))
+				} else {
+					e.Router.Any("/{path...}", StaticWithFallback(opts.PublicDir, opts.FallbackFile))
+				}
 			}
 
 			return e.Next()
