@@ -20,7 +20,6 @@ export function NewVersionToast() {
     return (
         <View
             // position: 'fixed' is web-only; safe under the Platform.OS check.
-            // @ts-expect-error fixed positioning isn't typed for RN core
             style={{ position: 'fixed', bottom: 16, right: 16, zIndex: 50 }}
             className="rounded-lg bg-accent px-4 py-3 shadow-lg"
         >

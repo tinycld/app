@@ -8,7 +8,9 @@ import '~/lib/polyfill-crypto'
 import '~/lib/configure-core'
 import '~/global.css'
 import { MinimalProviders } from '@tinycld/core/components/MinimalProviders'
+import { NewVersionToast } from '@tinycld/core/components/NewVersionToast'
 import { initSentry } from '@tinycld/core/lib/sentry'
+import { useVersionCheck } from '@tinycld/core/lib/use-version-check'
 import {
     getResolvedAddress,
     readCached,
@@ -83,6 +85,7 @@ function useServerAddressGate(pathname: string): GateState {
 export default function Layout() {
     const pathname = usePathname()
     const state = useServerAddressGate(pathname)
+    useVersionCheck()
 
     if (state.status === 'resolving') {
         return (
@@ -111,6 +114,7 @@ export default function Layout() {
     return (
         <Providers>
             <Slot />
+            <NewVersionToast />
         </Providers>
     )
 }
