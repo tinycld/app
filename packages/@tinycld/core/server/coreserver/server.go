@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/jsvm"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
@@ -122,7 +124,43 @@ func Register(app *pocketbase.PocketBase, opts Options) {
 	RegisterUsersDemoAuditHook(app)
 
 	registerSchemaHooks(app, opts.TypesDir)
+	registerDavCorsBypass(app)
 	registerStaticServe(app, opts)
+}
+
+// registerDavCorsBypass wraps PocketBase's default CORS middleware so that
+// requests under /caldav, /carddav, and /drive skip CORS entirely.
+//
+// Why: the default middleware always returns 204 for OPTIONS requests
+// (including non-browser DAV clients like macOS Finder that send no Origin
+// header). The 204 has no DAV: or Allow: headers, so Finder concludes the
+// endpoint is not a DAV server and aborts with a generic "problem connecting
+// to the server" dialog. CORS is irrelevant for these protocols — clients
+// are not browsers — so we let DAV requests bypass CORS and reach the
+// underlying handler, which sets the correct DAV class advertisement.
+func registerDavCorsBypass(app *pocketbase.PocketBase) {
+	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		for _, mw := range e.Router.Middlewares {
+			if mw.Id != apis.DefaultCorsMiddlewareId {
+				continue
+			}
+			original := mw.Func
+			mw.Func = func(re *core.RequestEvent) error {
+				if isDavPath(re.Request.URL.Path) {
+					return re.Next()
+				}
+				return original(re)
+			}
+			break
+		}
+		return e.Next()
+	})
+}
+
+func isDavPath(path string) bool {
+	return strings.HasPrefix(path, "/caldav") ||
+		strings.HasPrefix(path, "/carddav") ||
+		strings.HasPrefix(path, "/drive")
 }
 
 // registerFlags binds the persistent CLI flags shared by every tinycld server.
