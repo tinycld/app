@@ -26,7 +26,7 @@ func TestRegisterAuditHooksWiresCoreCollections(t *testing.T) {
 // TestApp. We don't validate file contents — only that the call path is
 // wired and returns cleanly when typesDir is a fresh tempdir.
 func TestSchemaGenerationDoesNotPanic(t *testing.T) {
-	app, err := tests.NewTestApp(testDataDir)
+	app, err := tests.NewTestApp()
 	if err != nil {
 		t.Fatalf("NewTestApp: %v", err)
 	}
@@ -52,7 +52,7 @@ func TestBinaryNameDefaults(t *testing.T) {
 // behavior, so a future regression that drops the binding (without changing
 // behavior) still surfaces.
 func TestRegisterAccountDeleteCoreSurfacesEndpoint(t *testing.T) {
-	app, err := tests.NewTestApp(testDataDir)
+	app, err := tests.NewTestApp()
 	if err != nil {
 		t.Fatalf("NewTestApp: %v", err)
 	}
