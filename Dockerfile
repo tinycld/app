@@ -21,7 +21,7 @@ RUN bun install --frozen-lockfile --ignore-scripts
 COPY scripts/ ./scripts/
 COPY server/ ./server/
 COPY tinycld.packages.ts ./
-COPY app.json app.config.js tsconfig.json ./
+COPY app.json tsconfig.json ./
 COPY app/ ./app/
 COPY lib/ ./lib/
 COPY public/ ./public/
@@ -62,11 +62,12 @@ ENV NODE_OPTIONS="--max-old-space-size=2048"
 # deploy.sh), the RUN below falls back to deriving an id internally.
 COPY .release-id* ./
 
-# Resolve effective release id, build the bundle with EXPO_BASE_URL pointing
-# at /v/<id>/, and stage the dist tree under release-staging/<id>/. Done in
-# one shell so the resolved id is consistent across all four steps. The
-# entrypoint promotes this directory to the persistent volume on container
-# start, and renames the SPA shell from index.html to app.html.
+# Resolve effective release id and stage the dist tree under
+# release-staging/<id>/. Done in one shell so the resolved id is consistent
+# across all steps. The entrypoint promotes this directory to the
+# persistent volume on container start, and renames the SPA shell from
+# index.html to app.html. EXPO_PUBLIC_RELEASE_ID is inlined into the
+# bundle so /api/version polling can detect when a deploy lands.
 RUN set -eu \
     && if [ -s .release-id ]; then \
         rid=$(tr -d '[:space:]' < .release-id); \
@@ -78,7 +79,6 @@ RUN set -eu \
     fi \
     && rm -f .release-id \
     && export EXPO_PUBLIC_RELEASE_ID="$rid" \
-    && export EXPO_BASE_URL="/v/$rid" \
     && bunx expo export --platform web \
     && mkdir -p /app/release-staging \
     && mv /app/dist "/app/release-staging/$rid" \
