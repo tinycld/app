@@ -173,6 +173,7 @@ RUN chmod +x ./bin/*.sh
 
 COPY config/dokku.app.json ./app.json
 COPY config/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
 
 # 7090: default HTTP (backward compat / dev)
 # 80/443: autocert HTTP/HTTPS (production with domain)
