@@ -46,17 +46,20 @@ promote_release() {
     src="$staging_dir/$release_id"
     dst="$releases_dir/$release_id"
 
+    # Treat a previously-promoted dst as valid only if it has app.html.
+    # If a prior boot left a half-promoted tree (interrupted copy, broken
+    # nested layout from a buggy cp invocation, etc.), the [ -d "$dst" ]
+    # check below would skip and reuse the corrupt tree; this guard wipes
+    # it so the next attempt re-promotes from staging cleanly.
+    if [ -d "$dst" ] && [ ! -f "$dst/app.html" ]; then
+        echo "[entrypoint] WARN: $dst exists but app.html is missing; clearing for re-promote"
+        rm -rf "$dst"
+    fi
+
     if [ ! -d "$dst" ]; then
         echo "[entrypoint] promoting release $release_id ($src -> $dst)"
-        # Hard-link the tree onto the volume when both live on the same
-        # filesystem (the common case). Per-release dirs are immutable
-        # after promotion — pruning only ever rm -rfs the whole dir, so
-        # links can't accidentally mutate older releases. Falls back to a
-        # full copy if hard-linking fails (e.g. cross-filesystem mount).
-        if ! cp -al "$src" "$dst.tmp" 2>/dev/null; then
-            echo "[entrypoint] hard-link unavailable; falling back to full copy"
-            cp -a "$src" "$dst.tmp"
-        fi
+        rm -rf "$dst.tmp"
+        cp -a "$src" "$dst.tmp"
         mv "$dst.tmp" "$dst"
         echo "[entrypoint] promotion complete; size=$(du -sh "$dst" 2>/dev/null | cut -f1)"
     else
