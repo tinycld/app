@@ -160,7 +160,10 @@ func registerDavCorsBypass(app *pocketbase.PocketBase) {
 func isDavPath(path string) bool {
 	return strings.HasPrefix(path, "/caldav") ||
 		strings.HasPrefix(path, "/carddav") ||
-		strings.HasPrefix(path, "/drive")
+		strings.HasPrefix(path, "/drive") ||
+		strings.HasPrefix(path, "/.well-known/caldav") ||
+		strings.HasPrefix(path, "/.well-known/carddav") ||
+		strings.HasPrefix(path, "/.well-known/webdav")
 }
 
 // registerFlags binds the persistent CLI flags shared by every tinycld server.
