@@ -15,7 +15,16 @@ test.describe('Keyboard shortcuts', () => {
     test('? opens the help dialog and Escape closes it', async ({ page }) => {
         test.skip(!mailLinked, 'mail package not linked')
         await navigateToPackage(page, 'mail')
-        await page.waitForSelector('body')
+        // Wait for the rail to render so the shortcut provider has mounted
+        // and tinykeys has bound its listeners before we start typing.
+        await expect(page.getByRole('link', { name: 'Mail', exact: true })).toBeVisible({
+            timeout: 10_000,
+        })
+
+        // Ensure focus is on body, not an input that would suppress shortcuts.
+        await page.evaluate(() => {
+            ;(document.activeElement as HTMLElement | null)?.blur?.()
+        })
 
         // The help shortcut binds to `Shift+?` because on real keyboards producing
         // a `?` always holds Shift. Playwright's press('?') fires the event with
