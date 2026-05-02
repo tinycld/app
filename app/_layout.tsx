@@ -17,6 +17,7 @@ import {
     setResolvedAddress,
     subscribeResolvedAddress,
 } from '@tinycld/core/lib/server-address'
+import { useChunkLoadRecovery } from '@tinycld/core/lib/use-chunk-load-recovery'
 import { useVersionCheck } from '@tinycld/core/lib/use-version-check'
 import { router, Slot, usePathname } from 'expo-router'
 import { type ComponentType, type ReactNode, useEffect, useState } from 'react'
@@ -86,6 +87,7 @@ export default function Layout() {
     const pathname = usePathname()
     const state = useServerAddressGate(pathname)
     useVersionCheck()
+    useChunkLoadRecovery()
 
     if (state.status === 'resolving') {
         return (
