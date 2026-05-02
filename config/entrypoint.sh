@@ -48,7 +48,15 @@ promote_release() {
 
     if [ ! -d "$dst" ]; then
         echo "[entrypoint] promoting release $release_id ($src -> $dst)"
-        cp -a "$src" "$dst.tmp"
+        # Hard-link the tree onto the volume when both live on the same
+        # filesystem (the common case). Per-release dirs are immutable
+        # after promotion — pruning only ever rm -rfs the whole dir, so
+        # links can't accidentally mutate older releases. Falls back to a
+        # full copy if hard-linking fails (e.g. cross-filesystem mount).
+        if ! cp -al "$src" "$dst.tmp" 2>/dev/null; then
+            echo "[entrypoint] hard-link unavailable; falling back to full copy"
+            cp -a "$src" "$dst.tmp"
+        fi
         mv "$dst.tmp" "$dst"
         echo "[entrypoint] promotion complete; size=$(du -sh "$dst" 2>/dev/null | cut -f1)"
     else
@@ -74,7 +82,7 @@ promote_release
 # Build serve arguments
 if [ -n "$SERVE_ON_DOMAINS" ]; then
     echo "Running on $SERVE_ON_DOMAINS"
-    ARGS="$SERVE_ON_DOMAINS --debug --http --https"
+    ARGS="$SERVE_ON_DOMAINS --http --https"
 else
     ARGS="--http=0.0.0.0:7090"
 fi
