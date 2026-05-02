@@ -21,11 +21,15 @@ type Options struct {
 	PublicDir    string
 	FallbackFile string
 
-	// ReleasesDir is the directory containing per-deploy web bundle
-	// subdirectories (e.g. /app/releases/2026-05-01-143022-abc1234/) plus
-	// a `current` symlink. Used by the /v/<id>/... handler and by the SPA
-	// fallback. When empty or missing on disk, the server falls back to
-	// the legacy single-PublicDir behavior (used in dev).
+	// ReleasesDir is the directory containing per-deploy web bundle state.
+	// On a deployed image it lives on the persistent volume and contains:
+	//   - <id>/             one dir per retained release, holding app.html
+	//                       + release-id.txt
+	//   - current           symlink → <id> for the active release
+	//   - _static/          cross-release asset pool (filled by entrypoint)
+	// Used by the asset-pool handlers, /api/version, and the SPA fallback.
+	// When empty or missing on disk the server falls back to the legacy
+	// single-PublicDir behavior used in dev.
 	ReleasesDir string
 
 	// Schema generation
@@ -174,10 +178,15 @@ func registerStaticServe(app *pocketbase.PocketBase, opts Options) {
 			GenerateSchemas(e.App, opts.TypesDir)
 			SyncBundledPackages(e.App)
 
-			// Per-release versioned asset handler. Registered before the
-			// catch-all so /v/<id>/... wins for matching paths.
+			// Per-route asset handlers, registered before the catch-all so
+			// the asset prefixes win. Both paths read from the cross-release
+			// asset pool the entrypoint maintains under
+			// <releasesDir>/_static/. _expo/static/ filenames are fully
+			// content-hashed (immutable), while /assets/ contains a few
+			// stable names like app-icon.png so a shorter max-age applies.
 			if opts.ReleasesDir != "" {
-				e.Router.GET("/v/{releaseId}/{path...}", VersionedAssets(opts.ReleasesDir))
+				e.Router.GET("/_expo/static/{path...}", PoolAssets(opts.ReleasesDir, "_expo/static", "public, max-age=31536000, immutable"))
+				e.Router.GET("/assets/{path...}", PoolAssets(opts.ReleasesDir, "assets", "public, max-age=300"))
 				e.Router.GET("/api/version", VersionHandler(opts.ReleasesDir))
 			}
 

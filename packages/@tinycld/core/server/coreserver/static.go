@@ -111,9 +111,9 @@ func StaticWithDynamicFallback(publicDir, releasesDir string) func(*core.Request
 			return e.FileFS(publicFs, indexPath)
 		}
 
-		// SPA fallback. Set no-store on app.html: its asset URLs reference
-		// /v/<release-id>/... and a stale cached copy will reference a
-		// release directory that may have been pruned.
+		// SPA fallback. Set no-store on app.html so a tab reload always
+		// pulls the active release's shell rather than a cached copy that
+		// may reference asset hashes the client has since dropped.
 		if releasesDir != "" {
 			currentApp := filepath.Join(releasesDir, "current", "app.html")
 			if data, err := os.ReadFile(currentApp); err == nil {
