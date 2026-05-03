@@ -198,6 +198,10 @@ async function startPocketBase(): Promise<ReturnType<typeof spawn>> {
         {
             stdio: ['ignore', 'ignore', 'pipe'],
             detached: false,
+            env: {
+                ...process.env,
+                SKIP_SENDING_MAIL: 'true',
+            },
         }
     )
 
