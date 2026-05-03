@@ -254,6 +254,7 @@ export const mailMessagesSchema = z.object({
     raw_headers: z.string().optional(),
     total_size: z.number().optional(),
     alias: z.string().regex(/^[a-z0-9]+$/).length(15).optional(),
+    cid_map: z.unknown().optional(),
 })
 
 export const mailThreadStateSchema = z.object({

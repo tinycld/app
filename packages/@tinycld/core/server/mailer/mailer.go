@@ -2,8 +2,10 @@
 // It wraps the configured provider (e.g. Postmark) so that any package can
 // send transactional emails without depending on the mail package.
 //
-// In development, emails are printed to stdout instead of delivered unless
-// DELIVER_MAIL=true is set in the environment.
+// Delivery gating: by default, PocketBase processes started with --dev (i.e.
+// dev/test/seed) log emails to stdout instead of delivering. SKIP_SENDING_MAIL
+// can override either way: "true" forces logging, "false" forces real
+// delivery. Production runs without --dev and delivers by default.
 package mailer
 
 import (
@@ -11,6 +13,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -87,7 +90,18 @@ var (
 )
 
 func init() {
-	deliver = !strings.EqualFold(os.Getenv("SKIP_SENDING_MAIL"), "true")
+	// Default to NOT delivering when PocketBase runs with --dev (the flag
+	// only ever appears in dev/test/seed processes). Production binaries
+	// invoke `serve` without --dev, so deliver defaults to true there.
+	// SKIP_SENDING_MAIL=true forces no-delivery regardless; setting it to
+	// "false" explicitly opts a --dev process back into real delivery.
+	devMode := slices.Contains(os.Args, "--dev")
+	skip := os.Getenv("SKIP_SENDING_MAIL")
+	if skip == "" {
+		deliver = !devMode
+	} else {
+		deliver = !strings.EqualFold(skip, "true")
+	}
 }
 
 // Default returns the shared PostmarkSender (or nil if not configured).

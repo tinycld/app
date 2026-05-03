@@ -32,11 +32,13 @@ result, err := mailer.Default().SendFull(ctx, &mailer.SendRequest{
 |---|---|---|
 | `POSTMARK_SERVER_TOKEN` | Yes (for delivery) | Postmark server API token |
 | `MAIL_FROM_ADDRESS` | No | Default "From" address. Defaults to `noreply@tinycld.org` |
-| `SKIP_SENDING_MAIL` | No | Set to `true` in development to print emails to stdout instead of delivering them |
+| `SKIP_SENDING_MAIL` | No | `true` forces logging instead of delivery; `false` forces real delivery. When unset, the default is `true` for PocketBase processes started with `--dev` (dev/test/seed) and `false` otherwise. |
 
 ## Development
 
-When `SKIP_SENDING_MAIL=true` is set, all emails are printed to stdout in a formatted box instead of being sent via Postmark. This applies to both simple sends (`Send`) and full sends (`SendFull`) across all packages.
+By default, any PocketBase started with `--dev` logs emails to stdout instead of delivering. Production runs without `--dev` and delivers normally. Set `SKIP_SENDING_MAIL=false` in a `--dev` process to force real delivery (e.g. for end-to-end testing against Postmark sandboxes).
+
+Logged emails are printed in a formatted box. This applies to both simple sends (`Send`) and full sends (`SendFull`) across all packages.
 
 ```
 ╭──────────────────────────────────────────────────────────╮

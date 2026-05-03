@@ -250,6 +250,7 @@ export interface MailMessages {
     raw_headers: string
     total_size: number
     alias: string
+    cid_map: any
 }
 
 export interface MailThreadState {
