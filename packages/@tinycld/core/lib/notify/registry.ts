@@ -18,6 +18,7 @@ export const eventRegistry: Record<NotifyEventName, EventConfig> = {
     'mail.send_failed': { channels: ['toast'], variant: 'error' },
     'mail.send_blocked_warn': { channels: ['toast'], variant: 'warning' },
     'mail.send_blocked_error': { channels: ['toast'], variant: 'error' },
+    'mail.attachments_rejected': { channels: ['toast'], variant: 'error' },
     'import.complete': { channels: ['toast', 'bell'], variant: 'success' },
     'import.failed': { channels: ['toast', 'bell'], variant: 'error' },
     'mutation.error': { channels: ['toast'], variant: 'error' },
