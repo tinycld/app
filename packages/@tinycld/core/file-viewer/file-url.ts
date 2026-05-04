@@ -67,9 +67,15 @@ async function saveOnNative(url: string, fileName: string, mimeType: string) {
         subdir.create({ intermediates: true, idempotent: true })
         const target = new File(subdir, fileName)
         const downloaded = await File.downloadFileAsync(url, target)
+        // Hint the system about the file type so the share sheet can offer
+        // type-appropriate destinations (e.g. "Save Image" for image MIMEs,
+        // which routes into Photos). On iOS the share sheet picks targets
+        // from the file's UTI; mapping MIME → UTI explicitly avoids relying
+        // on the file extension alone, which is sometimes ambiguous (e.g.
+        // jpg vs jpeg, heic without an extension).
         await Sharing.shareAsync(downloaded.uri, {
             mimeType,
-            UTI: mimeType,
+            UTI: mimeTypeToUTI(mimeType, fileName),
             dialogTitle: fileName,
         })
     } catch (err) {
@@ -81,6 +87,44 @@ async function saveOnNative(url: string, fileName: string, mimeType: string) {
             data: { operation: 'downloadFile', error: message },
         })
     }
+}
+
+// MIME type → iOS Uniform Type Identifier. Anything not listed falls back to
+// the generic `public.data`, in which case iOS picks share-sheet targets from
+// the filename extension. The image entries are what unlock "Save Image" →
+// Photos in the share sheet; the rest cover the file types we commonly serve.
+const MIME_TO_UTI: Record<string, string> = {
+    'image/jpeg': 'public.jpeg',
+    'image/jpg': 'public.jpeg',
+    'image/png': 'public.png',
+    'image/gif': 'com.compuserve.gif',
+    'image/heic': 'public.heic',
+    'image/heif': 'public.heif',
+    'image/webp': 'org.webmproject.webp',
+    'image/tiff': 'public.tiff',
+    'image/bmp': 'com.microsoft.bmp',
+    'image/svg+xml': 'public.svg-image',
+    'video/mp4': 'public.mpeg-4',
+    'video/quicktime': 'com.apple.quicktime-movie',
+    'audio/mpeg': 'public.mp3',
+    'audio/mp4': 'public.mpeg-4-audio',
+    'application/pdf': 'com.adobe.pdf',
+    'text/plain': 'public.plain-text',
+    'text/html': 'public.html',
+    'application/zip': 'public.zip-archive',
+}
+
+function mimeTypeToUTI(mimeType: string, fileName: string): string {
+    const direct = MIME_TO_UTI[mimeType.toLowerCase()]
+    if (direct) return direct
+    // Fall back to extension-based UTI for the common image cases — some
+    // PocketBase records carry an empty/garbled mimeType but a usable name.
+    const ext = fileName.toLowerCase().split('.').pop()
+    if (ext === 'jpg' || ext === 'jpeg') return 'public.jpeg'
+    if (ext === 'png') return 'public.png'
+    if (ext === 'gif') return 'com.compuserve.gif'
+    if (ext === 'heic') return 'public.heic'
+    return 'public.data'
 }
 
 /**
