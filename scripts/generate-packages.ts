@@ -789,18 +789,43 @@ function updateGoMod(
     const goModPath = path.join(SERVER_DIR, 'go.mod')
     let content = fs.readFileSync(goModPath, 'utf-8')
 
-    // Strip existing block (new or old markers)
+    // Strip existing block (new or old markers). Loop until no markers remain
+    // — earlier versions of this code used indexOf only once, which left
+    // orphaned end-markers behind whenever a separate tool (`go mod tidy`,
+    // a manual edit) consolidated the require/replace block but left the
+    // marker lines in place; subsequent runs then appended a fresh block on
+    // top of the orphans.
     for (const [start, end] of [
         [GO_MOD_MARKER_START, GO_MOD_MARKER_END],
         [OLD_GO_MOD_MARKER_START, OLD_GO_MOD_MARKER_END],
     ]) {
-        const startIdx = content.indexOf(start)
-        const endIdx = content.indexOf(end)
-        if (startIdx !== -1 && endIdx !== -1) {
-            content =
-                content.slice(0, startIdx).trimEnd() +
-                '\n' +
-                content.slice(endIdx + end.length).trimStart()
+        while (true) {
+            const startIdx = content.indexOf(start)
+            const endIdx = content.indexOf(end)
+            if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+                content =
+                    content.slice(0, startIdx).trimEnd() +
+                    '\n' +
+                    content.slice(endIdx + end.length).trimStart()
+                continue
+            }
+            // Orphan end marker (no matching start): drop just that line.
+            if (endIdx !== -1) {
+                content =
+                    content.slice(0, endIdx).trimEnd() +
+                    '\n' +
+                    content.slice(endIdx + end.length).trimStart()
+                continue
+            }
+            // Orphan start marker (no matching end): drop just that line.
+            if (startIdx !== -1) {
+                content =
+                    content.slice(0, startIdx).trimEnd() +
+                    '\n' +
+                    content.slice(startIdx + start.length).trimStart()
+                continue
+            }
+            break
         }
     }
 
@@ -808,11 +833,17 @@ function updateGoMod(
     content = `${content.trimEnd()}\n`
 
     if (withServer.length > 0) {
+        // Markers bracket only the `replace` lines, not the `require` lines.
+        // `go mod tidy` consolidates loose `require` directives into the
+        // top require block and discards adjacent comments; brackets around
+        // requires therefore lose their START marker on every tidy pass and
+        // accumulate orphans. `replace` directives stay where they are, so
+        // wrapping only those keeps both markers intact across tidy runs.
         const lines = [
             '',
-            GO_MOD_MARKER_START,
             ...withServer.map(a => `require ${a.manifest.server?.module} v0.0.0`),
             '',
+            GO_MOD_MARKER_START,
             ...withServer.map(a => {
                 const relPath = path.relative(
                     SERVER_DIR,
