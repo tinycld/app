@@ -437,9 +437,19 @@ export async function seedForUser(pb: PocketBase, config: SeedConfig) {
         user = await pb.collection('users').getFirstListItem(`username = "${config.userUsername}"`)
         log('Found existing user:', config.userUsername)
         if (config.isDemo) {
-            // Make sure pre-existing accounts have the flag — otherwise outbound
-            // side-effect chokepoints won't suppress for this user.
-            await pb.collection('users').update(user.id, { is_demo: true })
+            // The singleton demo account is shared across all anonymous
+            // visitors. Any field a previous visitor edited (name via direct
+            // update, email/password via the confirmation endpoints) would
+            // otherwise persist forever. Force-reset every visitor-mutable
+            // field on each reset so the next session starts clean.
+            const newPassword = `Demo${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}!`
+            await pb.collection('users').update(user.id, {
+                is_demo: true,
+                email: config.userEmail,
+                name: config.userName,
+                password: newPassword,
+                passwordConfirm: newPassword,
+            })
         }
     } catch {
         log('Creating user:', config.userUsername)
