@@ -54,13 +54,6 @@ export interface PreviewAction {
     label: string
     /** Disable the button while async work is in flight. */
     isPending?: boolean
-    /**
-     * Invoked when the user taps the icon. Receives the currently-displayed
-     * source and a `closePreview` callback so an action that opens its own
-     * dialog (e.g. drive's "Save to Drive" folder picker) can dismiss the
-     * preview first — modals don't reliably stack above the preview's RN
-     * fullscreen modal on native, and the user no longer needs the preview
-     * once they've made a decision about it.
-     */
-    onPress: (source: FilePreviewSource, closePreview: () => void) => void
+    /** Invoked with the currently-displayed source when the user taps the icon. */
+    onPress: (source: FilePreviewSource) => void
 }

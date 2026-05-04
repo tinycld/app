@@ -2,7 +2,7 @@ import { useBreakpoint } from '@tinycld/core/components/workspace/useBreakpoint'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { Modal, ModalBackdrop, ModalContent } from '@tinycld/core/ui/modal'
 import { ChevronLeft, ChevronRight, Download, X } from 'lucide-react-native'
-import { Platform, Pressable, Modal as RNModal, Text, View } from 'react-native'
+import { Platform, Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { GenericPreview } from './previews/GenericPreview'
 import { getPreviewEntry } from './registry'
@@ -33,27 +33,21 @@ export function PreviewModal({
 
     if (!source) return null
 
-    if (isMobile || Platform.OS !== 'web') {
-        return (
-            <RNModal visible={isVisible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
-                <View className="flex-1 bg-background">
-                    <PreviewModalContent
-                        source={source}
-                        onClose={onClose}
-                        onNext={onNext}
-                        onPrevious={onPrevious}
-                        onDownload={onDownload}
-                        actions={actions}
-                    />
-                </View>
-            </RNModal>
-        )
-    }
+    // Use the Gluestack Modal everywhere — on native it's a styled overlay
+    // in the React tree (no native RN <Modal>), so any other Gluestack
+    // dialog opened from a toolbar action (e.g. drive's folder picker)
+    // naturally stacks above it via tree order. On mobile/native we use
+    // the modal's `full` size so the panel fills the screen; on desktop
+    // web we keep the windowed 95vw × 90vh frame.
+    const isFullscreen = isMobile || Platform.OS !== 'web'
+    const contentClass = isFullscreen
+        ? 'h-full p-0 rounded-none border-0'
+        : 'w-[95vw] h-[90vh] max-w-[1400px] p-0 rounded-xl overflow-hidden'
 
     return (
-        <Modal isOpen={isVisible} onClose={onClose}>
+        <Modal isOpen={isVisible} onClose={onClose} size={isFullscreen ? 'full' : 'md'}>
             <ModalBackdrop />
-            <ModalContent className="w-[95vw] h-[90vh] max-w-[1400px] p-0 rounded-xl overflow-hidden">
+            <ModalContent className={contentClass}>
                 <PreviewModalContent
                     source={source}
                     onClose={onClose}
@@ -122,7 +116,7 @@ function PreviewModalContent({
                         return (
                             <Pressable
                                 key={action.id}
-                                onPress={() => action.onPress(source, onClose)}
+                                onPress={() => action.onPress(source)}
                                 disabled={action.isPending}
                                 className="flex-row items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-surface-secondary border border-border"
                                 hitSlop={8}
