@@ -2,6 +2,7 @@ package coreserver
 
 import (
 	"context"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/core"
 )
 
 // Defaults for the nightly demo reset job. Override via env vars at runtime —
@@ -25,6 +27,15 @@ const (
 // can take a couple minutes on a populated workspace, so a missed firing is
 // acceptable; concurrent runs are not.
 var resetMu sync.Mutex
+
+// resetURL is the base URL the reset script should connect to. Captured at
+// OnServe time because the script runs in a child process with no view of
+// what address PB actually bound. Empty until the server starts; the cron
+// won't fire before then in practice.
+var (
+	resetURLMu sync.RWMutex
+	resetURL   string
+)
 
 // RegisterDemoReset wires a nightly cron job that wipes and re-seeds the
 // singleton demo workspace. The job shells out to scripts/reset-demo.ts via
@@ -47,7 +58,41 @@ func RegisterDemoReset(app *pocketbase.PocketBase) {
 	app.Cron().MustAdd(demoResetJobID, schedule, func() {
 		runDemoReset(app)
 	})
+
+	// Capture the bound address once the server is serving. With autocert
+	// (CertManager non-nil) we cannot reach the listener by IP because the
+	// cert is issued for the configured domains; use the first SERVE_ON_DOMAINS
+	// entry over HTTPS instead. Without autocert PB binds a plain HTTP
+	// listener (default 127.0.0.1:7090) that we can hit directly.
+	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		url := deriveResetURL(e)
+		resetURLMu.Lock()
+		resetURL = url
+		resetURLMu.Unlock()
+		app.Logger().Info("demo reset target captured", "url", url)
+		return e.Next()
+	})
+
 	app.Logger().Info("demo reset cron registered", "schedule", schedule)
+}
+
+func deriveResetURL(e *core.ServeEvent) string {
+	if e.CertManager != nil {
+		domains := DomainArgs()
+		if len(domains) > 0 {
+			return "https://" + domains[0]
+		}
+	}
+	addr := e.Server.Addr
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		// addr like ":7090" — split returns "" for host, which won't connect.
+		return "http://127.0.0.1" + addr
+	}
+	if host == "" || host == "0.0.0.0" || host == "::" {
+		host = "127.0.0.1"
+	}
+	return "http://" + net.JoinHostPort(host, port)
 }
 
 func demoResetEnabled() bool {
@@ -66,11 +111,20 @@ func runDemoReset(app *pocketbase.PocketBase) {
 	ctx, cancel := context.WithTimeout(context.Background(), demoResetTimeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "bun", "run", "scripts/reset-demo.ts")
+	resetURLMu.RLock()
+	url := resetURL
+	resetURLMu.RUnlock()
+	if url == "" {
+		app.Logger().Error("demo reset skipped: server not yet serving (resetURL empty)")
+		return
+	}
+
+	cmd := exec.CommandContext(ctx, "bun", "run", "scripts/reset-demo.ts", "--url", url)
 	cmd.Dir = scriptDir
 	// Pass through env so ADMIN_USER_LOGIN / ADMIN_USER_PW configured for the
-	// container reach the script. The script defaults to localhost:7090,
-	// which is where the PB server is listening inside the container.
+	// container reach the script. The bound URL is passed via --url because
+	// the script's localhost default doesn't match autocert deployments
+	// (which bind 80/443 instead of 127.0.0.1:7090).
 	cmd.Env = os.Environ()
 
 	app.Logger().Info("demo reset starting", "dir", scriptDir)

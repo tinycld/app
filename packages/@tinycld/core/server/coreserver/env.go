@@ -79,15 +79,25 @@ func HasSubcommand(name string) bool {
 // subcommand (e.g. "./tinycld serve mail.example.com"). These are domain
 // names that PocketBase uses for autocert TLS provisioning.
 func HasDomainArgs() bool {
+	return len(DomainArgs()) > 0
+}
+
+// DomainArgs returns positional arguments that follow the "serve" subcommand
+// — the domain list used for autocert TLS provisioning.
+func DomainArgs() []string {
+	var domains []string
 	foundServe := false
 	for _, arg := range os.Args[1:] {
 		if arg == "serve" {
 			foundServe = true
 			continue
 		}
-		if foundServe && !strings.HasPrefix(arg, "-") {
-			return true
+		if !foundServe {
+			continue
+		}
+		if !strings.HasPrefix(arg, "-") {
+			domains = append(domains, arg)
 		}
 	}
-	return false
+	return domains
 }
