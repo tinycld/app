@@ -109,6 +109,16 @@ func registerUsersFieldGuardCore(app core.App) {
 
 		original := e.Record.Original()
 		isSelf := e.Auth.Id == e.Record.Id
+
+		// Demo accounts are shared across anonymous visitors via /api/demo/start.
+		// Letting one visitor self-edit the profile (name, avatar, ...) leaves
+		// the change visible to every subsequent visitor until the nightly
+		// reset wipes it. Reject self-edits outright; admin edits are still
+		// allowed so an operator can flip is_demo back off if needed.
+		if isSelf && original.GetBool("is_demo") {
+			return e.ForbiddenError("Demo accounts are read-only", nil)
+		}
+
 		allowed := selfEditableUserFields
 		if !isSelf {
 			allowed = adminEditableUserFields

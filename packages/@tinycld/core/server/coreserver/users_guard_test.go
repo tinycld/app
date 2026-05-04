@@ -220,6 +220,57 @@ func TestUsersGuard_SelfCannotEditIsDemo(t *testing.T) {
 	}
 }
 
+func TestUsersGuard_DemoUserCannotSelfEditAnything(t *testing.T) {
+	app := setupGuardTestApp(t)
+	user := makeUser(t, app, "demo@test.local")
+	user.Set("is_demo", true)
+	if err := app.Save(user); err != nil {
+		t.Fatal(err)
+	}
+
+	// Even fields that would normally be self-editable (name, avatar) must
+	// be rejected — the demo account is shared across anonymous visitors,
+	// so any persisted edit leaks to the next session.
+	err := updateAsAuthenticated(t, app, user, user, func(r *core.Record) {
+		r.Set("name", "Visitor Vandal")
+	})
+	if err == nil {
+		t.Fatal("demo user self-edit of name should have been rejected")
+	}
+
+	fresh, _ := app.FindRecordById("users", user.Id)
+	if fresh.GetString("name") != "Original Name" {
+		t.Errorf("name should be unchanged, got %q", fresh.GetString("name"))
+	}
+}
+
+func TestUsersGuard_AdminCanStillEditDemoUser(t *testing.T) {
+	app := setupGuardTestApp(t)
+	admin := makeUser(t, app, "demoadmin@test.local")
+	target := makeUser(t, app, "demotarget@test.local")
+	target.Set("is_demo", true)
+	if err := app.Save(target); err != nil {
+		t.Fatal(err)
+	}
+	org := makeOrg(t, app, "DemoCo", "democo")
+	makeMembership(t, app, admin, org, "owner")
+	makeMembership(t, app, target, org, "member")
+
+	// The demo lockout only applies to self-edits; an org admin must still
+	// be able to flip is_demo back off (e.g. operator reclaiming an account).
+	err := updateAsAuthenticated(t, app, admin, target, func(r *core.Record) {
+		r.Set("is_demo", false)
+	})
+	if err != nil {
+		t.Fatalf("admin should still be able to clear is_demo on a demo user: %v", err)
+	}
+
+	fresh, _ := app.FindRecordById("users", target.Id)
+	if fresh.GetBool("is_demo") {
+		t.Error("is_demo should be false after admin clear")
+	}
+}
+
 func TestUsersGuard_SelfCannotEditVerified(t *testing.T) {
 	app := setupGuardTestApp(t)
 	user := makeUser(t, app, "self3@test.local")
