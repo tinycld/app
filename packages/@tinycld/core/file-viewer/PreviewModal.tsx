@@ -122,7 +122,7 @@ function PreviewModalContent({
                         return (
                             <Pressable
                                 key={action.id}
-                                onPress={() => action.onPress(source)}
+                                onPress={() => action.onPress(source, onClose)}
                                 disabled={action.isPending}
                                 className="flex-row items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-surface-secondary border border-border"
                                 hitSlop={8}
