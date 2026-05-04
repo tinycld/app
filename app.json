@@ -25,7 +25,6 @@
             [
                 "expo-media-library",
                 {
-                    "photosPermission": "Allow TinyCld to read photos from your library to attach to messages and Drive.",
                     "savePhotosPermission": "Allow TinyCld to save downloaded images to your Photos library."
                 }
             ],
@@ -42,8 +41,7 @@
             "buildNumber": "1",
             "infoPlist": {
                 "ITSAppUsesNonExemptEncryption": false,
-                "NSPhotoLibraryAddUsageDescription": "Allow TinyCld to save downloaded images to your Photos library.",
-                "NSPhotoLibraryUsageDescription": "Allow TinyCld to read photos from your library to attach to messages and Drive."
+                "NSPhotoLibraryAddUsageDescription": "Allow TinyCld to save downloaded images to your Photos library."
             }
         },
         "android": {
