@@ -1,9 +1,21 @@
 import { execSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const ROOT = path.resolve(import.meta.dirname, '..')
+const __filename = fileURLToPath(import.meta.url)
+const ROOT = path.resolve(path.dirname(__filename), '..')
 const PACKAGES_DIR = path.join(ROOT, 'packages')
+
+function isMainModule(): boolean {
+    if ((import.meta as { main?: boolean }).main) return true
+    if (!process.argv[1]) return false
+    try {
+        return fs.realpathSync(process.argv[1]) === fs.realpathSync(__filename)
+    } catch {
+        return false
+    }
+}
 
 /**
  * A package name may be scoped (`@scope/name`) or unscoped (`name`).
@@ -127,7 +139,7 @@ function execGenerate(): void {
     execSync('bun run packages:generate', { cwd: ROOT, stdio: 'inherit' })
 }
 
-if (import.meta.main) {
+if (isMainModule()) {
     const [mode, arg] = process.argv.slice(2)
 
     if (!mode || !arg || (mode !== 'link' && mode !== 'unlink')) {
