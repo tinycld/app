@@ -90,7 +90,6 @@ export default function Connect() {
     return (
         <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
             <ScrollView
-                className="flex-1"
                 contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 28, paddingBottom: 32 }}
                 showsVerticalScrollIndicator={false}
             >
