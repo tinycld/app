@@ -113,7 +113,7 @@
         "ical.js": "^2.2.1",
         "isomorphic-webcrypto": "^2.3.8",
         "lucide-react-native": "^1.7.0",
-        "pbtsdb": "^0.4.0",
+        "pbtsdb": "^0.5.0",
         "pocketbase": "^0.26.8",
         "react": "19.2.0",
         "react-aria": "^3.47.0",
