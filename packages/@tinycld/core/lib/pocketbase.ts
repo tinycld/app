@@ -1,13 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { QueryClient } from '@tanstack/react-query'
 import { type MergedSchema, packageStores } from '@tinycld/app-generated/package-collections'
-import { router } from 'expo-router'
 import { BasicIndex, createCollection, createReactProvider, setLogger } from 'pbtsdb'
 import PocketBase, { AsyncAuthStore } from 'pocketbase'
 import { Platform } from 'react-native'
 import type { Orgs, UserOrg, Users } from '@tinycld/core/types/pbSchema'
 import { PB_SERVER_ADDR } from './config'
-import { clearCached, resolveEnvAddress } from './server-address'
+import { resolveEnvAddress } from './server-address'
+import { useConnectivityStore } from './stores/connectivity-store'
 import type { UserSession } from './types'
 
 export { eq } from '@tanstack/db'
@@ -66,16 +66,23 @@ function isNetworkLevelFailure(err: unknown): boolean {
 const origSend = pb.send.bind(pb)
 pb.send = (async <T>(path: string, options: Parameters<typeof origSend>[1]) => {
     try {
-        return (await origSend(path, options)) as T
+        const result = (await origSend(path, options)) as T
+        if (!useConnectivityStore.getState().isServerReachable) {
+            useConnectivityStore.getState().setServerReachable(true)
+        }
+        networkFailures = 0
+        return result
     } catch (err) {
         if (resolveEnvAddress()) throw err
-        if (Date.now() - sessionStart > RECOVERY_WINDOW_MS) throw err
         if (!isNetworkLevelFailure(err)) throw err
         networkFailures++
-        if (networkFailures >= RECOVERY_THRESHOLD) {
-            await clearCached()
-            router.replace('/connect?backTo=/')
-        }
+        // During the first RECOVERY_WINDOW_MS we require RECOVERY_THRESHOLD
+        // failures before flipping, because the auth bootstrap can race
+        // pb.send and produce a single spurious failure. After the window we
+        // trust any single network-level failure.
+        const inEarlyWindow = Date.now() - sessionStart <= RECOVERY_WINDOW_MS
+        if (inEarlyWindow && networkFailures < RECOVERY_THRESHOLD) throw err
+        useConnectivityStore.getState().setServerReachable(false)
         throw err
     }
 }) as typeof pb.send
