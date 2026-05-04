@@ -67,7 +67,7 @@
         "ical.js": "^2.2.1",
         "isomorphic-webcrypto": "^2.3.8",
         "lucide-react-native": "^1.7.0",
-        "pbtsdb": "^0.4.0",
+        "pbtsdb": "^0.5.0",
         "pocketbase": "^0.26.8",
         "react": "19.2.0",
         "react-aria": "^3.47.0",
@@ -1817,7 +1817,7 @@
 
     "pathval": ["pathval@2.0.1", "", {}, "sha512-//nshmD55c46FuFw26xV/xFAaB5HF9Xdap7HJBBnrKdAd6/GxDBaNA1870O79+9ueg61cZLSVc+OaFlfmObYVQ=="],
 
-    "pbtsdb": ["pbtsdb@0.4.0", "", { "peerDependencies": { "@tanstack/query-db-collection": ">=1.0.0", "@tanstack/react-db": ">=0.1.0", "@tanstack/react-query": ">=5.0.0", "pocketbase": ">=0.21.0", "react": ">=18.0.0", "react-dom": ">=18.0.0" }, "optionalPeers": ["@tanstack/react-db", "react", "react-dom"] }, "sha512-HVL8VZEys21woDpH2XZ7YzHg+jfnph3Xt8bY1MZUKzhZCCJ/I2NqP/z+fK1YstvyPlWkMP6g7pvnx4LQPfyc/A=="],
+    "pbtsdb": ["pbtsdb@0.5.0", "", { "peerDependencies": { "@tanstack/query-db-collection": ">=1.0.0", "@tanstack/react-db": ">=0.1.0", "@tanstack/react-query": ">=5.0.0", "pocketbase": ">=0.21.0", "react": ">=18.0.0", "react-dom": ">=18.0.0" }, "optionalPeers": ["@tanstack/react-db", "react", "react-dom"] }, "sha512-NUv00UbLop5wX052i5Psa5vRgg4BJ76vFhJEvDswVUBZp0QxwTWk4/fvYI/XyE6u5nC/85Klt6v8zkN+7vz5Eg=="],
 
     "pdfjs-dist": ["pdfjs-dist@5.4.296", "", { "optionalDependencies": { "@napi-rs/canvas": "^0.1.80" } }, "sha512-DlOzet0HO7OEnmUmB6wWGJrrdvbyJKftI1bhMitK7O2N8W2gc757yyYBbINy9IDafXAV9wmKr9t7xsTaNKRG5Q=="],
 
