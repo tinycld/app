@@ -9,6 +9,7 @@ export interface InstallArgs {
     url: string
     overridePath?: string
     ref?: string
+    shallow?: boolean
 }
 
 /**
@@ -34,9 +35,14 @@ export function deriveDirNameFromUrl(url: string): string {
     return name
 }
 
-export function parseInstallFlags(rest: string[]): { overridePath?: string; ref?: string } {
+export function parseInstallFlags(rest: string[]): {
+    overridePath?: string
+    ref?: string
+    shallow?: boolean
+} {
     let overridePath: string | undefined
     let ref: string | undefined
+    let shallow: boolean | undefined
     for (let i = 0; i < rest.length; i++) {
         const arg = rest[i]
         if (arg === '--path' || arg === '-p') {
@@ -45,11 +51,15 @@ export function parseInstallFlags(rest: string[]): { overridePath?: string; ref?
         } else if (arg === '--ref' || arg === '-r') {
             ref = rest[++i]
             if (!ref) throw new Error('--ref requires a value')
+        } else if (arg === '--full' || arg === '--no-shallow') {
+            shallow = false
+        } else if (arg === '--shallow') {
+            shallow = true
         } else {
             throw new Error(`Unknown argument: ${arg}`)
         }
     }
-    return { overridePath, ref }
+    return { overridePath, ref, shallow }
 }
 
 function runGit(args: string[], cwd?: string): void {
@@ -75,7 +85,7 @@ function requireValidName(pkg: { name?: string }, where: string): string {
     return pkg.name
 }
 
-export function installPackage({ url, overridePath, ref }: InstallArgs): void {
+export function installPackage({ url, overridePath, ref, shallow = true }: InstallArgs): void {
     const dirName = deriveDirNameFromUrl(url)
     const targetDir = overridePath
         ? path.resolve(ROOT, overridePath)
@@ -100,8 +110,10 @@ export function installPackage({ url, overridePath, ref }: InstallArgs): void {
         return
     }
 
-    console.log(`Cloning ${url} → ${targetDir}${ref ? ` (ref: ${ref})` : ''}...`)
+    const detail = [ref && `ref: ${ref}`, shallow && 'shallow'].filter(Boolean).join(', ')
+    console.log(`Cloning ${url} → ${targetDir}${detail ? ` (${detail})` : ''}...`)
     const cloneArgs = ['clone']
+    if (shallow) cloneArgs.push('--depth=1', '--single-branch')
     if (ref) cloneArgs.push('--branch', ref)
     cloneArgs.push(url, targetDir)
     runGit(cloneArgs)
@@ -115,7 +127,7 @@ if (import.meta.main) {
 
     if (!url) {
         console.error(
-            'Usage: bun run packages:install <git-url> [--path <dir>] [--ref <branch|tag|sha>]'
+            'Usage: bun run packages:install <git-url> [--path <dir>] [--ref <branch|tag|sha>] [--full]'
         )
         process.exit(2)
     }
