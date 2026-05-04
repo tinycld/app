@@ -21,3 +21,19 @@ for pkg in "${PACKAGES[@]}"; do
     echo "==> Installing @tinycld/${pkg}"
     bun run packages:install "${REPO_BASE}/${pkg}.git"
 done
+
+# Verify each package landed as a symlink under packages/@tinycld/. Without
+# this guard, install-package's CLI block silently no-ops on some
+# bunx/tsx/node combinations, the install loop "succeeds", and the build
+# ships without feature routes.
+missing=()
+for pkg in "${PACKAGES[@]}"; do
+    if [ ! -L "packages/@tinycld/${pkg}" ] && [ ! -d "packages/@tinycld/${pkg}" ]; then
+        missing+=("@tinycld/${pkg}")
+    fi
+done
+if [ "${#missing[@]}" -gt 0 ]; then
+    echo "FATAL: feature packages did not link: ${missing[*]}" >&2
+    ls -la packages/@tinycld/ >&2 || true
+    exit 1
+fi

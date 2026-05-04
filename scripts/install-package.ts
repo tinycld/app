@@ -1,9 +1,24 @@
 import { execSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { linkPackage } from './link-package'
 
-const ROOT = path.resolve(import.meta.dirname, '..')
+const __filename = fileURLToPath(import.meta.url)
+const ROOT = path.resolve(path.dirname(__filename), '..')
+
+// Bun exposes `import.meta.main`, but tsx (running on Node) does not, so we
+// fall back to comparing argv[1] with this file's resolved path. realpath on
+// both sides handles macOS /private/tmp vs /tmp and any symlinked launchers.
+function isMainModule(): boolean {
+    if ((import.meta as { main?: boolean }).main) return true
+    if (!process.argv[1]) return false
+    try {
+        return fs.realpathSync(process.argv[1]) === fs.realpathSync(__filename)
+    } catch {
+        return false
+    }
+}
 
 export interface InstallArgs {
     url: string
@@ -122,7 +137,7 @@ export function installPackage({ url, overridePath, ref, shallow = true }: Insta
     linkPackage(relTargetDir)
 }
 
-if (import.meta.main) {
+if (isMainModule()) {
     const [url, ...rest] = process.argv.slice(2)
 
     if (!url) {
