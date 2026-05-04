@@ -19,10 +19,12 @@ export const ToolbarIconButton = forwardRef<View, ToolbarIconButtonProps>(functi
     const mutedColor = useThemeColor('muted-foreground')
     const iconColor = color ?? mutedColor
 
+    const padding = Platform.OS === 'web' ? 'p-2' : 'p-3'
+
     const button = (
         <Pressable
             ref={ref}
-            className={`p-2 rounded-full ${disabled ? 'opacity-40' : 'opacity-100'}`}
+            className={`${padding} rounded-full ${disabled ? 'opacity-40' : 'opacity-100'}`}
             onPress={onPress}
             accessibilityLabel={label}
             disabled={disabled}
