@@ -86,7 +86,6 @@ function PreviewModalContent({
 }: PreviewModalContentProps) {
     const mutedColor = useThemeColor('muted-foreground')
     const insets = useSafeAreaInsets()
-    const isMobile = useBreakpoint() === 'mobile'
 
     const entry = getPreviewEntry(source.mimeType)
     const PreviewComponent = entry?.preview ?? GenericPreview
@@ -130,11 +129,9 @@ function PreviewModalContent({
                                 accessibilityLabel={action.label}
                             >
                                 <ActionIcon size={16} color={mutedColor} />
-                                {!isMobile && (
-                                    <Text className="text-foreground" style={{ fontSize: 13, fontWeight: '500' }}>
-                                        {action.label}
-                                    </Text>
-                                )}
+                                <Text className="text-foreground" style={{ fontSize: 13, fontWeight: '500' }}>
+                                    {action.label}
+                                </Text>
                             </Pressable>
                         )
                     })}
