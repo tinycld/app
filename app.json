@@ -40,7 +40,8 @@
             "bundleIdentifier": "org.tinycld.app",
             "buildNumber": "1",
             "infoPlist": {
-                "ITSAppUsesNonExemptEncryption": false
+                "ITSAppUsesNonExemptEncryption": false,
+                "NSPhotoLibraryAddUsageDescription": "Allow TinyCld to save downloaded images to your Photos library."
             }
         },
         "android": {
