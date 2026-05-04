@@ -6,7 +6,7 @@ import { Platform, Pressable, Modal as RNModal, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { GenericPreview } from './previews/GenericPreview'
 import { getPreviewEntry } from './registry'
-import type { FilePreviewSource } from './types'
+import type { FilePreviewSource, PreviewAction } from './types'
 
 interface PreviewModalProps {
     isVisible: boolean
@@ -16,9 +16,19 @@ interface PreviewModalProps {
     onPrevious?: () => void
     /** Called when the user clicks the toolbar download button. If omitted, the button is hidden. */
     onDownload?: () => void
+    /** Consumer-supplied toolbar actions (e.g. mail's "Save to Drive"). Each is shown as an icon button before Download. */
+    actions?: PreviewAction[]
 }
 
-export function PreviewModal({ isVisible, source, onClose, onNext, onPrevious, onDownload }: PreviewModalProps) {
+export function PreviewModal({
+    isVisible,
+    source,
+    onClose,
+    onNext,
+    onPrevious,
+    onDownload,
+    actions,
+}: PreviewModalProps) {
     const isMobile = useBreakpoint() === 'mobile'
 
     if (!source) return null
@@ -33,6 +43,7 @@ export function PreviewModal({ isVisible, source, onClose, onNext, onPrevious, o
                         onNext={onNext}
                         onPrevious={onPrevious}
                         onDownload={onDownload}
+                        actions={actions}
                     />
                 </View>
             </RNModal>
@@ -49,6 +60,7 @@ export function PreviewModal({ isVisible, source, onClose, onNext, onPrevious, o
                     onNext={onNext}
                     onPrevious={onPrevious}
                     onDownload={onDownload}
+                    actions={actions}
                 />
             </ModalContent>
         </Modal>
@@ -61,9 +73,17 @@ interface PreviewModalContentProps {
     onNext?: () => void
     onPrevious?: () => void
     onDownload?: () => void
+    actions?: PreviewAction[]
 }
 
-function PreviewModalContent({ source, onClose, onNext, onPrevious, onDownload }: PreviewModalContentProps) {
+function PreviewModalContent({
+    source,
+    onClose,
+    onNext,
+    onPrevious,
+    onDownload,
+    actions,
+}: PreviewModalContentProps) {
     const mutedColor = useThemeColor('muted-foreground')
     const insets = useSafeAreaInsets()
 
@@ -100,6 +120,21 @@ function PreviewModalContent({ source, onClose, onNext, onPrevious, onDownload }
                             <ChevronRight size={20} color={mutedColor} />
                         </Pressable>
                     )}
+                    {actions?.map((action) => {
+                        const ActionIcon = action.icon
+                        return (
+                            <Pressable
+                                key={action.id}
+                                onPress={() => action.onPress(source)}
+                                disabled={action.isPending}
+                                className="p-1.5 rounded-md"
+                                hitSlop={8}
+                                accessibilityLabel={action.label}
+                            >
+                                <ActionIcon size={18} color={mutedColor} />
+                            </Pressable>
+                        )
+                    })}
                     {onDownload && (
                         <Pressable onPress={onDownload} className="p-1.5 rounded-md" hitSlop={8}>
                             <Download size={18} color={mutedColor} />
