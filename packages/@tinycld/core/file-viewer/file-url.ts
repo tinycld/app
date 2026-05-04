@@ -50,17 +50,22 @@ async function saveOnNative(url: string, fileName: string, mimeType: string) {
         // by code paths (previews, thumbnails) that never need to save —
         // module-init failures from expo-file-system / expo-sharing would
         // otherwise propagate up the import graph and freeze the boot gate.
-        const [{ File, Paths }, Sharing] = await Promise.all([
+        const [{ Directory, File, Paths }, Sharing] = await Promise.all([
             import('expo-file-system'),
             import('expo-sharing'),
         ])
         if (!(await Sharing.isAvailableAsync())) {
             throw new Error('Sharing is not available on this device')
         }
-        // Pre-create a target File in the cache directory using the user-
-        // facing filename, so the share sheet's default "Save as…" matches
-        // what they saw in the preview. expo-file-system handles URI escaping.
-        const target = new File(Paths.cache, fileName)
+        // Place the file in a unique subdirectory under cache so repeated
+        // downloads don't collide and we can keep the user-facing filename
+        // (which the share sheet's "Save as…" defaults to) unchanged.
+        // downloadFileAsync errors out if the destination already exists,
+        // which is exactly what happened the second time the user tapped
+        // Download for the same attachment.
+        const subdir = new Directory(Paths.cache, `download-${Date.now()}`)
+        subdir.create({ intermediates: true, idempotent: true })
+        const target = new File(subdir, fileName)
         const downloaded = await File.downloadFileAsync(url, target)
         await Sharing.shareAsync(downloaded.uri, {
             mimeType,
