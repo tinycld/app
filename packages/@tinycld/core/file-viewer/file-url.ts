@@ -54,7 +54,9 @@ async function saveOnNative(url: string, fileName: string, mimeType: string) {
             import('expo-file-system'),
             import('expo-sharing'),
         ])
-
+        if (!(await Sharing.isAvailableAsync())) {
+            throw new Error('Sharing is not available on this device')
+        }
         // Place the file in a unique subdirectory under cache so repeated
         // downloads don't collide and we can keep the user-facing filename
         // (which the share sheet's "Save as…" defaults to) unchanged.
@@ -63,34 +65,11 @@ async function saveOnNative(url: string, fileName: string, mimeType: string) {
         subdir.create({ intermediates: true, idempotent: true })
         const target = new File(subdir, fileName)
         const downloaded = await File.downloadFileAsync(url, target)
-
-        // For images, route directly to Photos via expo-media-library — the
-        // generic share sheet's "Save Image" entry depends on iOS UTI
-        // inference from the cache file URI and is unreliable across iOS
-        // versions and the simulator. media-library calls into PHPhotoLibrary
-        // directly, which is what the user actually wants when they hit
-        // Download on a JPEG/PNG.
-        if (isImageMime(mimeType, fileName)) {
-            const MediaLibrary = await import('expo-media-library')
-            const perm = await MediaLibrary.requestPermissionsAsync(true)
-            if (!perm.granted) {
-                throw new Error('Permission to save photos was denied')
-            }
-            await MediaLibrary.saveToLibraryAsync(downloaded.uri)
-            notify.emit({
-                event: 'file.saved_to_photos',
-                title: 'Saved to Photos',
-                body: fileName,
-                data: { fileName },
-            })
-            return
-        }
-
-        // For everything else, hand the file to the system share sheet so
-        // the user can pick Save to Files / AirDrop / send-to-app.
-        if (!(await Sharing.isAvailableAsync())) {
-            throw new Error('Sharing is not available on this device')
-        }
+        // Hand the file to the system share sheet — iOS picks the activity
+        // list (Save Image → Photos for image MIMEs, Save to Files, AirDrop,
+        // send-to-app, …) from the file URL's path extension. The
+        // NSPhotoLibraryAddUsageDescription Info.plist key (declared in
+        // app.json) is what unlocks the Save Image entry.
         await Sharing.shareAsync(downloaded.uri, {
             mimeType,
             dialogTitle: fileName,
@@ -104,12 +83,6 @@ async function saveOnNative(url: string, fileName: string, mimeType: string) {
             data: { operation: 'downloadFile', error: message },
         })
     }
-}
-
-function isImageMime(mimeType: string, fileName: string): boolean {
-    if (mimeType.toLowerCase().startsWith('image/')) return true
-    const ext = fileName.toLowerCase().split('.').pop()
-    return ext === 'jpg' || ext === 'jpeg' || ext === 'png' || ext === 'gif' || ext === 'heic' || ext === 'webp' || ext === 'bmp' || ext === 'tiff'
 }
 
 /**

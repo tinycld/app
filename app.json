@@ -22,12 +22,6 @@
                     "photosPermission": "Allow TinyCld to access your photos so you can upload them to Drive."
                 }
             ],
-            [
-                "expo-media-library",
-                {
-                    "savePhotosPermission": "Allow TinyCld to save downloaded images to your Photos library."
-                }
-            ],
             "expo-sharing"
         ],
         "icon": "./assets/app-icon.png",
