@@ -21,7 +21,7 @@ import { useChunkLoadRecovery } from '@tinycld/core/lib/use-chunk-load-recovery'
 import { useVersionCheck } from '@tinycld/core/lib/use-version-check'
 import { router, Slot, usePathname } from 'expo-router'
 import { type ComponentType, type ReactNode, useEffect, useState } from 'react'
-import { View } from 'react-native'
+import { Text, View } from 'react-native'
 
 initSentry()
 
@@ -31,6 +31,7 @@ type GateState =
     | { status: 'resolving' }
     | { status: 'resolved'; Providers: ProvidersComponent }
     | { status: 'unresolved' }
+    | { status: 'failed'; error: string }
 
 function useServerAddressGate(pathname: string): GateState {
     const [state, setState] = useState<GateState>(() => {
@@ -46,19 +47,33 @@ function useServerAddressGate(pathname: string): GateState {
         let cancelled = false
 
         async function resolve() {
-            if (!getResolvedAddress()) {
-                const cached = await readCached()
-                if (cached) setResolvedAddress(cached)
-            }
+            try {
+                if (!getResolvedAddress()) {
+                    const cached = await readCached()
+                    if (cached) setResolvedAddress(cached)
+                }
 
-            if (cancelled) return
-
-            if (getResolvedAddress()) {
-                const mod = await import('@tinycld/core/components/Providers')
                 if (cancelled) return
-                setState({ status: 'resolved', Providers: mod.Providers })
-            } else {
-                setState({ status: 'unresolved' })
+
+                if (getResolvedAddress()) {
+                    const mod = await import('@tinycld/core/components/Providers')
+                    if (cancelled) return
+                    setState({ status: 'resolved', Providers: mod.Providers })
+                } else {
+                    setState({ status: 'unresolved' })
+                }
+            } catch (err) {
+                // Without this catch a failure inside the dynamic Providers
+                // import (e.g. a transitive native module that fails to
+                // initialize after a binary/JS mismatch) leaves the gate
+                // stuck at "resolving" → permanent blank white screen with
+                // nothing in the logs. Surface it so the next layer can show
+                // diagnostic UI.
+                if (cancelled) return
+                const message = err instanceof Error ? err.message : String(err)
+                // biome-ignore lint/suspicious/noConsole: pre-Sentry boot path
+                console.error('[layout-gate] failed to resolve providers:', err)
+                setState({ status: 'failed', error: message })
             }
         }
 
@@ -93,6 +108,19 @@ export default function Layout() {
         return (
             <MinimalProviders>
                 <View className="flex-1 bg-background" />
+            </MinimalProviders>
+        )
+    }
+
+    if (state.status === 'failed') {
+        return (
+            <MinimalProviders>
+                <View className="flex-1 items-center justify-center bg-background gap-2 p-6">
+                    <Text className="text-foreground" style={{ fontSize: 18, fontWeight: '600' }}>
+                        Failed to load app
+                    </Text>
+                    <Text className="text-muted-foreground text-center">{state.error}</Text>
+                </View>
             </MinimalProviders>
         )
     }
