@@ -251,6 +251,8 @@ export interface MailMessages {
     total_size: number
     alias: string
     cid_map: any
+    attachment_thumbnails: string[]
+    attachment_thumbnail_map: any
 }
 
 export interface MailThreadState {
