@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pickThumbnailBase } from '@tinycld/core/file-viewer/file-url'
+import { pickThumbnailBase } from '@tinycld/core/file-viewer/pick-thumbnail-base'
 
 describe('pickThumbnailBase', () => {
     it('returns the dedicated thumbnail filename when present', () => {

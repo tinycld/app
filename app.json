@@ -21,7 +21,8 @@
                 {
                     "photosPermission": "Allow TinyCld to access your photos so you can upload them to Drive."
                 }
-            ]
+            ],
+            "expo-sharing"
         ],
         "icon": "./assets/app-icon.png",
         "splash": {

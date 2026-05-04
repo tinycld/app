@@ -86,6 +86,7 @@ function PreviewModalContent({
 }: PreviewModalContentProps) {
     const mutedColor = useThemeColor('muted-foreground')
     const insets = useSafeAreaInsets()
+    const isMobile = useBreakpoint() === 'mobile'
 
     const entry = getPreviewEntry(source.mimeType)
     const PreviewComponent = entry?.preview ?? GenericPreview
@@ -96,9 +97,6 @@ function PreviewModalContent({
                 className="flex-row items-center px-4 py-3 gap-3 border-b border-border"
                 style={{ paddingTop: Math.max(insets.top, 12) }}
             >
-                <Pressable onPress={onClose} className="p-1.5">
-                    <X size={20} color={mutedColor} />
-                </Pressable>
                 <Text
                     numberOfLines={1}
                     className="flex-1 text-foreground"
@@ -127,11 +125,16 @@ function PreviewModalContent({
                                 key={action.id}
                                 onPress={() => action.onPress(source)}
                                 disabled={action.isPending}
-                                className="p-1.5 rounded-md"
+                                className="flex-row items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-surface-secondary border border-border"
                                 hitSlop={8}
                                 accessibilityLabel={action.label}
                             >
-                                <ActionIcon size={18} color={mutedColor} />
+                                <ActionIcon size={16} color={mutedColor} />
+                                {!isMobile && (
+                                    <Text className="text-foreground" style={{ fontSize: 13, fontWeight: '500' }}>
+                                        {action.label}
+                                    </Text>
+                                )}
                             </Pressable>
                         )
                     })}
@@ -140,6 +143,9 @@ function PreviewModalContent({
                             <Download size={18} color={mutedColor} />
                         </Pressable>
                     )}
+                    <Pressable onPress={onClose} className="p-1.5 rounded-md ml-1" hitSlop={8}>
+                        <X size={20} color={mutedColor} />
+                    </Pressable>
                 </View>
             </View>
             <View className="flex-1 overflow-hidden">
