@@ -13,6 +13,7 @@ export type NotificationEvents = {
     'import.complete': { source: 'google-takeout' | 'csv'; count: number }
     'import.failed': { source: string; error: string }
     'mutation.error': { operation: string; error: string }
+    'file.saved_to_photos': { fileName: string }
 }
 
 export type NotifyEventName = keyof NotificationEvents
