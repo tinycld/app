@@ -8,7 +8,7 @@ export type NotificationEvents = {
     'mail.send_blocked_warn': { reason: string }
     'mail.send_blocked_error': { reason: string }
     'mail.attachments_rejected': { reason: string }
-    'drive.save_succeeded': { name: string }
+    'drive.save_succeeded': { name: string; folder: string }
     'drive.save_failed': { reason: string }
     'import.complete': { source: 'google-takeout' | 'csv'; count: number }
     'import.failed': { source: string; error: string }
