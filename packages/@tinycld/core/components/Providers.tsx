@@ -1,4 +1,5 @@
 import '@tinycld/core/lib/crypto-polyfill'
+import '@tinycld/core/file-viewer/register-default-previews'
 import { QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'

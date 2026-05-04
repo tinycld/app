@@ -10,6 +10,7 @@
         "./components/*": "./components/*",
         "./ui/*": "./ui/*",
         "./types/*": "./types/*",
+        "./file-viewer/*": "./file-viewer/*",
         "./Providers": "./components/Providers.tsx"
     }
 }
