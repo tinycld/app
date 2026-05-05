@@ -2,7 +2,7 @@
 #   - tinycld/ repo at root
 #   - packages/@tinycld/core/ — full core source tree (real directory)
 #   - packages/@tinycld/<other>/ — one entry per linked feature package
-# The deploy/build.sh script in the deploy/ sibling assembles this layout
+# The deploy.sh script in the utils/ sibling assembles this layout
 # from the per-repo git HEADs before running `docker build`.
 
 # Node stage: generate package wiring and build the web app
@@ -29,7 +29,7 @@ COPY global.css ./
 COPY react-native.config.cjs metro.config.cjs babel.config.cjs ./
 
 # Copy every bundled sibling package — including @tinycld/core itself.
-# The build context (assembled by deploy/build.sh) contains real directories
+# The build context (assembled by utils/deploy.sh) contains real directories
 # under packages/, one per linked sibling: packages/@scope/name or
 # packages/name. Core ships as packages/@tinycld/core/ here.
 COPY packages/ ./packages/
@@ -100,7 +100,7 @@ ENV EXPO_PUBLIC_SENTRY_DSN=$EXPO_PUBLIC_SENTRY_DSN
 ENV EXPO_PUBLIC_GIT_COMMIT=$EXPO_PUBLIC_GIT_COMMIT
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 
-# Bring in .release-id, which deploy/deploy.sh writes into the deploy tree
+# Bring in .release-id, which utils/deploy.sh writes into the deploy tree
 # right before pushing to Dokku. Format: YYYY-MM-DD-HHMMSS-<short-sha>.
 # When the file is absent (someone running `docker build` by hand without
 # deploy.sh), the RUN below falls back to deriving an id internally.
@@ -201,7 +201,7 @@ COPY --from=go-builder /app/server/tinycld ./tinycld
 # Per-release web bundle, staged by the web-builder. The entrypoint promotes
 # this to the persistent volume mounted at /app/releases/ on container start.
 # The /app/public/ directory is reserved for the marketing website (populated
-# by deploy/Dockerfile.tail).
+# by utils/Dockerfile.tail).
 COPY --from=web-builder /app/release-staging /app/release-staging
 RUN mkdir -p /app/public /app/releases
 
