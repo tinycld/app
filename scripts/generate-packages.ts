@@ -777,9 +777,16 @@ function updateGoWork(
 ) {
     // Sibling Go modules wire into the app server through go.work, not go.mod.
     // The tracked server/go.mod stays lean (only the bundled core); go.work is
-    // gitignored and lists every linked sibling's server/ as an additional
-    // workspace module. This avoids mutating a tracked file on every link/unlink
-    // and keeps fresh clones / CI building without sibling resolution attempts.
+    // gitignored and lists the bundled core plus every linked sibling's server/
+    // as workspace modules. This avoids mutating a tracked file on every
+    // link/unlink and keeps fresh clones / CI building without sibling
+    // resolution attempts.
+    //
+    // Once go.work is active, `replace` directives in the app server's go.mod
+    // (including `replace tinycld.org/core => ../packages/@tinycld/core/server`)
+    // are SHADOWED by the workspace. So core has to be a `use` entry too —
+    // otherwise `go mod download` / `go build` can't find tinycld.org/core
+    // and fails with "use go work edit -replace tinycld.org/core=[override]".
     const withServer = packagesInfo.filter(
         a =>
             a.manifest.server?.package &&
@@ -795,6 +802,9 @@ function updateGoWork(
         return
     }
 
+    const coreServerPath = path.join(ROOT, 'packages/@tinycld/core/server')
+    const coreRelPath = path.relative(SERVER_DIR, coreServerPath)
+
     const uses = withServer.map(a => {
         const relPath = path.relative(
             SERVER_DIR,
@@ -803,7 +813,16 @@ function updateGoWork(
         return `    ${relPath}`
     })
 
-    const content = ['go 1.25.0', '', 'use (', '    .', ...uses, ')', ''].join('\n')
+    const content = [
+        'go 1.25.0',
+        '',
+        'use (',
+        '    .',
+        `    ${coreRelPath}`,
+        ...uses,
+        ')',
+        '',
+    ].join('\n')
 
     fs.writeFileSync(goWorkPath, content)
 }
