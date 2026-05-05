@@ -19,7 +19,8 @@ function setupAppRoot(root: string): void {
     fs.mkdirSync(path.join(root, 'lib/generated'), { recursive: true })
     fs.mkdirSync(path.join(root, 'app/a/[orgSlug]'), { recursive: true })
 
-    // Minimal go.mod so the generator's updateGoMod has something to write into.
+    // Minimal go.mod so the generator (and any go work sync it triggers when
+    // siblings are linked) has a real module to operate against.
     fs.writeFileSync(
         path.join(root, 'server/go.mod'),
         'module tinycld.org/app\n\ngo 1.25.0\n\nrequire github.com/pocketbase/pocketbase v0.36.8\n'
