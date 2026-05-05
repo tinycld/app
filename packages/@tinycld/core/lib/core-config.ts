@@ -1,6 +1,6 @@
 /**
- * Runtime configuration that the app sibling (e.g. `@tinycld/app`) hands
- * to `@tinycld/core` at startup. Moves per-app details — branding, server
+ * Runtime configuration that the app shell hands to `@tinycld/core` at
+ * startup. Moves per-app details — branding, server
  * shortcuts, Sentry DSN, review-mode flags — out of hard-coded env reads
  * inside core and into a single injection point.
  *

@@ -1,15 +1,17 @@
-# @tinycld/app
+# TinyCld
 
-The runnable [TinyCld](https://tinycld.org) app — Expo Router on the front, PocketBase on the
-back, every feature shipped as a separately-installable package.
+A self-hosted Google Workspace alternative — Expo Router on the front, PocketBase on the
+back, every feature shipped as a separately-installable package. See
+[tinycld.org](https://tinycld.org) for the full story.
 
-This repo bundles `@tinycld/core` (the shared TypeScript + Go library) directly at
-`packages/@tinycld/core/` along with branding, Expo native projects, deployment configs, and
-the package generator. It's the entrypoint for `bun run dev` and `docker pull tinycld/tinycld`.
+This repo is the runnable app shell. It bundles `@tinycld/core` (the shared TypeScript + Go
+library) directly at `packages/@tinycld/core/` along with branding, Expo native projects,
+deployment configs, and the package generator. It's the entrypoint for `bun run dev` and
+`docker pull tinycld/tinycld`.
 
 ```
 ~/code/tinycld/
-    tinycld/                 # @tinycld/app — this repo (bundles @tinycld/core)
+    tinycld/                 # this repo — the app shell (bundles @tinycld/core)
     mail/                    # @tinycld/mail (feature package)
     calendar/                # @tinycld/calendar
     contacts/                # @tinycld/contacts

@@ -22,7 +22,7 @@ vi.mock('expo-router', () => ({
     useLocalSearchParams: () => ({}),
 }))
 
-// @tinycld/app-generated/* is provided by the runnable app sibling at
+// @tinycld/app-generated/* is provided by the runnable app shell at
 // build time. In core's standalone test environment there's no app, so
 // shim each generated module to its empty default. Types come from the
 // ambient declaration in types/app-generated.d.ts.

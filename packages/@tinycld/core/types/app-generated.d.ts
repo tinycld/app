@@ -1,10 +1,10 @@
 /**
  * Ambient declaration for the app-sibling-provided generated modules.
  *
- * The runnable app sibling (e.g. `@tinycld/app`) generates these files at
- * build time via `scripts/generate-packages.ts` and exposes them through a
+ * The runnable app shell generates these files at build time via
+ * `scripts/generate-packages.ts` and exposes them through a
  * `@tinycld/app-generated/*` path alias in its own tsconfig. Core consumes
- * them by name; the actual contents are only visible to the app.
+ * them by name; the actual contents are only visible to the app shell.
  *
  * The minimal shapes here let core typecheck standalone (without needing
  * the app's generated files on disk). Concrete types come from the app's
