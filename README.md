@@ -19,8 +19,9 @@ deployment configs, and the package generator. It's the entrypoint for `bun run 
     google-takeout-import/   # @tinycld/google-takeout-import
 ```
 
-Feature sibling repos reach into core via `../tinycld/packages/@tinycld/core/...` from their
-own tsconfigs and Go go.mod replace directives.
+Feature siblings import core as `@tinycld/core/*` (and `tinycld.org/core` for Go); each
+sibling's tsconfig `paths` and Go go.mod `replace` directive resolves those names onto
+this repo's bundled core.
 
 ## Quick start
 
