@@ -2,7 +2,7 @@
 
 ## Documentation drift
 
-When you change a code-style or data-access rule in the ecosystem-root `CLAUDE.md`, update the matching task page in the `web` repo at `web/src/content/docs/tasks/<file>.md`. The two are the canonical source for their respective audiences (Claude reads CLAUDE.md during development; human contributors read the website at https://tinycld.org/docs), and they must not drift.
+When you change a code-style or data-access rule also update the matching task page in the `web` repo at `web/src/content/docs/tasks/<file>.md`. The two are the canonical source for their respective audiences (devs and coding agents read this file during development; human contributors read the website at https://tinycld.org/docs), and they must not drift.
 
 ## Overview
 This repo is the runnable Expo + PocketBase app shell. It bundles `@tinycld/core`
