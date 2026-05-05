@@ -107,6 +107,15 @@ func registerUsersFieldGuardCore(app core.App) {
 			return e.UnauthorizedError("Authentication required", nil)
 		}
 
+		// Superusers bypass the field allowlist. The guard exists to constrain
+		// regular API clients (self-edits, org-admin edits); superusers already
+		// bypass collection rules and are trusted with full administrative
+		// writes (seed/reset scripts overwrite email/password on the demo
+		// account, operators reset locked-out users, etc.).
+		if e.Auth.IsSuperuser() {
+			return e.Next()
+		}
+
 		original := e.Record.Original()
 		isSelf := e.Auth.Id == e.Record.Id
 

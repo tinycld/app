@@ -384,6 +384,44 @@ func TestUsersGuard_PlainMemberCannotEditAnotherUser(t *testing.T) {
 	}
 }
 
+// Superusers (e.g. the seed/reset-demo CLI scripts authed as
+// _superusers) need to overwrite fields outside the admin allowlist —
+// notably email and password on the singleton demo account. Without a
+// bypass the guard rejects the write with "Only the record owner can
+// change this field" and the script falls back to a doomed create.
+func TestUsersGuard_SuperuserCanEditAnyField(t *testing.T) {
+	app := setupGuardTestApp(t)
+	target := makeUser(t, app, "supertarget@test.local")
+
+	su, err := app.FindCollectionByNameOrId(core.CollectionNameSuperusers)
+	if err != nil {
+		t.Fatal(err)
+	}
+	superuser := core.NewRecord(su)
+	superuser.SetEmail("super@test.local")
+	superuser.SetPassword("Superuser1234!")
+	if err := app.Save(superuser); err != nil {
+		t.Fatalf("save superuser: %v", err)
+	}
+
+	err = updateAsAuthenticated(t, app, superuser, target, func(r *core.Record) {
+		r.SetEmail("renamed@test.local")
+		r.SetPassword("Rotated1234!")
+		r.Set("name", "Operator Rewrite")
+	})
+	if err != nil {
+		t.Fatalf("superuser write should bypass field allowlist: %v", err)
+	}
+
+	fresh, _ := app.FindRecordById("users", target.Id)
+	if fresh.Email() != "renamed@test.local" {
+		t.Errorf("email not saved, got %q", fresh.Email())
+	}
+	if !fresh.ValidatePassword("Rotated1234!") {
+		t.Error("rotated password should validate")
+	}
+}
+
 // seedAuditLogs adds the audit_logs collection so the demo-audit hook has
 // somewhere to write. Mirrors the migration's shape minimally — only the
 // fields the hook actually sets.
