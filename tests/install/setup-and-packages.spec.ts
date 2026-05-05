@@ -18,7 +18,7 @@ if (!SETUP_TOKEN) {
 // Adjust this list when the public-CI default LINKED_PACKAGES set changes.
 // The names match `bundled-packages.json::name` (capitalized labels), which
 // is what PackageManager renders on the dashboard.
-const EXPECTED_BUNDLED = ['Mail', 'Calendar', 'Contacts', 'Drive']
+const EXPECTED_BUNDLED = ['Mail', 'Calendar', 'Contacts', 'Drive', 'Google Takeout Import']
 
 const SUPERUSER_EMAIL = 'smoke@example.com'
 const SUPERUSER_PASSWORD = 'SmokeTest1234!'

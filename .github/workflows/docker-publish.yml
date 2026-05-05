@@ -20,6 +20,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # QEMU lets the amd64 runner emulate arm64 so we can ship a multi-arch
+      # manifest. Roughly doubles build time (~12 min) since arm64 builds run
+      # under emulation, but it lets Apple-Silicon and ARM-VPS users pull
+      # without "no matching manifest" errors.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -62,20 +71,18 @@ jobs:
         with:
           context: .
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: ${{ steps.tags.outputs.tags }}
           labels: ${{ steps.tags.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           # Bake the default feature packages into every public image so a
-          # docs-following operator gets mail/calendar/contacts/drive out of
-          # the box. google-takeout-import is currently a private repo, so
-          # it stays out of the public image until the repo is made public
-          # — at which point append it to LINKED_PACKAGES below.
+          # docs-following operator gets the full feature set out of the box.
           # TODO: pin each entry to a tagged ref (e.g.
           #   https://github.com/tinycld/mail.git@v0.1.0
           # ) once the sibling repos start cutting versioned tags.
           build-args: |
-            LINKED_PACKAGES=https://github.com/tinycld/mail.git https://github.com/tinycld/calendar.git https://github.com/tinycld/contacts.git https://github.com/tinycld/drive.git
+            LINKED_PACKAGES=https://github.com/tinycld/mail.git https://github.com/tinycld/calendar.git https://github.com/tinycld/contacts.git https://github.com/tinycld/drive.git https://github.com/tinycld/google-takeout-import.git
 
       - name: Summary
         run: |
