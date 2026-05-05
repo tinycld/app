@@ -1,5 +1,5 @@
 {
-    "name": "@tinycld/app",
+    "name": "tinycld",
     "version": "1.13.7",
     "packageManager": "bun@1.3.12",
     "private": true,
