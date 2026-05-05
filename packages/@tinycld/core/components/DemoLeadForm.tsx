@@ -1,5 +1,6 @@
 import { forwardRef, useImperativeHandle } from 'react'
 import { View } from 'react-native'
+import { PB_SERVER_ADDR } from '@tinycld/core/lib/config'
 import { captureException } from '@tinycld/core/lib/errors'
 import {
     FormErrorSummary,
@@ -65,7 +66,11 @@ export const DemoLeadForm = forwardRef<DemoLeadFormHandle, DemoLeadFormProps>(
                         })
                         // Fire-and-forget. Network failures are logged but not
                         // surfaced — the user has already left the form mentally.
-                        fetch('/api/demo/lead', {
+                        // Address PB explicitly via PB_SERVER_ADDR (matching
+                        // SetupPage / PackageManager) — the dev / native /
+                        // self-hosted topologies all run PB on a different
+                        // origin from the client, so a relative path would 404.
+                        fetch(`${PB_SERVER_ADDR}/api/demo/lead`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body,
