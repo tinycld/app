@@ -7,7 +7,7 @@ back, every feature shipped as a separately-installable package. See
 This repo is the runnable app shell. It bundles `@tinycld/core` (the shared TypeScript + Go
 library) directly at `packages/@tinycld/core/` along with branding, Expo native projects,
 deployment configs, and the package generator. It's the entrypoint for `bun run dev` and
-`docker pull tinycld/tinycld`.
+`docker pull ghcr.io/tinycld/tinycld`.
 
 ```
 ~/code/tinycld/
@@ -90,7 +90,7 @@ semantic Tailwind tokens, pbtsdb for data, etc.
 ## Deploy
 
 ```sh
-docker pull tinycld/tinycld
+docker pull ghcr.io/tinycld/tinycld
 ```
 
 The image bakes the Go binary, Expo web export, and PocketBase server into one container.
