@@ -8,9 +8,10 @@ When you change a code-style or data-access rule in the ecosystem-root `CLAUDE.m
 This repo is the runnable Expo + PocketBase app shell. It bundles `@tinycld/core`
 directly at `packages/@tinycld/core/` (TypeScript surface under
 `packages/@tinycld/core/{lib,components,ui,types}/`, Go side at
-`packages/@tinycld/core/server/`). Feature sibling repos reach into core via
-`../tinycld/packages/@tinycld/core/...` from their own tsconfigs and Go go.mod replace
-directives.
+`packages/@tinycld/core/server/`). Feature sibling repos import core as
+`@tinycld/core/*` (and `tinycld.org/core` for Go); each sibling's tsconfig
+`paths` (and Go go.mod `replace`) resolves those names onto the bundled
+core inside the app shell.
 
 The Go side of core is module `tinycld.org/core` exporting `coreserver` (registration
 orchestrator), plus subsystems `notify`, `push`, `mailer`, `audit`, `textextract`,
