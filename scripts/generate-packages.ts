@@ -829,6 +829,19 @@ function updateGoMod(
         }
     }
 
+    // Drop any orphan sibling-package require/replace lines that escaped the
+    // marker-based strip above. The generator owns every `tinycld.org/packages/*`
+    // line: `require` lines historically lived outside markers (tidy consolidates
+    // them into the top require block, where they'd lose any wrapping comment),
+    // and an interrupted run can also leave `replace` lines behind without a
+    // matching start/end marker. Walking the file and dropping any matching
+    // line keeps a fresh checkout building cleanly even when `server/go.mod`
+    // was committed in a developer's linked state.
+    content = content
+        .split('\n')
+        .filter(line => !/^\s*(require|replace)\s+tinycld\.org\/packages\//.test(line))
+        .join('\n')
+
     // Remove trailing whitespace/newlines and ensure single trailing newline
     content = `${content.trimEnd()}\n`
 
