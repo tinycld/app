@@ -41,6 +41,11 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ steps.image.outputs.name }}
+          # Disable the auto-flavor that emits :latest for the highest semver.
+          # We control :latest explicitly via the type=raw rule below so a raw
+          # tag push doesn't accidentally move it.
+          flavor: |
+            latest=false
           # Tag strategy:
           #   - any v1.2.3 trigger (tag push or release)  → :1.2.3 + :1.2 + :1
           #   - non-prerelease GitHub Release             → also :latest
