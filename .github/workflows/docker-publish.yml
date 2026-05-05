@@ -66,6 +66,16 @@ jobs:
           labels: ${{ steps.tags.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # Bake the default feature packages into every public image so a
+          # docs-following operator gets mail/calendar/contacts/drive out of
+          # the box. google-takeout-import is currently a private repo, so
+          # it stays out of the public image until the repo is made public
+          # — at which point append it to LINKED_PACKAGES below.
+          # TODO: pin each entry to a tagged ref (e.g.
+          #   https://github.com/tinycld/mail.git@v0.1.0
+          # ) once the sibling repos start cutting versioned tags.
+          build-args: |
+            LINKED_PACKAGES=https://github.com/tinycld/mail.git https://github.com/tinycld/calendar.git https://github.com/tinycld/contacts.git https://github.com/tinycld/drive.git
 
       - name: Summary
         run: |
