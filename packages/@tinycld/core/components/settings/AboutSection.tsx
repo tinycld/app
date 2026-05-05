@@ -4,7 +4,7 @@ import { getCoreConfigOptional } from '@tinycld/core/lib/core-config'
 import { getResolvedAddress } from '@tinycld/core/lib/server-address'
 
 const DEFAULT_PRIVACY_URL = 'https://tinycld.org/privacy'
-const DEFAULT_SOURCE_URL = 'https://github.com/tinycld/core'
+const DEFAULT_SOURCE_URL = 'https://github.com/tinycld/tinycld'
 
 export function AboutSection() {
     const config = getCoreConfigOptional()

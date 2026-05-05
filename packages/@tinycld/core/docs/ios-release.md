@@ -24,7 +24,7 @@ TinyCld is a self-hosted productivity suite that connects to a PocketBase server
 - **Calendar.** Recurring events, guest RSVP, reminders, CalDAV.
 - **Contacts.** Shared directory, favorites, CardDAV.
 - **Drive.** Files, versioning, share links, role-based permissions, WebDAV.
-- **Open source.** AGPL-3.0. Every line is auditable at github.com/tinycld/core.
+- **Open source.** AGPL-3.0. Every line is auditable at github.com/tinycld/tinycld.
 
 No analytics, no ad SDKs, no tracking pixels. Diagnostic crash reports are anonymized.
 
