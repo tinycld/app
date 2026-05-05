@@ -153,6 +153,11 @@ WORKDIR /app
 COPY --from=web-builder /app/go-mod-staging/ ./
 
 WORKDIR /app/server
+# DIAGNOSTIC: dump go.work / go.mod so the deploy log shows exactly what the
+# go-builder stage is operating against. Remove once the build is green.
+RUN echo '=== /app/server/go.work ===' && (cat go.work || echo '(no go.work)') \
+    && echo '=== /app/server/go.mod ===' && cat go.mod \
+    && echo '=== ls /app/packages/@tinycld/core/server ===' && ls -la /app/packages/@tinycld/core/server | head -10
 # Warm the module cache. This layer is reused on every rebuild as long as
 # none of the go.mod/go.sum/go.work files copied above changed.
 RUN go mod download
