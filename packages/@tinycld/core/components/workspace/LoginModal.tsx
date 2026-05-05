@@ -1,5 +1,13 @@
 import { useState } from 'react'
-import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native'
+import {
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    Text,
+    TextInput,
+    View,
+} from 'react-native'
 import { ChangeServerLink } from '@tinycld/core/components/ChangeServerLink'
 import { ReviewModeHints } from '@tinycld/core/components/connect/ReviewModeHints'
 import { useAuth } from '@tinycld/core/lib/auth'
@@ -32,7 +40,8 @@ export function LoginModal() {
     }
 
     return (
-        <View
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             className="absolute top-0 left-0 right-0 bottom-0 justify-center items-center"
             style={{
                 zIndex: 200,
@@ -120,6 +129,6 @@ export function LoginModal() {
                     <ChangeServerLink />
                 </View>
             </View>
-        </View>
+        </KeyboardAvoidingView>
     )
 }
