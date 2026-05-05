@@ -122,3 +122,105 @@ func TestDemoLead_MalformedEmail(t *testing.T) {
 	}
 	scenario.Test(t)
 }
+
+// TestDemoLead_OversizedReasonTruncated checks the lossy-by-design truncation:
+// once the user has submitted, we'd rather store the first 2000 chars than
+// lose the lead by rejecting it.
+func TestDemoLead_OversizedReasonTruncated(t *testing.T) {
+	app := setupDemoLeadTestApp(t)
+	longReason := strings.Repeat("x", 3000)
+
+	scenario := &tests.ApiScenario{
+		Name:   "oversized reason is truncated to max 2000 chars",
+		Method: http.MethodPost,
+		URL:    "/api/demo/lead",
+		Body: strings.NewReader(
+			`{"email":"oversized@example.com","reason":"` + longReason + `","source":"intro_modal"}`,
+		),
+		Headers:        map[string]string{"Content-Type": "application/json"},
+		ExpectedStatus: http.StatusNoContent,
+		TestAppFactory: func(_ testing.TB) *tests.TestApp { return app },
+		DisableTestAppCleanup: true,
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			tt := t.(*testing.T)
+			rec, err := app.FindFirstRecordByFilter(
+				"demo_leads",
+				"email = {:email}",
+				dbx.Params{"email": "oversized@example.com"},
+			)
+			if err != nil {
+				tt.Fatalf("lead row not created: %v", err)
+			}
+			if got := len(rec.GetString("reason")); got != 2000 {
+				tt.Errorf("reason length = %d, want 2000", got)
+			}
+		},
+	}
+	scenario.Test(t)
+}
+
+// TestDemoLead_UnknownSourceCoerced confirms unknown source values fall back
+// to "intro_modal" rather than rejecting. The source field is analytic-only;
+// throwing away the lead over a typo is a worse trade than miscategorising it.
+func TestDemoLead_UnknownSourceCoerced(t *testing.T) {
+	app := setupDemoLeadTestApp(t)
+
+	scenario := &tests.ApiScenario{
+		Name:           "unknown source coerced to intro_modal",
+		Method:         http.MethodPost,
+		URL:            "/api/demo/lead",
+		Body:           strings.NewReader(`{"email":"coerced@example.com","source":"garbage"}`),
+		Headers:        map[string]string{"Content-Type": "application/json"},
+		ExpectedStatus: http.StatusNoContent,
+		TestAppFactory: func(_ testing.TB) *tests.TestApp { return app },
+		DisableTestAppCleanup: true,
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			tt := t.(*testing.T)
+			rec, err := app.FindFirstRecordByFilter(
+				"demo_leads",
+				"email = {:email}",
+				dbx.Params{"email": "coerced@example.com"},
+			)
+			if err != nil {
+				tt.Fatalf("lead row not created: %v", err)
+			}
+			if got := rec.GetString("source"); got != "intro_modal" {
+				tt.Errorf("source = %q, want intro_modal", got)
+			}
+		},
+	}
+	scenario.Test(t)
+}
+
+// TestDemoLead_MissingSourceCoerced confirms an entirely-missing source key
+// also defaults to intro_modal. The intro_modal path is the most common
+// caller, so it's the right default for malformed clients.
+func TestDemoLead_MissingSourceCoerced(t *testing.T) {
+	app := setupDemoLeadTestApp(t)
+
+	scenario := &tests.ApiScenario{
+		Name:           "missing source coerced to intro_modal",
+		Method:         http.MethodPost,
+		URL:            "/api/demo/lead",
+		Body:           strings.NewReader(`{"email":"nosource@example.com"}`),
+		Headers:        map[string]string{"Content-Type": "application/json"},
+		ExpectedStatus: http.StatusNoContent,
+		TestAppFactory: func(_ testing.TB) *tests.TestApp { return app },
+		DisableTestAppCleanup: true,
+		AfterTestFunc: func(t testing.TB, app *tests.TestApp, _ *http.Response) {
+			tt := t.(*testing.T)
+			rec, err := app.FindFirstRecordByFilter(
+				"demo_leads",
+				"email = {:email}",
+				dbx.Params{"email": "nosource@example.com"},
+			)
+			if err != nil {
+				tt.Fatalf("lead row not created: %v", err)
+			}
+			if got := rec.GetString("source"); got != "intro_modal" {
+				tt.Errorf("source = %q, want intro_modal", got)
+			}
+		},
+	}
+	scenario.Test(t)
+}
