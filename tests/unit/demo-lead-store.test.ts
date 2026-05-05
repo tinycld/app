@@ -28,18 +28,14 @@ describe('useDemoLeadStore', () => {
     })
 
     it('starts with hasSubmitted=false and isFollowUpOpen=false', async () => {
-        const { useDemoLeadStore } = await import(
-            '@tinycld/core/lib/stores/demo-lead-store'
-        )
+        const { useDemoLeadStore } = await import('@tinycld/core/lib/stores/demo-lead-store')
         const state = useDemoLeadStore.getState()
         expect(state.hasSubmitted).toBe(false)
         expect(state.isFollowUpOpen).toBe(false)
     })
 
     it('setSubmitted flips hasSubmitted true and closes the follow-up modal', async () => {
-        const { useDemoLeadStore } = await import(
-            '@tinycld/core/lib/stores/demo-lead-store'
-        )
+        const { useDemoLeadStore } = await import('@tinycld/core/lib/stores/demo-lead-store')
         useDemoLeadStore.getState().setFollowUpOpen(true)
         useDemoLeadStore.getState().setSubmitted()
 
@@ -49,9 +45,7 @@ describe('useDemoLeadStore', () => {
     })
 
     it('setFollowUpOpen toggles the transient field independently', async () => {
-        const { useDemoLeadStore } = await import(
-            '@tinycld/core/lib/stores/demo-lead-store'
-        )
+        const { useDemoLeadStore } = await import('@tinycld/core/lib/stores/demo-lead-store')
         useDemoLeadStore.getState().setFollowUpOpen(true)
         expect(useDemoLeadStore.getState().isFollowUpOpen).toBe(true)
         expect(useDemoLeadStore.getState().hasSubmitted).toBe(false)
