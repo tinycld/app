@@ -93,11 +93,11 @@ func TestDemoLead_MissingEmail(t *testing.T) {
 		Name:           "missing email returns 400",
 		Method:         http.MethodPost,
 		URL:            "/api/demo/lead",
-		Body:           strings.NewReader(`{"email":"","reason":"hi","source":"intro_modal"}`),
-		Headers:        map[string]string{"Content-Type": "application/json"},
-		ExpectedStatus: http.StatusBadRequest,
-		ExpectedContent: []string{"message"},
-		TestAppFactory: func(_ testing.TB) *tests.TestApp { return app },
+		Body:            strings.NewReader(`{"email":"","reason":"hi","source":"intro_modal"}`),
+		Headers:         map[string]string{"Content-Type": "application/json"},
+		ExpectedStatus:  http.StatusBadRequest,
+		ExpectedContent: []string{`"status":400`},
+		TestAppFactory:  func(_ testing.TB) *tests.TestApp { return app },
 		DisableTestAppCleanup: true,
 	}
 	scenario.Test(t)
@@ -113,11 +113,11 @@ func TestDemoLead_MalformedEmail(t *testing.T) {
 		Name:           "malformed email returns 400",
 		Method:         http.MethodPost,
 		URL:            "/api/demo/lead",
-		Body:           strings.NewReader(`{"email":"not-an-email","source":"intro_modal"}`),
-		Headers:        map[string]string{"Content-Type": "application/json"},
-		ExpectedStatus: http.StatusBadRequest,
-		ExpectedContent: []string{"message"},
-		TestAppFactory: func(_ testing.TB) *tests.TestApp { return app },
+		Body:            strings.NewReader(`{"email":"not-an-email","source":"intro_modal"}`),
+		Headers:         map[string]string{"Content-Type": "application/json"},
+		ExpectedStatus:  http.StatusBadRequest,
+		ExpectedContent: []string{`"status":400`},
+		TestAppFactory:  func(_ testing.TB) *tests.TestApp { return app },
 		DisableTestAppCleanup: true,
 	}
 	scenario.Test(t)
