@@ -24,7 +24,7 @@ export const ToolbarIconButton = forwardRef<View, ToolbarIconButtonProps>(functi
     const button = (
         <Pressable
             ref={ref}
-            className={`${padding} rounded-full ${disabled ? 'opacity-40' : 'opacity-100'}`}
+            className={`${padding} rounded-full hover:bg-hover-background active:bg-hover-background ${disabled ? 'opacity-40' : 'opacity-100'}`}
             onPress={onPress}
             accessibilityLabel={label}
             disabled={disabled}
