@@ -39,6 +39,8 @@ server/pb_test_data/
 /app/share/\[token\].tsx
 /lib/generated/
 /server/package_extensions.go
+/server/go.work
+/server/go.work.sum
 /server/bundled-packages.json
 /server/pb_migrations/
 /server/pb_hooks/

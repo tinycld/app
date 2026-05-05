@@ -725,11 +725,6 @@ function generateSeedsFile(
     ].join('\n')
 }
 
-const GO_MOD_MARKER_START = '// --- package extensions (auto-generated, do not edit) ---'
-const GO_MOD_MARKER_END = '// --- end package extensions ---'
-const OLD_GO_MOD_MARKER_START = '// --- addon extensions (auto-generated, do not edit) ---'
-const OLD_GO_MOD_MARKER_END = '// --- end addon extensions ---'
-
 function generatePackageExtensionsGo(
     packagesInfo: { packageName: string; manifest: PackageManifest; packageDir: string }[]
 ): string {
@@ -777,119 +772,64 @@ function generatePackageExtensionsGo(
     ].join('\n')
 }
 
-function updateGoMod(
+function updateGoWork(
     packagesInfo: { packageName: string; manifest: PackageManifest; packageDir: string }[]
 ) {
+    // Sibling Go modules wire into the app server through go.work, not go.mod.
+    // The tracked server/go.mod stays lean (only the bundled core); go.work is
+    // gitignored and lists every linked sibling's server/ as an additional
+    // workspace module. This avoids mutating a tracked file on every link/unlink
+    // and keeps fresh clones / CI building without sibling resolution attempts.
     const withServer = packagesInfo.filter(
         a =>
             a.manifest.server?.package &&
             fs.existsSync(path.join(a.packageDir, a.manifest.server.package))
     )
 
-    const goModPath = path.join(SERVER_DIR, 'go.mod')
-    let content = fs.readFileSync(goModPath, 'utf-8')
+    const goWorkPath = path.join(SERVER_DIR, 'go.work')
 
-    // Strip existing block (new or old markers). Loop until no markers remain
-    // — earlier versions of this code used indexOf only once, which left
-    // orphaned end-markers behind whenever a separate tool (`go mod tidy`,
-    // a manual edit) consolidated the require/replace block but left the
-    // marker lines in place; subsequent runs then appended a fresh block on
-    // top of the orphans.
-    for (const [start, end] of [
-        [GO_MOD_MARKER_START, GO_MOD_MARKER_END],
-        [OLD_GO_MOD_MARKER_START, OLD_GO_MOD_MARKER_END],
-    ]) {
-        while (true) {
-            const startIdx = content.indexOf(start)
-            const endIdx = content.indexOf(end)
-            if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
-                content =
-                    content.slice(0, startIdx).trimEnd() +
-                    '\n' +
-                    content.slice(endIdx + end.length).trimStart()
-                continue
-            }
-            // Orphan end marker (no matching start): drop just that line.
-            if (endIdx !== -1) {
-                content =
-                    content.slice(0, endIdx).trimEnd() +
-                    '\n' +
-                    content.slice(endIdx + end.length).trimStart()
-                continue
-            }
-            // Orphan start marker (no matching end): drop just that line.
-            if (startIdx !== -1) {
-                content =
-                    content.slice(0, startIdx).trimEnd() +
-                    '\n' +
-                    content.slice(startIdx + start.length).trimStart()
-                continue
-            }
-            break
-        }
+    if (withServer.length === 0) {
+        if (fs.existsSync(goWorkPath)) fs.unlinkSync(goWorkPath)
+        const goWorkSumPath = path.join(SERVER_DIR, 'go.work.sum')
+        if (fs.existsSync(goWorkSumPath)) fs.unlinkSync(goWorkSumPath)
+        return
     }
 
-    // Drop any orphan sibling-package require/replace lines that escaped the
-    // marker-based strip above. The generator owns every `tinycld.org/packages/*`
-    // line: `require` lines historically lived outside markers (tidy consolidates
-    // them into the top require block, where they'd lose any wrapping comment),
-    // and an interrupted run can also leave `replace` lines behind without a
-    // matching start/end marker. Walking the file and dropping any matching
-    // line keeps a fresh checkout building cleanly even when `server/go.mod`
-    // was committed in a developer's linked state.
-    content = content
-        .split('\n')
-        .filter(line => !/^\s*(require|replace)\s+tinycld\.org\/packages\//.test(line))
-        .join('\n')
+    const uses = withServer.map(a => {
+        const relPath = path.relative(
+            SERVER_DIR,
+            path.join(a.packageDir, a.manifest.server?.package ?? '')
+        )
+        return `    ${relPath}`
+    })
 
-    // Remove trailing whitespace/newlines and ensure single trailing newline
-    content = `${content.trimEnd()}\n`
+    const content = ['go 1.25.0', '', 'use (', '    .', ...uses, ')', ''].join('\n')
 
-    if (withServer.length > 0) {
-        // Markers bracket only the `replace` lines, not the `require` lines.
-        // `go mod tidy` consolidates loose `require` directives into the
-        // top require block and discards adjacent comments; brackets around
-        // requires therefore lose their START marker on every tidy pass and
-        // accumulate orphans. `replace` directives stay where they are, so
-        // wrapping only those keeps both markers intact across tidy runs.
-        const lines = [
-            '',
-            ...withServer.map(a => `require ${a.manifest.server?.module} v0.0.0`),
-            '',
-            GO_MOD_MARKER_START,
-            ...withServer.map(a => {
-                const relPath = path.relative(
-                    SERVER_DIR,
-                    path.join(a.packageDir, a.manifest.server?.package ?? '')
-                )
-                return `replace ${a.manifest.server?.module} => ${relPath}`
-            }),
-            GO_MOD_MARKER_END,
-            '',
-        ]
-        content += lines.join('\n')
-    }
-
-    fs.writeFileSync(goModPath, content)
+    fs.writeFileSync(goWorkPath, content)
 }
 
-function runGoModTidy() {
+function runGoWorkSync() {
     // Skip cleanly when go isn't installed at all (e.g. the Docker Node-only
-    // build stage). Any other failure — bad go.mod, network issue, missing
-    // dep — should surface to the developer instead of being swallowed.
+    // build stage). Any other failure — bad workspace, missing dep — should
+    // surface to the developer instead of being swallowed.
     try {
         execSync('command -v go', { stdio: 'ignore' })
     } catch {
         return
     }
 
+    // Only sync when a workspace exists. With no linked sibling servers
+    // there's no go.work and nothing to sync — the lean shell's go.mod is
+    // already canonical and `go build` resolves only against it.
+    if (!fs.existsSync(path.join(SERVER_DIR, 'go.work'))) return
+
     try {
-        execSync('go mod tidy', { cwd: SERVER_DIR, stdio: 'inherit' })
+        execSync('go work sync', { cwd: SERVER_DIR, stdio: 'inherit' })
     } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
-        process.stderr.write(`\ngenerate-packages: go mod tidy failed: ${msg}\n`)
+        process.stderr.write(`\ngenerate-packages: go work sync failed: ${msg}\n`)
         process.stderr.write(
-            'generate-packages: continuing — go.mod may be in an inconsistent state\n'
+            'generate-packages: continuing — go.work may be in an inconsistent state\n'
         )
     }
 }
@@ -1061,9 +1001,11 @@ async function main() {
     fs.writeFileSync(bundledPkgFile, JSON.stringify(bundledPackages, null, 2))
     allGenerated.push(bundledPkgFile)
 
-    // Update server/go.mod with package require/replace directives
-    updateGoMod(packagesInfo)
-    runGoModTidy()
+    // Wire linked sibling Go modules through go.work (gitignored). The
+    // tracked server/go.mod stays lean — only the bundled core's replace
+    // directive lives there.
+    updateGoWork(packagesInfo)
+    runGoWorkSync()
 
     // Save manifest for cleanup
     const linksManifest: LinksManifest = {
