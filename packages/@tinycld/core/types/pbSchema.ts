@@ -46,6 +46,7 @@ export interface CalendarEvents {
     created: string
     updated: string
     ical_uid: string
+    recurrence_until: string
 }
 
 export interface CalendarMembers {
@@ -190,6 +191,18 @@ export interface MailDomains {
     webhook_secret: string
 }
 
+export interface MailFolderCounts {
+    id: string
+    user_org: string
+    mailbox: string
+    inbox: any
+    drafts: any
+    sent: any
+    starred: any
+    trash: any
+    spam: any
+}
+
 export interface MailImapMailboxState {
     id: string
     mailbox: string
@@ -276,6 +289,8 @@ export interface MailThreads {
     participants: any
     created: string
     updated: string
+    has_draft: boolean
+    has_attachments: boolean
 }
 
 export interface Notifications {
@@ -527,6 +542,13 @@ export type Schema = {
             // mail_mailboxes_via_domain?: MailMailboxes[]
         }
     }
+    mail_folder_counts: {
+        type: MailFolderCounts
+        relations: {
+            user_org: UserOrg
+            mailbox: MailMailboxes
+        }
+    }
     mail_imap_mailbox_state: {
         type: MailImapMailboxState
         relations: {
@@ -550,6 +572,7 @@ export type Schema = {
     mail_mailboxes: {
         type: MailMailboxes
         relations: {
+            // mail_folder_counts_via_mailbox?: MailFolderCounts[]
             mail_imap_mailbox_state_via_mailbox?: MailImapMailboxState
             // mail_mailbox_aliases_via_mailbox?: MailMailboxAliases[]
             // mail_mailbox_members_via_mailbox?: MailMailboxMembers[]
@@ -648,6 +671,7 @@ export type Schema = {
             // drive_shares_via_created_by?: DriveShares[]
             // label_assignments_via_user_org?: LabelAssignments[]
             // labels_via_user_org?: Labels[]
+            // mail_folder_counts_via_user_org?: MailFolderCounts[]
             // mail_mailbox_members_via_user_org?: MailMailboxMembers[]
             // mail_thread_state_via_user_org?: MailThreadState[]
             // org_pkg_access_via_user_org?: OrgPkgAccess[]

@@ -50,6 +50,7 @@ export const calendarEventsSchema = z.object({
     created: z.string().regex(DATETIME_REGEX).optional(),
     updated: z.string().regex(DATETIME_REGEX).optional(),
     ical_uid: z.string().max(500).optional(),
+    recurrence_until: z.string().regex(DATETIME_REGEX).optional(),
 })
 
 export const calendarMembersSchema = z.object({
@@ -194,6 +195,18 @@ export const mailDomainsSchema = z.object({
     webhook_secret: z.string().max(64).optional(),
 })
 
+export const mailFolderCountsSchema = z.object({
+    id: z.string().regex(/^[a-z0-9]+$/).min(1),
+    user_org: z.string().regex(/^[a-z0-9]+$/).length(15),
+    mailbox: z.string().regex(/^[a-z0-9]+$/).length(15),
+    inbox: z.unknown().optional(),
+    drafts: z.unknown().optional(),
+    sent: z.unknown().optional(),
+    starred: z.unknown().optional(),
+    trash: z.unknown().optional(),
+    spam: z.unknown().optional(),
+})
+
 export const mailImapMailboxStateSchema = z.object({
     id: z.string().regex(/^[a-z0-9]+$/).length(15).optional(),
     mailbox: z.string().regex(/^[a-z0-9]+$/).length(15),
@@ -280,6 +293,8 @@ export const mailThreadsSchema = z.object({
     participants: z.unknown().optional(),
     created: z.string().regex(DATETIME_REGEX).optional(),
     updated: z.string().regex(DATETIME_REGEX).optional(),
+    has_draft: z.boolean().optional(),
+    has_attachments: z.boolean().optional(),
 })
 
 export const notificationsSchema = z.object({
