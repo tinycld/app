@@ -119,6 +119,7 @@ func Register(app *pocketbase.PocketBase, opts Options) {
 	RegisterSetupBootstrap(app)
 	RegisterAccountDelete(app)
 	RegisterDemoStart(app)
+	RegisterDemoLead(app)
 	RegisterDemoReset(app)
 	RegisterUsersFieldGuard(app)
 	RegisterUsersDemoAuditHook(app)
