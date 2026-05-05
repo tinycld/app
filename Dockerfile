@@ -34,6 +34,39 @@ COPY react-native.config.cjs metro.config.cjs babel.config.cjs ./
 # packages/name. Core ships as packages/@tinycld/core/ here.
 COPY packages/ ./packages/
 
+# Optional: clone additional feature packages at build time.
+#
+# LINKED_PACKAGES is a space-separated list of `<git-url>[@<ref>]` entries.
+# For each entry the build clones the repo into a temp dir, reads the
+# package's name from package.json, and moves the working tree into
+# packages/<scoped-name>/ as a real directory (no symlink, no node_modules).
+# generate-packages.ts then picks up every linked package alongside core.
+#
+# Default is empty → lean shell (works as a fallback for `docker build .`
+# from a fresh clone). The CI workflow passes a default set of feature
+# packages so the public image ships with mail/calendar/contacts/drive/etc.
+ARG LINKED_PACKAGES=""
+RUN if [ -n "$LINKED_PACKAGES" ]; then \
+        apt-get update && apt-get install -y --no-install-recommends git ca-certificates jq && rm -rf /var/lib/apt/lists/* ; \
+        set -eu ; \
+        for entry in $LINKED_PACKAGES; do \
+            url="${entry%@*}" ; \
+            ref="" ; \
+            case "$entry" in *@*) ref="${entry#*@}" ;; esac ; \
+            tmp=$(mktemp -d) ; \
+            echo "[build] cloning $url${ref:+ @ $ref}" ; \
+            git clone --depth 1 ${ref:+--branch "$ref"} "$url" "$tmp/repo" ; \
+            name=$(jq -r '.name' "$tmp/repo/package.json") ; \
+            [ -n "$name" ] && [ "$name" != "null" ] || { echo "no .name in $url package.json" >&2; exit 1; } ; \
+            target="packages/$name" ; \
+            mkdir -p "$(dirname "$target")" ; \
+            rm -rf "$target" ; \
+            mv "$tmp/repo" "$target" ; \
+            rm -rf "$target/.git" "$target/node_modules" "$target/bun.lock" ; \
+            echo "[build] linked $name → $target" ; \
+        done ; \
+    fi
+
 # Generate package wiring (produces server/package_extensions.go,
 # lib/generated/, app/a/[orgSlug]/<slug>/ routes, public route re-exports,
 # server/pb_migrations/ symlinks, and updates server/go.mod replace
