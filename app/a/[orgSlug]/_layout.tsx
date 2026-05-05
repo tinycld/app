@@ -1,3 +1,4 @@
+import { DemoFollowUpModal } from '@tinycld/core/components/DemoFollowUpModal'
 import { DemoIntroModal } from '@tinycld/core/components/DemoIntroModal'
 import { NotifyContextSync } from '@tinycld/core/components/NotifyContextSync'
 import { AuthGate } from '@tinycld/core/components/workspace/AuthGate'
@@ -40,6 +41,7 @@ function OrgLayoutInner() {
             <NotifyContextSync />
             <WorkspaceLayout isReady={isReady} />
             <DemoIntroModal />
+            <DemoFollowUpModal />
         </>
     )
 }
