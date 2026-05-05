@@ -164,6 +164,17 @@ function htmlBlob(html: string) {
     return new File([html], 'body.html', { type: 'text/html' })
 }
 
+// PocketBase's `getFirstListItem` rejects with a 404 ClientResponseError when
+// no record matches. We need to distinguish that from genuine errors (auth
+// failures, server-side guards, network issues) so we don't accidentally
+// fall through to a `create` that masks the real cause.
+function isNotFoundError(err: unknown): boolean {
+    if (err && typeof err === 'object' && 'status' in err) {
+        return (err as { status: number }).status === 404
+    }
+    return false
+}
+
 function todayAt(dayOffset: number, hour: number, minute = 0) {
     const d = new Date()
     d.setHours(0, 0, 0, 0)
@@ -432,9 +443,23 @@ async function seedSecondOrg(pb: PocketBase, ctx: OrgSeedContext) {
  * Exported so reset-demo.ts can re-seed without shelling out.
  */
 export async function seedForUser(pb: PocketBase, config: SeedConfig) {
-    let user: { id: string }
+    // Find first; only branch into create when the lookup specifically returns
+    // nothing. Catching around the update too would mask a real failure (e.g.
+    // a server-side guard rejecting the write) and silently fall through to a
+    // duplicate-create attempt, which then fails with a confusing
+    // "username must be unique" error instead of the underlying cause.
+    let existingUser: { id: string } | null = null
     try {
-        user = await pb.collection('users').getFirstListItem(`username = "${config.userUsername}"`)
+        existingUser = await pb
+            .collection('users')
+            .getFirstListItem(`username = "${config.userUsername}"`)
+    } catch (err) {
+        if (!isNotFoundError(err)) throw err
+    }
+
+    let user: { id: string }
+    if (existingUser) {
+        user = existingUser
         log('Found existing user:', config.userUsername)
         if (config.isDemo) {
             // The singleton demo account is shared across all anonymous
@@ -451,7 +476,7 @@ export async function seedForUser(pb: PocketBase, config: SeedConfig) {
                 passwordConfirm: newPassword,
             })
         }
-    } catch {
+    } else {
         log('Creating user:', config.userUsername)
         // Demo accounts are created by the Go endpoint with a random password;
         // when we create one here from the CLI we still need *some* password
@@ -484,18 +509,27 @@ export async function seedForUser(pb: PocketBase, config: SeedConfig) {
         })
     }
 
-    let userOrg: { id: string; role: string }
+    // Same find-then-create split as the user block above — keeps a failed
+    // role update from silently falling through to a duplicate-create attempt.
+    let existingUserOrg: { id: string; role: string } | null = null
     try {
-        userOrg = await pb
+        existingUserOrg = await pb
             .collection('user_org')
             .getFirstListItem(`user = "${user.id}" && org = "${org.id}"`)
-        if (userOrg.role !== 'owner') {
-            log(`Updating user role from "${userOrg.role}" to "owner"`)
-            userOrg = await pb.collection('user_org').update(userOrg.id, { role: 'owner' })
+    } catch (err) {
+        if (!isNotFoundError(err)) throw err
+    }
+
+    let userOrg: { id: string; role: string }
+    if (existingUserOrg) {
+        if (existingUserOrg.role !== 'owner') {
+            log(`Updating user role from "${existingUserOrg.role}" to "owner"`)
+            userOrg = await pb.collection('user_org').update(existingUserOrg.id, { role: 'owner' })
         } else {
             log('Found existing user_org membership (role: owner)')
+            userOrg = existingUserOrg
         }
-    } catch {
+    } else {
         log('Creating user_org membership (role: owner)')
         userOrg = await pb.collection('user_org').create({
             org: org.id,
