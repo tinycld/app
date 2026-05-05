@@ -8,7 +8,7 @@ import {
     useForm,
     z,
     zodResolver,
-} from '~/ui/form'
+} from '@tinycld/core/ui/form'
 
 export type DemoLeadSource = 'intro_modal' | 'banner_link'
 
