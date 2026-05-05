@@ -79,14 +79,16 @@ RUN bun run scripts/generate-packages.ts
 # real content, so materialize them in place.
 RUN find server/pb_migrations server/pb_hooks -type l -exec sh -c 'target=$(readlink "$1") && rm "$1" && cp "$target" "$1"' _ {} \; 2>/dev/null || true
 
-# Stage a tree containing only Go module manifests (go.mod / go.sum), with
-# directory structure preserved. The go-builder stage copies just this tree
-# to warm its module cache, so `go mod download` only re-runs when one of
-# these files changes — independent of any Go source edits. tar with
-# --files-from preserves the relative paths into the destination.
+# Stage a tree containing only Go module manifests (go.mod / go.sum / go.work),
+# with directory structure preserved. The go-builder stage copies just this
+# tree to warm its module cache, so `go mod download` only re-runs when one
+# of these files changes — independent of any Go source edits. go.work is
+# generator output (gitignored locally, but real in the build context); it
+# wires linked sibling Go modules into the app server's workspace and must
+# travel with the manifests. tar with --files-from preserves relative paths.
 RUN mkdir -p /app/go-mod-staging \
     && cd /app \
-    && find server packages \( -name go.mod -o -name go.sum \) -print0 \
+    && find server packages \( -name go.mod -o -name go.sum -o -name go.work -o -name go.work.sum \) -print0 \
         | tar --null --files-from=- -cf - \
         | tar -xf - -C /app/go-mod-staging
 
@@ -140,18 +142,19 @@ RUN apt-get update \
 
 WORKDIR /app
 
-# Stage only go.mod / go.sum files first so the module-download layer caches
-# until those files change. Without this, every source edit busts the cache
-# and re-downloads ~hundreds of MB of Go modules. The app server's go.mod
-# uses local `replace` directives pointing at sibling package server trees,
-# so each replaced module's go.mod must be present too — the web-builder
-# stage assembled all of them under /app/go-mod-staging/ with their original
-# directory structure preserved.
+# Stage only go.mod / go.sum / go.work files first so the module-download
+# layer caches until those files change. Without this, every source edit
+# busts the cache and re-downloads ~hundreds of MB of Go modules. The app
+# server's go.mod stays lean (just the bundled core); linked sibling Go
+# modules are wired in through a generator-written go.work file at
+# server/go.work, with each sibling's own go.mod under packages/<name>/server/.
+# The web-builder stage assembled all of those under /app/go-mod-staging/
+# with their original directory structure preserved.
 COPY --from=web-builder /app/go-mod-staging/ ./
 
 WORKDIR /app/server
 # Warm the module cache. This layer is reused on every rebuild as long as
-# none of the go.mod/go.sum files copied above changed.
+# none of the go.mod/go.sum/go.work files copied above changed.
 RUN go mod download
 
 # Now bring in the full server source. Changes here invalidate everything
@@ -161,12 +164,12 @@ COPY --from=web-builder /app/server/ ./server/
 COPY --from=web-builder /app/packages ./packages
 
 WORKDIR /app/server
-# Reconcile go.sum after the full source lands. The web-builder stage
-# generates package_extensions.go and rewrites go.mod's require/replace
-# block but has no go toolchain available, so go.sum can be stale. With the
-# module cache already warm from `go mod download` above, this is cheap and
-# offline.
-RUN go mod tidy
+# Reconcile go.sum across the workspace after the full source lands. The
+# web-builder stage generated package_extensions.go and go.work but had no
+# Go toolchain to populate go.sum entries; `go work sync` does that now,
+# offline (module cache is warm from `go mod download` above) and only
+# costs cycles when go.work or any sibling go.mod changed.
+RUN if [ -f go.work ]; then go work sync; fi
 
 # Build the server binary.
 RUN CGO_ENABLED=1 GOOS=linux go build -o tinycld .
