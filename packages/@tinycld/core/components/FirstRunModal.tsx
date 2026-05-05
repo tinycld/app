@@ -30,12 +30,21 @@ export interface FirstRunModalProps {
     /** Tone of the icon + accent edge. Maps to a useThemeColor token. */
     accentToken?: 'primary' | 'warning' | 'success'
     title: string
-    /** Single short paragraph below the title — keep under ~140 chars. */
-    intro: string
+    /**
+     * Single short paragraph below the title — keep under ~140 chars. Optional;
+     * omit when the body slot itself frames the modal (e.g. a form).
+     */
+    intro?: string
     /** Body slot — typically a list of <FirstRunModalBullet /> children. */
     children?: ReactNode
     primaryLabel: string
-    onPrimary: () => void
+    /**
+     * Primary button handler. Returning `false` aborts dismissal — the modal
+     * stays open and the storage marker is not written. Useful when the body
+     * slot owns validation that should keep the modal open on failure.
+     * Default (return undefined or `true`) preserves dismiss-on-press.
+     */
+    onPrimary: () => void | boolean
     /**
      * Optional secondary action. When omitted, the modal renders the primary
      * button alone — useful for "got it" confirmations where there's nothing
@@ -88,13 +97,21 @@ export function FirstRunModal({
     if (phase !== 'show') return null
 
     const dismiss = (action: 'primary' | 'secondary') => {
+        if (action === 'primary') {
+            // Run the callback first so it can abort dismissal by returning
+            // false. Lets callers gate dismissal on body-slot validation
+            // (e.g. a form rejecting a malformed email).
+            const result = onPrimary()
+            if (result === false) return
+        } else if (onSecondary) {
+            onSecondary()
+        }
+
         AsyncStorage.setItem(STORAGE_NAMESPACE + storageKey, '1').catch(() => {
             // If we can't persist the marker the modal will reappear next
             // boot. Annoying but not broken; nothing to do at the call site.
         })
         setPhase('hide')
-        if (action === 'primary') onPrimary()
-        else if (onSecondary) onSecondary()
     }
 
     return (
@@ -126,12 +143,18 @@ export function FirstRunModal({
                         <Icon size={22} color={accentFg} />
                     </View>
 
-                    <Text className="text-[22px] font-bold text-foreground mb-2">{title}</Text>
                     <Text
-                        className={`text-sm leading-5 text-muted-foreground ${children ? 'mb-5' : 'mb-6'}`}
+                        className={`text-[22px] font-bold text-foreground ${intro ? 'mb-2' : children ? 'mb-5' : 'mb-6'}`}
                     >
-                        {intro}
+                        {title}
                     </Text>
+                    {intro ? (
+                        <Text
+                            className={`text-sm leading-5 text-muted-foreground ${children ? 'mb-5' : 'mb-6'}`}
+                        >
+                            {intro}
+                        </Text>
+                    ) : null}
 
                     {children ? <View className="gap-3 mb-6">{children}</View> : null}
 
