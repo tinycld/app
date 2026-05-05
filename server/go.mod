@@ -6,10 +6,6 @@ require (
 	github.com/getsentry/sentry-go v0.44.1
 	github.com/pocketbase/pocketbase v0.36.8
 	tinycld.org/core v0.0.0
-	tinycld.org/packages/calendar v0.0.0
-	tinycld.org/packages/contacts v0.0.0
-	tinycld.org/packages/drive v0.0.0
-	tinycld.org/packages/mail v0.0.0
 )
 
 replace tinycld.org/core => ../packages/@tinycld/core/server
@@ -82,13 +78,3 @@ require (
 	modernc.org/sqlite v1.48.0 // indirect
 )
 
-// --- package extensions (auto-generated, do not edit) ---
-replace tinycld.org/packages/calendar => ../../calendar/server
-
-replace tinycld.org/packages/contacts => ../../contacts/server
-
-replace tinycld.org/packages/drive => ../../drive/server
-
-replace tinycld.org/packages/mail => ../../mail/server
-
-// --- end package extensions ---
