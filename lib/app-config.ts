@@ -24,5 +24,5 @@ export const appConfig: CoreConfig = {
     demoPassword: process.env.EXPO_PUBLIC_DEMO_PASSWORD,
     demoEmail: 'appreview@tinycld.org',
     privacyUrl: 'https://tinycld.org/privacy',
-    sourceUrl: 'https://github.com/tinycld/core',
+    sourceUrl: 'https://github.com/tinycld/tinycld',
 }
