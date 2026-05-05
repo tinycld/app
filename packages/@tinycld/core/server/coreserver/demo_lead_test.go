@@ -82,3 +82,43 @@ func TestDemoLead_HappyPath(t *testing.T) {
 	}
 	scenario.Test(t)
 }
+
+// TestDemoLead_MissingEmail confirms the handler rejects requests without an
+// email. We can't follow up on a lead with no contact info, so this is the
+// only hard validation gate.
+func TestDemoLead_MissingEmail(t *testing.T) {
+	app := setupDemoLeadTestApp(t)
+
+	scenario := &tests.ApiScenario{
+		Name:           "missing email returns 400",
+		Method:         http.MethodPost,
+		URL:            "/api/demo/lead",
+		Body:           strings.NewReader(`{"email":"","reason":"hi","source":"intro_modal"}`),
+		Headers:        map[string]string{"Content-Type": "application/json"},
+		ExpectedStatus: http.StatusBadRequest,
+		ExpectedContent: []string{"message"},
+		TestAppFactory: func(_ testing.TB) *tests.TestApp { return app },
+		DisableTestAppCleanup: true,
+	}
+	scenario.Test(t)
+}
+
+// TestDemoLead_MalformedEmail confirms basic email-format validation. A
+// missing @ or domain is the most common shape of bot traffic; we want it
+// rejected at the edge so the table doesn't fill with garbage.
+func TestDemoLead_MalformedEmail(t *testing.T) {
+	app := setupDemoLeadTestApp(t)
+
+	scenario := &tests.ApiScenario{
+		Name:           "malformed email returns 400",
+		Method:         http.MethodPost,
+		URL:            "/api/demo/lead",
+		Body:           strings.NewReader(`{"email":"not-an-email","source":"intro_modal"}`),
+		Headers:        map[string]string{"Content-Type": "application/json"},
+		ExpectedStatus: http.StatusBadRequest,
+		ExpectedContent: []string{"message"},
+		TestAppFactory: func(_ testing.TB) *tests.TestApp { return app },
+		DisableTestAppCleanup: true,
+	}
+	scenario.Test(t)
+}
