@@ -11,7 +11,15 @@ import { TextInput, useForm, z, zodResolver } from '@tinycld/core/ui/form'
 import { router, useLocalSearchParams } from 'expo-router'
 import { ChevronDown, Globe, Server, X } from 'lucide-react-native'
 import { useState } from 'react'
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
+import {
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    Text,
+    View,
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 const FALLBACK_DEFAULT_SERVER = 'https://tinycld.org'
@@ -176,7 +184,10 @@ export default function Connect() {
                 animationType="slide"
                 onRequestClose={closeSheet}
             >
-                <View className="flex-1">
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    className="flex-1"
+                >
                     <Pressable
                         onPress={closeSheet}
                         className="flex-1"
@@ -244,7 +255,7 @@ export default function Connect() {
                             />
                         </SafeAreaView>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
         </SafeAreaView>
     )
