@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 
@@ -32,7 +33,16 @@ func RegisterSetupBootstrap(app *pocketbase.PocketBase) {
 			setupToken = token
 			setupTokenMu.Unlock()
 
-			setupURL := fmt.Sprintf("%s/setup?token=%s", strings.TrimRight(baseURL, "/"), token)
+			// Prefer TINYCLD_PUBLIC_URL when set so the printed URL matches
+			// where the user actually browses (dev: scripts/dev.ts proxy on
+			// 7100; prod: whatever public URL fronts PB). PB's baseURL is
+			// the bind address, which is wrong whenever a reverse proxy
+			// sits in front of the server.
+			publicURL := strings.TrimRight(os.Getenv("TINYCLD_PUBLIC_URL"), "/")
+			if publicURL == "" {
+				publicURL = strings.TrimRight(baseURL, "/")
+			}
+			setupURL := fmt.Sprintf("%s/setup?token=%s", publicURL, token)
 			printBoxed("First run setup, visit below URL to configure tinycld:", setupURL)
 			return nil
 		}
