@@ -80,6 +80,16 @@ export const contactsSchema = z.object({
     deleted_at: z.string().regex(DATETIME_REGEX).optional(),
 })
 
+export const demoLeadsSchema = z.object({
+    id: z.string().regex(/^[a-z0-9]+$/).length(15).optional(),
+    email: z.string().email(),
+    reason: z.string().max(2000).optional(),
+    source: z.enum(["intro_modal", "banner_link"]),
+    user_agent: z.string().max(1000).optional(),
+    ip: z.string().max(100).optional(),
+    created: z.string().regex(DATETIME_REGEX).optional(),
+})
+
 export const driveItemStateSchema = z.object({
     id: z.string().regex(/^[a-z0-9]+$/).length(15).optional(),
     item: z.string().regex(/^[a-z0-9]+$/).length(15),

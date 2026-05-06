@@ -76,6 +76,16 @@ export interface Contacts {
     deleted_at: string
 }
 
+export interface DemoLeads {
+    id: string
+    email: string
+    reason: string
+    source: 'intro_modal' | 'banner_link'
+    user_agent: string
+    ip: string
+    created: string
+}
+
 export interface DriveItemState {
     id: string
     item: string
@@ -469,6 +479,9 @@ export type Schema = {
         relations: {
             owner: UserOrg
         }
+    }
+    demo_leads: {
+        type: DemoLeads
     }
     drive_item_state: {
         type: DriveItemState
