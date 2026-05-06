@@ -19,6 +19,7 @@
         "analyze:web": "EXPO_ATLAS=true bunx expo export --platform web && bunx expo-atlas .expo/atlas.jsonl",
         "dev": "bunx tsx scripts/dev.ts",
         "start": "bunx tsx scripts/dev.ts",
+        "ssl:generate": "mkcert -cert-file assets/localhost.pem -key-file assets/localhost-key.pem localhost 127.0.0.1 ::1",
         "expo:test": "EXPO_PUBLIC_ENV=test bunx expo start --port 7101",
         "ios:simulator": "bunx expo run:ios --device B5B76CBA-B42A-4C06-9D55-9B391BB4175F",
         "ios": "bunx expo run:ios",
