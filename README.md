@@ -37,9 +37,21 @@ bun run packages:install git@github.com:tinycld/mail.git    # add features as ne
 bun run dev
 ```
 
-`bun run dev` runs three processes in parallel: the Expo bundler on port 7100, the Go
-PocketBase server on 7093, and a local SSL proxy on 7090 → 7093. Visit
-`https://localhost:7090`.
+`bun run dev` runs three processes in parallel: an HTTP proxy on the user-facing port
+7100, the Go PocketBase server on 7101, and the Expo bundler on 7102. The proxy routes
+`/api` and `/_` to PB and everything else to Expo, so the app talks to PB same-origin.
+
+If `assets/localhost.pem` + `assets/localhost-key.pem` are present, the proxy serves
+TLS — visit `https://localhost:7100`. Otherwise it's plain HTTP at `http://localhost:7100`.
+Generate the certs once with [mkcert](https://github.com/FiloSottile/mkcert):
+
+SSL is needed for developing on iOS simulator.  Trust the certs by dropping onto the Settings app.
+
+```sh
+brew install mkcert     # macOS — see mkcert docs for other platforms
+mkcert -install         # one-time, installs the local CA in your trust store
+bun run ssl:generate
+```
 
 ## What's where
 
@@ -74,7 +86,7 @@ bun run packages:link <package-name>   # link an already-cloned sibling
 bun run packages:unlink <package-name> # remove a link
 ```
 
-After any change, `bun run packages:generate` (also runs as `predev` and `postinstall`).
+After any change, `bun run packages:generate` (also runs as `postinstall` and at the start of `bun run dev`).
 
 ## Working in this repo
 
@@ -97,7 +109,13 @@ semantic Tailwind tokens, pbtsdb for data, etc.
 docker pull ghcr.io/tinycld/tinycld
 ```
 
-The image bakes the Go binary, Expo web export, and PocketBase server into one container.
+The image bakes the Go binary, Expo web export, PocketBase server, and the
+[mail](https://github.com/tinycld/mail),
+[calendar](https://github.com/tinycld/calendar),
+[contacts](https://github.com/tinycld/contacts),
+[drive](https://github.com/tinycld/drive), and
+[google-takeout-import](https://github.com/tinycld/google-takeout-import)
+packages into one container.
 Healthchecks and Let's Encrypt-friendly cert handling are baked in. Dokku one-liner deploys
 work via `app.json` + the `Procfile` analog in `Dockerfile`.
 
