@@ -25,7 +25,7 @@ interface Config {
 function parseArgs(): Config {
     const args = process.argv.slice(2)
     const config: Config = {
-        url: process.env.SMOKE_TEST_ADDRESS || 'http://127.0.0.1:7090',
+        url: process.env.SMOKE_TEST_ADDRESS || 'http://127.0.0.1:7100',
         email: process.env.SMOKE_TEST_USER || '',
         password: process.env.SMOKE_TEST_PW || '',
     }

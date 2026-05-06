@@ -50,7 +50,6 @@ server/pb_test_data/
 /server/pb_data/
 /installed-packages.json
 /.package-links.json
-
 # Linked sibling packages — symlinks managed by `bun run packages:link`.
 # The bundled @tinycld/core is real tracked content (force-allowed below).
 /packages/*
