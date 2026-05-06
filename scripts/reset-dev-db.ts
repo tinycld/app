@@ -9,7 +9,7 @@
  *   bunx tsx scripts/reset-dev-db.ts [options]
  *
  * Options:
- *   --url <url>        PocketBase URL (default: http://127.0.0.1:7090)
+ *   --url <url>        PocketBase URL (default: http://127.0.0.1:7100)
  *   --data-dir <dir>   Data directory (default: server/pb_data)
  *   --skip-build       Skip building PocketBase
  *   --keep-running     Keep server running after seeding (default: false)
@@ -48,7 +48,7 @@ interface Config {
 function parseArgs(): Config {
     const args = process.argv.slice(2)
     const config: Config = {
-        url: 'http://127.0.0.1:7090',
+        url: 'http://127.0.0.1:7100',
         dataDir: 'server/pb_data',
         skipBuild: false,
         keepRunning: false,

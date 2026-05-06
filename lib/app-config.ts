@@ -7,11 +7,10 @@ import type { CoreConfig } from '@tinycld/core'
  */
 export const appConfig: CoreConfig = {
     brandName: 'TinyCld',
-    serverShortcuts: {
-        dev: 'https://localhost:7090',
-        app: 'https://tinycld.org',
-        test: 'http://127.0.0.1:7091',
-    },
+    // Web is always same-origin via webShortcut. Native uses the
+    // server-picker UI on first launch, persisted to AsyncStorage. Neither
+    // path consults serverShortcuts, so it stays empty.
+    serverShortcuts: {},
     webShortcut: () => {
         if (typeof window === 'undefined') return null
         return window.location.origin

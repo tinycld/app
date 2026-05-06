@@ -14,7 +14,7 @@
  *   bunx tsx scripts/reset-demo.ts [options]
  *
  * Options:
- *   --url <url>            PocketBase URL (default: http://127.0.0.1:7090)
+ *   --url <url>            PocketBase URL (default: http://127.0.0.1:7100)
  *   --admin-email <email>  Superuser email
  *   --admin-pw <pw>        Superuser password
  *   --help                 Show this help message
@@ -48,7 +48,7 @@ function parseArgs() {
     const args = process.argv.slice(2)
     if (args.includes('--help')) process.exit(0)
 
-    let url = 'http://127.0.0.1:7090'
+    let url = 'http://127.0.0.1:7100'
     let adminEmail = process.env.ADMIN_USER_LOGIN || 'admin@tinycld.org'
     let adminPassword = process.env.ADMIN_USER_PW || 'AdminPass1234!'
 

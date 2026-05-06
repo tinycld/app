@@ -17,6 +17,12 @@ function envToAddress(env: string): string | null {
 }
 
 export function resolveEnvAddress(): string | null {
+    // Web is always same-origin: the page is served from the dev proxy (or
+    // production app server) which routes /api and /_ to PB. There's no
+    // valid reason to point web fetches at a different origin in any env,
+    // so we ignore EXPO_PUBLIC_ENV on web and resolve via window.location.
+    if (Platform.OS === 'web') return envToAddress('web')
+
     const env = process.env.EXPO_PUBLIC_ENV
     if (!env) return null
     return envToAddress(env)

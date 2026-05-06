@@ -2,11 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const TEST_CONFIG = {
     brandName: 'TestApp',
-    serverShortcuts: {
-        dev: 'https://localhost:7090',
-        app: 'https://tinycld.org',
-        test: 'http://127.0.0.1:7091',
-    },
+    serverShortcuts: {},
 } as const
 
 async function importFresh() {
@@ -32,44 +28,17 @@ describe('server-address', () => {
     })
 
     describe('resolveEnvAddress', () => {
-        it('returns null when EXPO_PUBLIC_ENV is unset', async () => {
-            const { resolveEnvAddress } = await importFresh()
-            expect(resolveEnvAddress()).toBeNull()
-        })
+        // On web (Platform.OS === 'web' in unit-setup.ts) we ignore
+        // EXPO_PUBLIC_ENV and serverShortcuts entirely — every web build is
+        // same-origin, served by the dev proxy or production app server.
 
-        it('returns null when no config has been registered', async () => {
-            process.env.EXPO_PUBLIC_ENV = 'app'
-            const { resolveEnvAddress } = await importFreshNoConfig()
-            expect(resolveEnvAddress()).toBeNull()
-        })
-
-        it('resolves dev to the configured shortcut', async () => {
-            process.env.EXPO_PUBLIC_ENV = 'dev'
-            const { resolveEnvAddress } = await importFresh()
-            expect(resolveEnvAddress()).toBe('https://localhost:7090')
-        })
-
-        it('resolves app to the configured shortcut', async () => {
-            process.env.EXPO_PUBLIC_ENV = 'app'
-            const { resolveEnvAddress } = await importFresh()
-            expect(resolveEnvAddress()).toBe('https://tinycld.org')
-        })
-
-        it('resolves test to the configured shortcut', async () => {
-            process.env.EXPO_PUBLIC_ENV = 'test'
-            const { resolveEnvAddress } = await importFresh()
-            expect(resolveEnvAddress()).toBe('http://127.0.0.1:7091')
-        })
-
-        it('falls back to window.location.origin for web when webShortcut not provided', async () => {
-            process.env.EXPO_PUBLIC_ENV = 'web'
+        it('returns the window origin on web regardless of EXPO_PUBLIC_ENV', async () => {
             vi.stubGlobal('window', { location: { origin: 'https://example.com' } })
             const { resolveEnvAddress } = await importFresh()
             expect(resolveEnvAddress()).toBe('https://example.com')
         })
 
         it('uses webShortcut when provided', async () => {
-            process.env.EXPO_PUBLIC_ENV = 'web'
             vi.stubGlobal('window', { location: { origin: 'https://fallback.example' } })
             vi.resetModules()
             const config = await import('@tinycld/core/lib/core-config')
@@ -82,9 +51,8 @@ describe('server-address', () => {
             expect(resolveEnvAddress()).toBe('https://web.acme.example')
         })
 
-        it('returns null for an unknown env shortcut', async () => {
-            process.env.EXPO_PUBLIC_ENV = 'staging'
-            const { resolveEnvAddress } = await importFresh()
+        it('returns null when no config has been registered', async () => {
+            const { resolveEnvAddress } = await importFreshNoConfig()
             expect(resolveEnvAddress()).toBeNull()
         })
     })
@@ -168,16 +136,17 @@ describe('server-address', () => {
 
     describe('setResolvedAddress / getResolvedAddress', () => {
         it('roundtrips', async () => {
+            vi.stubGlobal('window', { location: { origin: 'https://example.com' } })
             const { setResolvedAddress, getResolvedAddress } = await importFresh()
-            expect(getResolvedAddress()).toBeNull()
+            // module-load auto-resolution sets the web origin; override it
             setResolvedAddress('https://pb.example.com')
             expect(getResolvedAddress()).toBe('https://pb.example.com')
         })
 
-        it('auto-sets from env on module load when config is registered first', async () => {
-            process.env.EXPO_PUBLIC_ENV = 'dev'
+        it('auto-sets to window origin on module load when config is registered', async () => {
+            vi.stubGlobal('window', { location: { origin: 'https://auto.example' } })
             const { getResolvedAddress } = await importFresh()
-            expect(getResolvedAddress()).toBe('https://localhost:7090')
+            expect(getResolvedAddress()).toBe('https://auto.example')
         })
     })
 })
