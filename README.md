@@ -1,6 +1,10 @@
 # TinyCld
 
-A self-hosted Google Workspace alternative — Expo Router on the front, PocketBase on the
+<p align="center">
+    <img src=".github/hero.jpeg" alt="TinyCld — self-hosted Workspace alternative with mail, calendar, and drive on a plug-in package SDK" />
+</p>
+
+A self-hosted workspace alternative — Expo Router on the front, PocketBase on the
 back, every feature shipped as a separately-installable package. See
 [tinycld.org](https://tinycld.org) for the full story.
 
