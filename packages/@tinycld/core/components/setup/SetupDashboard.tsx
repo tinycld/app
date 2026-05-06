@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, ExternalLink } from 'lucide-react-native'
 import type PocketBase from 'pocketbase'
 import { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import { deriveUsername } from '@tinycld/core/lib/derive-username'
 import { captureException } from '@tinycld/core/lib/errors'
 import { pb as appPb } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
@@ -603,14 +604,32 @@ function CreateOrgSection({
         let orgId: string | null = null
 
         try {
-            const user = await pb.collection('users').create({
-                email: data.email,
-                password: data.password,
-                passwordConfirm: data.password,
-                name: data.ownerName,
-                emailVisibility: true,
-                verified: true,
-            })
+            const base = deriveUsername(data.email)
+            let user: { id: string } | null = null
+            let lastErr: unknown = null
+            for (let i = 0; i < 20; i++) {
+                const candidate = i === 0 ? base : `${base}${i + 1}`
+                try {
+                    user = await pb.collection('users').create({
+                        username: candidate,
+                        email: data.email,
+                        password: data.password,
+                        passwordConfirm: data.password,
+                        name: data.ownerName,
+                        emailVisibility: true,
+                        verified: true,
+                    })
+                    break
+                } catch (err) {
+                    lastErr = err
+                    const validation = (err as { response?: { data?: Record<string, unknown> } })
+                        ?.response?.data
+                    const usernameErr = validation?.username as { code?: string } | undefined
+                    if (usernameErr?.code === 'validation_not_unique') continue
+                    throw err
+                }
+            }
+            if (!user) throw lastErr ?? new Error('Failed to allocate a unique username')
             userId = user.id
 
             const org = await pb.collection('orgs').create({
