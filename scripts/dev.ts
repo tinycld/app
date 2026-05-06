@@ -101,7 +101,7 @@ function buildPbSync() {
     })
 }
 
-function spawnPbBinary(pbPort: number): ChildProcess {
+function spawnPbBinary(pbPort: number, publicUrl: string): ChildProcess {
     const onPbOut = withPrefix('pb', '\x1b[36m') // cyan
     const onPbErr = withPrefix('pb', '\x1b[31m') // red
     const child = spawn(
@@ -114,7 +114,15 @@ function spawnPbBinary(pbPort: number): ChildProcess {
             path.join(ROOT, 'packages', '@tinycld/core', 'types'),
             'serve',
         ],
-        { cwd: ROOT, stdio: ['inherit', 'pipe', 'pipe'] }
+        {
+            cwd: ROOT,
+            stdio: ['inherit', 'pipe', 'pipe'],
+            // PB's first-run installer prints a /setup URL using the address
+            // it bound to. Override with the public proxy URL so the printed
+            // URL points where the user actually browses, not at PB's
+            // internal port.
+            env: { ...process.env, TINYCLD_PUBLIC_URL: publicUrl },
+        }
     )
     child.stdout?.on('data', onPbOut)
     child.stderr?.on('data', onPbErr)
@@ -257,7 +265,8 @@ async function main() {
         printBanner(block, useSsl, suffix)
     }
 
-    const pb = spawnPbBinary(block.pb)
+    const publicUrl = `${useSsl ? 'https' : 'http'}://localhost:${block.proxy}`
+    const pb = spawnPbBinary(block.pb, publicUrl)
     const expo = spawnExpo(block.expo, () => printOnce())
     const server = startProxy({
         proxyPort: block.proxy,
