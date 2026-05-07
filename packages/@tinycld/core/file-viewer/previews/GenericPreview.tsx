@@ -1,26 +1,19 @@
 import { formatBytes } from '@tinycld/core/lib/format-utils'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { Download } from 'lucide-react-native'
-import { Pressable, Text, View } from 'react-native'
-import { getFileURL } from '../file-url'
+import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import { downloadFile } from '../file-url'
 import { getFileIconForMime } from '../file-icons'
 import type { PreviewProps } from '../types'
+import { useAuthedFileURL } from '../use-authed-file-url'
 
 export function GenericPreview({ source }: PreviewProps) {
     const mutedColor = useThemeColor('muted-foreground')
     const primaryFgColor = useThemeColor('primary-foreground')
     const { icon: FileIcon, color: iconColor } = getFileIconForMime(source.mimeType, mutedColor)
-    const fileUrl = getFileURL(source)
+    const { url, isLoading } = useAuthedFileURL(source)
 
-    const handleDownload = () => {
-        if (!fileUrl) return
-        if (typeof window !== 'undefined') {
-            const a = document.createElement('a')
-            a.href = fileUrl
-            a.download = source.displayName
-            a.click()
-        }
-    }
+    if (isLoading) return <ActivityIndicator />
 
     return (
         <View className="flex-1 items-center justify-center p-8">
@@ -37,9 +30,9 @@ export function GenericPreview({ source }: PreviewProps) {
             <Text className="mt-1 text-muted-foreground" style={{ fontSize: 13 }}>
                 {source.mimeType} · {formatBytes(source.size)}
             </Text>
-            {fileUrl && (
+            {url && (
                 <Pressable
-                    onPress={handleDownload}
+                    onPress={() => downloadFile(source)}
                     className="flex-row items-center gap-2 mt-5 px-5 py-3 rounded-lg bg-primary"
                 >
                     <Download size={16} color={primaryFgColor} />

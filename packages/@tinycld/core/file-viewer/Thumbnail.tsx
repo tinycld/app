@@ -1,16 +1,16 @@
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { Image, View } from 'react-native'
-import { getThumbnailURL } from './file-url'
 import { getFileIconForMime } from './file-icons'
 import type { ThumbnailProps } from './types'
+import { useAuthedThumbnailURL } from './use-authed-file-url'
 
 export function Thumbnail({ source, size = 120 }: ThumbnailProps) {
     const mutedColor = useThemeColor('muted-foreground')
     const { icon: FileIcon, color: iconColor } = getFileIconForMime(source.mimeType, mutedColor)
 
-    const thumbnailUrl = getThumbnailURL(source, `${size}x${size}`)
+    const { url } = useAuthedThumbnailURL(source, `${size}x${size}`)
 
-    if (!thumbnailUrl) {
+    if (!url) {
         return (
             <View
                 className="items-center justify-center w-full"
@@ -25,7 +25,7 @@ export function Thumbnail({ source, size = 120 }: ThumbnailProps) {
 
     return (
         <Image
-            source={{ uri: thumbnailUrl }}
+            source={{ uri: url }}
             style={{ width: size, height: size, borderRadius: 4 }}
             resizeMode="cover"
         />

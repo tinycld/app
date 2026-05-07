@@ -1,28 +1,29 @@
 import { notify } from '@tinycld/core/lib/notify'
-import { pb } from '@tinycld/core/lib/pocketbase'
 import { Platform } from 'react-native'
 import { pickThumbnailBase } from './pick-thumbnail-base'
 import type { FilePreviewSource } from './types'
+import { buildAuthedFileURL, getFileToken } from './use-authed-file-url'
 
 export { pickThumbnailBase }
-
-const DEFAULT_THUMB_SIZE = '480x360'
-
-export function getFileURL(source: FilePreviewSource): string {
-    if (!source.fileName) return ''
-    return pb.files.getURL({ collectionId: source.collectionId, id: source.recordId }, source.fileName)
-}
 
 /**
  * Save a previewable file to the user's device. Web triggers a browser
  * download; native downloads to the cache directory and hands the file to
  * the OS share sheet (Save to Files, Save Image for image MIMEs, AirDrop,
  * send-to-app, etc.). Fire-and-forget: callers don't need to await.
+ *
+ * Fetches a short-lived PocketBase file token first so protected collections
+ * download successfully. Token fetch failure falls back to a bare URL (works
+ * for collections with public viewRule, fails visibly for protected ones).
  */
 export function downloadFile(source: FilePreviewSource) {
-    const url = getFileURL(source)
-    if (!url) return
-    downloadFromUrl(url, source.displayName, source.mimeType)
+    if (!source.fileName) return
+    void (async () => {
+        const token = await getFileToken()
+        const url = buildAuthedFileURL(source, token)
+        if (!url) return
+        downloadFromUrl(url, source.displayName, source.mimeType)
+    })()
 }
 
 /**
@@ -83,17 +84,5 @@ async function saveOnNative(url: string, fileName: string, mimeType: string) {
             data: { operation: 'downloadFile', error: message },
         })
     }
-}
-
-/**
- * Returns a URL suitable for a thumbnail-sized image, or '' when no thumbnail is
- * available. Prefers a dedicated thumbnail file (e.g. a PDF first-page render);
- * falls back to PocketBase's `?thumb=` query parameter for image MIME types.
- */
-export function getThumbnailURL(source: FilePreviewSource, size: string = DEFAULT_THUMB_SIZE): string {
-    const baseUrl = pickThumbnailBase(source)
-    if (!baseUrl) return ''
-    const url = pb.files.getURL({ collectionId: source.collectionId, id: source.recordId }, baseUrl)
-    return `${url}?thumb=${size}`
 }
 

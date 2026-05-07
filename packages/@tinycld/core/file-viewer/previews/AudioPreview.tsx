@@ -1,17 +1,18 @@
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
-import { Platform, Text, View } from 'react-native'
-import { getFileURL } from '../file-url'
+import { ActivityIndicator, Platform, Text, View } from 'react-native'
 import { getFileIconForMime } from '../file-icons'
 import type { PreviewProps } from '../types'
+import { useAuthedFileURL } from '../use-authed-file-url'
 import { GenericPreview } from './GenericPreview'
 
 export function AudioPreview(props: PreviewProps) {
     const { source } = props
     const mutedColor = useThemeColor('muted-foreground')
     const { icon: FileIcon, color: iconColor } = getFileIconForMime(source.mimeType, mutedColor)
-    const fileUrl = getFileURL(source)
+    const { url, isLoading } = useAuthedFileURL(source)
 
-    if (!fileUrl) return null
+    if (isLoading) return <ActivityIndicator />
+    if (!url) return null
 
     if (Platform.OS === 'web') {
         return (
@@ -28,7 +29,7 @@ export function AudioPreview(props: PreviewProps) {
                 </Text>
                 <View className="w-full mt-6" style={{ maxWidth: 400 }}>
                     {/* biome-ignore lint/a11y/useMediaCaption: captions not available for user uploads */}
-                    <audio src={fileUrl} controls style={{ width: '100%' }} />
+                    <audio src={url} controls style={{ width: '100%' }} />
                 </View>
             </View>
         )

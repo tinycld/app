@@ -1,18 +1,19 @@
-import { Platform, View } from 'react-native'
-import { getFileURL } from '../file-url'
+import { ActivityIndicator, Platform, View } from 'react-native'
 import type { PreviewProps } from '../types'
+import { useAuthedFileURL } from '../use-authed-file-url'
 import { GenericPreview } from './GenericPreview'
 
 export function VideoPreview(props: PreviewProps) {
-    const fileUrl = getFileURL(props.source)
+    const { url, isLoading } = useAuthedFileURL(props.source)
 
-    if (!fileUrl) return null
+    if (isLoading) return <ActivityIndicator />
+    if (!url) return null
 
     if (Platform.OS === 'web') {
         return (
             <View className="flex-1 items-center justify-center">
                 {/* biome-ignore lint/a11y/useMediaCaption: captions not available for user uploads */}
-                <video src={fileUrl} controls style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                <video src={url} controls style={{ maxWidth: '100%', maxHeight: '100%' }} />
             </View>
         )
     }
