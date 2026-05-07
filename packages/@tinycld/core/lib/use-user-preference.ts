@@ -31,10 +31,20 @@ export function useUserPreference<T>(
     const existing = rows?.[0]
     const value = existing ? (existing.value as T) : defaultValue
 
+    // Re-resolve the row at mutation time rather than capturing the render-time
+    // closure. The live query syncs asynchronously: a render where rows is still
+    // empty can hand a stale `existing = undefined` to the mutation, which then
+    // INSERTs a duplicate. PocketBase's unique index on (user, app, key)
+    // rejects the second insert and TanStack DB rolls the optimistic update
+    // back, manifesting as the UI flipping to the new value and snapping back.
     const upsert = useMutation({
         mutationFn: mutation(function* (newValue: T) {
-            if (existing) {
-                yield userPreferencesCollection.update(existing.id, draft => {
+            const current = userPreferencesCollection
+                .toArray.find(
+                    (r) => r.app === app && r.key === key && r.user === user.id
+                )
+            if (current) {
+                yield userPreferencesCollection.update(current.id, (draft) => {
                     draft.value = newValue
                 })
             } else {
