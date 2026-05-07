@@ -437,5 +437,6 @@ export const usersSchema = z.object({
     updated: z.string().regex(DATETIME_REGEX).optional(),
     is_demo: z.boolean().optional(),
     username: z.string().regex(/^[a-z0-9][a-z0-9_-]{2,31}$/).min(3).max(32),
+    metadata: z.unknown().optional(),
 })
 

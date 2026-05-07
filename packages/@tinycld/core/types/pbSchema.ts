@@ -433,6 +433,7 @@ export interface Users {
     updated: string
     is_demo: boolean
     username: string
+    metadata: any
 }
 
 
