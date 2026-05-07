@@ -15,7 +15,11 @@ export const appConfig: CoreConfig = {
         if (typeof window === 'undefined') return null
         return window.location.origin
     },
-    defaultServer: 'https://tinycld.org',
+    // Production app-store builds default to tinycld.org. Dev builds (the
+    // ones run via `expo run:ios` from a local checkout) default to the
+    // local dev proxy — matches the running PB on the developer's machine
+    // and gives screenshot-capture flows a deterministic starting point.
+    defaultServer: __DEV__ ? 'https://localhost:7100' : 'https://tinycld.org',
     sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
     environment: process.env.EXPO_PUBLIC_ENV,
     release: process.env.EXPO_PUBLIC_GIT_COMMIT,

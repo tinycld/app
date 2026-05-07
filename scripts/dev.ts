@@ -14,7 +14,7 @@
 // EXPO_PUBLIC_ENV plumbing or build-time URL injection — everything works
 // off the page's own origin.
 
-import { type ChildProcess, spawn } from 'node:child_process'
+import { type ChildProcess, spawn, spawnSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as http from 'node:http'
 import * as https from 'node:https'
@@ -61,20 +61,163 @@ async function probePort(port: number): Promise<boolean> {
     })
 }
 
-async function pickBlock(): Promise<PortBlock> {
-    for (let i = 0; i < MAX_BLOCK_ATTEMPTS; i++) {
-        const base = DEFAULT_PROXY_PORT + i * BLOCK_SHIFT
-        const candidate: PortBlock = { proxy: base, pb: base + 1, expo: base + 2 }
-        const results = await Promise.all([
-            probePort(candidate.proxy),
-            probePort(candidate.pb),
-            probePort(candidate.expo),
-        ])
-        if (results.every(Boolean)) return candidate
+async function tryConnect(port: number, host = '127.0.0.1'): Promise<boolean> {
+    return new Promise(resolve => {
+        const sock = net.connect({ port, host })
+        const done = (ok: boolean) => {
+            sock.removeAllListeners()
+            sock.destroy()
+            resolve(ok)
+        }
+        sock.once('connect', () => done(true))
+        sock.once('error', () => done(false))
+    })
+}
+
+async function waitForUpstream(port: number, label: string, timeoutMs = 60_000): Promise<void> {
+    const start = Date.now()
+    while (Date.now() - start < timeoutMs) {
+        if (await tryConnect(port)) return
+        await new Promise(r => setTimeout(r, 200))
     }
-    throw new Error(
-        `dev: no free port block in range ${DEFAULT_PROXY_PORT}..${DEFAULT_PROXY_PORT + MAX_BLOCK_ATTEMPTS * BLOCK_SHIFT}`
-    )
+    throw new Error(`dev: ${label} on :${port} did not accept connections within ${timeoutMs}ms`)
+}
+
+async function isBlockFree(block: PortBlock): Promise<boolean> {
+    const results = await Promise.all([
+        probePort(block.proxy),
+        probePort(block.pb),
+        probePort(block.expo),
+    ])
+    return results.every(Boolean)
+}
+
+function blockAt(i: number): PortBlock {
+    const base = DEFAULT_PROXY_PORT + i * BLOCK_SHIFT
+    return { proxy: base, pb: base + 1, expo: base + 2 }
+}
+
+interface PortHolder {
+    pid: number
+    command: string
+}
+
+function findPortHolder(port: number): PortHolder | null {
+    // lsof on macOS: -t prints just PIDs, -nP skips DNS/port-name lookups,
+    // -sTCP:LISTEN restricts to the listening socket so we don't catch
+    // ephemeral clients.
+    const lsof = spawnSync('lsof', ['-t', '-nP', `-iTCP:${port}`, '-sTCP:LISTEN'], {
+        encoding: 'utf8',
+    })
+    const pid = Number.parseInt(lsof.stdout.trim().split('\n')[0] ?? '', 10)
+    if (!Number.isFinite(pid) || pid <= 0) return null
+    const ps = spawnSync('ps', ['-o', 'command=', '-p', String(pid)], { encoding: 'utf8' })
+    return { pid, command: ps.stdout.trim() || '<unknown>' }
+}
+
+function prompt(question: string): Promise<string> {
+    process.stdout.write(question)
+    return new Promise(resolve => {
+        const onData = (chunk: Buffer) => {
+            process.stdin.removeListener('data', onData)
+            process.stdin.pause()
+            resolve(chunk.toString('utf8').trim())
+        }
+        process.stdin.resume()
+        process.stdin.once('data', onData)
+    })
+}
+
+async function waitForPortFree(port: number, timeoutMs = 5_000): Promise<boolean> {
+    const start = Date.now()
+    while (Date.now() - start < timeoutMs) {
+        if (await probePort(port)) return true
+        await new Promise(r => setTimeout(r, 100))
+    }
+    return false
+}
+
+async function findFreeBlock(startIndex: number): Promise<PortBlock | null> {
+    for (let i = startIndex; i < MAX_BLOCK_ATTEMPTS; i++) {
+        const candidate = blockAt(i)
+        if (await isBlockFree(candidate)) return candidate
+    }
+    return null
+}
+
+async function pickBlock(): Promise<PortBlock> {
+    const preferred = blockAt(0)
+    if (await isBlockFree(preferred)) return preferred
+
+    // Default block taken — show the user who's holding it and what to do.
+    const holder = findPortHolder(preferred.proxy)
+    process.stdout.write(`\ndev: port ${preferred.proxy} is in use`)
+    if (holder) {
+        process.stdout.write(` by pid ${holder.pid} (${holder.command})`)
+    }
+    process.stdout.write('\n')
+
+    const interactive = process.stdin.isTTY === true
+    if (!interactive) {
+        const fallback = await findFreeBlock(1)
+        if (!fallback) {
+            throw new Error(
+                `dev: no free port block in range ${DEFAULT_PROXY_PORT}..${DEFAULT_PROXY_PORT + MAX_BLOCK_ATTEMPTS * BLOCK_SHIFT}`
+            )
+        }
+        process.stdout.write(`dev: non-interactive shell, falling back to :${fallback.proxy}\n`)
+        return fallback
+    }
+
+    const fallback = await findFreeBlock(1)
+    const fallbackHint = fallback ? `:${fallback.proxy}` : 'none free'
+    const canKill = holder !== null
+    const choices = canKill ? '[k]ill, [u]se alternative, [q]uit' : '[u]se alternative, [q]uit'
+    const answer = (
+        await prompt(`Choose: ${choices} (alternative=${fallbackHint}): `)
+    ).toLowerCase()
+
+    if (answer === 'q' || answer === 'quit') {
+        throw new Error('dev: aborted by user')
+    }
+    if (answer === 'k' || answer === 'kill') {
+        if (!canKill) throw new Error('dev: no holder to kill (lsof returned nothing)')
+        process.stdout.write(`dev: killing pid ${holder.pid}\n`)
+        try {
+            process.kill(holder.pid, 'SIGTERM')
+        } catch (err) {
+            throw new Error(
+                `dev: failed to signal pid ${holder.pid}: ${err instanceof Error ? err.message : String(err)}`
+            )
+        }
+        if (!(await waitForPortFree(preferred.proxy))) {
+            // Escalate to SIGKILL if SIGTERM didn't free the port in time.
+            process.stdout.write(
+                `dev: pid ${holder.pid} still holding :${preferred.proxy}, sending SIGKILL\n`
+            )
+            try {
+                process.kill(holder.pid, 'SIGKILL')
+            } catch {
+                // process may already be gone
+            }
+            if (!(await waitForPortFree(preferred.proxy))) {
+                throw new Error(`dev: port ${preferred.proxy} still in use after SIGKILL`)
+            }
+        }
+        if (await isBlockFree(preferred)) return preferred
+        // Killing the proxy holder freed :proxy but :pb or :expo is still
+        // taken — fall through to alternative.
+        process.stdout.write(
+            `dev: port ${preferred.proxy} freed, but the rest of the block isn't — using alternative\n`
+        )
+    }
+    // Default branch (including 'u'/'use'/empty input): alternative block.
+    if (!fallback) {
+        throw new Error(
+            `dev: no free port block in range ${DEFAULT_PROXY_PORT}..${DEFAULT_PROXY_PORT + MAX_BLOCK_ATTEMPTS * BLOCK_SHIFT}`
+        )
+    }
+    return fallback
 }
 
 function withPrefix(prefix: string, color: string) {
@@ -268,6 +411,15 @@ async function main() {
     const publicUrl = `${useSsl ? 'https' : 'http'}://localhost:${block.proxy}`
     const pb = spawnPbBinary(block.pb, publicUrl)
     const expo = spawnExpo(block.expo, () => printOnce())
+
+    // Wait for both upstreams to accept TCP connections before binding the
+    // user-facing proxy. Otherwise the browser hits the proxy first, the
+    // proxy forwards to a port that's not listening yet, and the user sees
+    // 502s + ECONNREFUSED noise during cold start. A few seconds of
+    // "connection refused" on :proxy is fine — browsers retry, and the
+    // banner only prints once Expo signals ready anyway.
+    await Promise.all([waitForUpstream(block.pb, 'pb'), waitForUpstream(block.expo, 'expo')])
+
     const server = startProxy({
         proxyPort: block.proxy,
         pbPort: block.pb,
