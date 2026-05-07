@@ -26,8 +26,11 @@ Feature packages (`@tinycld/contacts`, `@tinycld/mail`, `@tinycld/calendar`, `@t
 server, and PocketBase migrations.
 
 Validate changes with `bun run checks` (biome + tsc) and `bun run test:unit` (vitest). The Go
-side runs `cd server && go test ./...` plus
-`cd packages/@tinycld/core/server && go test ./...`.
+side runs `bun run test:go`, which uses the `no_ui` build tag so PocketBase's
+admin UI routes are skipped during tests (PB v0.37+ panics on duplicate route
+registration when an `OnServe` handler binds a fixed pattern across multiple
+test scenarios that share an app). The shipped server binary is still built
+without `no_ui` so the admin UI is available in production.
 
 ## Code Style & Patterns
 

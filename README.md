@@ -78,7 +78,7 @@ bun run ssl:generate
   `server/pb_migrations/` plus each linked feature package's `pb-migrations/`.
 - **`Dockerfile`, `docker-compose.yml`, `eas.json`** — deployment.
 
-## Adding / removing feature packages
+## Adding / removing feature packagesq
 
 ```sh
 bun run packages:install <git-url>     # clone + link + regenerate
