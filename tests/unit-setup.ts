@@ -12,6 +12,10 @@ vi.mock('@sentry/react-native', () => ({
 // the tiny surface our shortcut-layer tests touch.
 vi.mock('react-native', () => ({
     Platform: { OS: 'web' },
+    Dimensions: {
+        get: () => ({ width: 1024, height: 768 }),
+        addEventListener: () => ({ remove: () => {} }),
+    },
 }))
 
 vi.mock('expo-router', () => ({
