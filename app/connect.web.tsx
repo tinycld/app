@@ -148,6 +148,7 @@ export default function ConnectWeb() {
 
                 <View className="flex-1 p-10 gap-4" style={{ minWidth: 320 }}>
                     <Pressable
+                        testID="connect-use-default"
                         onPress={onUseDefault}
                         disabled={busy}
                         className={`border-[1.5px] border-foreground bg-foreground rounded-2xl p-[18px] flex-row items-start gap-3.5 ${busy ? 'opacity-60' : 'opacity-100'}`}

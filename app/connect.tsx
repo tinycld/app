@@ -158,6 +158,7 @@ export default function Connect() {
 
                 <View className="gap-2.5 mt-7">
                     <PrimaryCta
+                        testID="connect-use-default"
                         label={busyDefault ? 'Connecting…' : `Use ${defaultServerLabel}`}
                         onPress={onUseDefault}
                         disabled={busy}
@@ -296,14 +297,17 @@ function PrimaryCta({
     label,
     onPress,
     disabled,
+    testID,
 }: {
     label: string
     onPress: () => void
     disabled?: boolean
+    testID?: string
 }) {
     const bg = useThemeColor('background')
     return (
         <Pressable
+            testID={testID}
             onPress={onPress}
             disabled={disabled}
             className={`bg-foreground rounded-2xl py-4 px-5 items-center justify-center relative overflow-hidden ${disabled ? 'opacity-[0.55]' : 'opacity-100'}`}
