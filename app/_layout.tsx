@@ -17,6 +17,7 @@ import {
     setResolvedAddress,
     subscribeResolvedAddress,
 } from '@tinycld/core/lib/server-address'
+import { useAppUpdates } from '@tinycld/core/lib/use-app-updates'
 import { useChunkLoadRecovery } from '@tinycld/core/lib/use-chunk-load-recovery'
 import { useVersionCheck } from '@tinycld/core/lib/use-version-check'
 import { router, Slot, usePathname } from 'expo-router'
@@ -56,6 +57,13 @@ function useServerAddressGate(pathname: string): GateState {
                 if (cancelled) return
 
                 if (getResolvedAddress()) {
+                    // Flip out of 'unresolved' synchronously so a navigation
+                    // racing the dynamic import below (e.g. /connect doing
+                    // setResolvedAddress + router.replace('/')) doesn't trip
+                    // the unresolved→/connect redirect effect.
+                    setState(prev =>
+                        prev.status === 'unresolved' ? { status: 'resolving' } : prev
+                    )
                     const mod = await import('@tinycld/core/components/Providers')
                     if (cancelled) return
                     setState({ status: 'resolved', Providers: mod.Providers })
@@ -103,6 +111,7 @@ export default function Layout() {
     const state = useServerAddressGate(pathname)
     useVersionCheck()
     useChunkLoadRecovery()
+    useAppUpdates()
 
     if (state.status === 'resolving') {
         return (
