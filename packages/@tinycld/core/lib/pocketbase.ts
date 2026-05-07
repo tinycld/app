@@ -6,7 +6,6 @@ import PocketBase, { AsyncAuthStore } from 'pocketbase'
 import { Platform } from 'react-native'
 import type { Orgs, UserOrg, Users } from '@tinycld/core/types/pbSchema'
 import { PB_SERVER_ADDR } from './config'
-import { resolveEnvAddress } from './server-address'
 import { useConnectivityStore } from './stores/connectivity-store'
 import type { UserSession } from './types'
 
@@ -73,7 +72,6 @@ pb.send = (async <T>(path: string, options: Parameters<typeof origSend>[1]) => {
         networkFailures = 0
         return result
     } catch (err) {
-        if (resolveEnvAddress()) throw err
         if (!isNetworkLevelFailure(err)) throw err
         networkFailures++
         // During the first RECOVERY_WINDOW_MS we require RECOVERY_THRESHOLD
@@ -89,6 +87,21 @@ pb.send = (async <T>(path: string, options: Parameters<typeof origSend>[1]) => {
 
 export function usePocketBase() {
     return pb
+}
+
+// Tear down the live PB session, then drop the resolved address so the
+// next gate pass routes to the picker. Order matters: PB's RealtimeService
+// auto-reconnects on EventSource error, and reconnect reads PB_SERVER_ADDR
+// — clearing the address before disconnecting realtime trips the "address
+// not resolved" guard. The auth-store's logout already does the realtime
+// teardown + auth clear; we just need to add the address clear.
+export async function disconnectServer() {
+    const { useAuthStore } = await import('./stores/auth-store')
+    useAuthStore.getState().logout()
+    pb.cancelAllRequests()
+    const { clearCached, setResolvedAddress } = await import('./server-address')
+    await clearCached()
+    setResolvedAddress(null)
 }
 
 setLogger({
@@ -232,12 +245,14 @@ export function getUserFromAuthStore(primaryOrgSlug?: string | null): UserSessio
         return null
     }
 
+    const metadata = (authRecord as Users & { metadata?: Record<string, unknown> }).metadata
     return {
         id: authRecord.id,
         name: authRecord.name,
         email: authRecord.email,
         primaryOrgSlug: primaryOrgSlug ?? undefined,
         isDemo: !!(authRecord as Users & { is_demo?: boolean }).is_demo,
+        isBetaTester: !!metadata?.isBetaTester,
     }
 }
 

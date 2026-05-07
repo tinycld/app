@@ -1,15 +1,10 @@
 import { router } from 'expo-router'
 import { Pressable, Text, View } from 'react-native'
-import { useAuth } from '@tinycld/core/lib/auth'
-import { clearCached, setResolvedAddress } from '@tinycld/core/lib/server-address'
+import { disconnectServer } from '@tinycld/core/lib/pocketbase'
 
 export function DisconnectServerSection() {
-    const { logout } = useAuth()
-
     async function onDisconnect() {
-        logout()
-        await clearCached()
-        setResolvedAddress(null)
+        await disconnectServer()
         router.replace('/connect')
     }
 

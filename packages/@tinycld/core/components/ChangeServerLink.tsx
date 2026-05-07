@@ -1,10 +1,10 @@
 import { router } from 'expo-router'
 import { Pressable, Text } from 'react-native'
-import { clearCached } from '@tinycld/core/lib/server-address'
+import { disconnectServer } from '@tinycld/core/lib/pocketbase'
 
 export function ChangeServerLink() {
     async function onPress() {
-        await clearCached()
+        await disconnectServer()
         router.replace('/connect?backTo=/')
     }
 

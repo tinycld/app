@@ -110,12 +110,15 @@ export const useAuthStore = create<AuthStoreState>()((set, get) => ({
 
             const primaryOrgSlug = firstUserOrgWithSlug.expand.org.slug
 
+            const metadata = (authData.record as Users & { metadata?: Record<string, unknown> })
+                .metadata
             const authenticatedUser: AuthenticatedUser = {
                 id: authData.record.id,
                 name: authData.record.name,
                 email: authData.record.email,
                 primaryOrgSlug,
                 isDemo: !!(authData.record as Users & { is_demo?: boolean }).is_demo,
+                isBetaTester: !!metadata?.isBetaTester,
             }
 
             const { expand: _, ...userOrgRecord } = firstUserOrgWithSlug
