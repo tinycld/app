@@ -1,20 +1,19 @@
 import { lazy, Suspense } from 'react'
-import { ActivityIndicator, Platform } from 'react-native'
-import { getFileURL } from '../file-url'
+import { ActivityIndicator } from 'react-native'
 import type { PreviewProps } from '../types'
-import { GenericPreview } from './GenericPreview'
+import { useAuthedFileURL } from '../use-authed-file-url'
 
 const PdfCanvasViewer = lazy(() => import('./PdfCanvasViewer').then((m) => ({ default: m.PdfCanvasViewer })))
 
 export function PdfPreview(props: PreviewProps) {
-    const fileUrl = getFileURL(props.source)
+    const { url, isLoading } = useAuthedFileURL(props.source)
 
-    if (!fileUrl) return null
-    if (Platform.OS !== 'web') return <GenericPreview {...props} />
+    if (isLoading) return <ActivityIndicator />
+    if (!url) return null
 
     return (
         <Suspense fallback={<ActivityIndicator />}>
-            <PdfCanvasViewer url={fileUrl} />
+            <PdfCanvasViewer url={url} />
         </Suspense>
     )
 }

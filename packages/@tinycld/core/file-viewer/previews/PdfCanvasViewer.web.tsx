@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { View } from 'react-native'
 import { Document, Page, pdfjs } from 'react-pdf'
 
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+pdfjs.GlobalWorkerOptions.workerSrc = '/workers/pdfcanvas/pdf.worker.min.mjs'
 
 // The modal Dialog uses a FocusScope with trapped={true} that listens for
 // focusin/focusout on the document. During a mouse drag for text selection, the
@@ -85,8 +85,11 @@ export function PdfCanvasViewer({ url }: { url: string }) {
     const [containerWidth, setContainerWidth] = useState(0)
     const containerRef = useRef<HTMLDivElement>(null)
 
-    useWebStylesheet('react-pdf-text-layer-css', '/react-pdf-text-layer.css')
-    useWebStylesheet('react-pdf-annotation-layer-css', '/react-pdf-annotation-layer.css')
+    useWebStylesheet('react-pdf-text-layer-css', '/workers/pdfcanvas/react-pdf-text-layer.css')
+    useWebStylesheet(
+        'react-pdf-annotation-layer-css',
+        '/workers/pdfcanvas/react-pdf-annotation-layer.css'
+    )
 
     useFocusTrapDragFix(containerRef)
 
