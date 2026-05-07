@@ -81,6 +81,7 @@
         "@react-stately/tree": "^3.10.0",
         "@react-stately/utils": "^3.12.0",
         "@sentry/react-native": "^8.8.0",
+        "@shopify/flash-list": "^2.3.1",
         "@tanstack/db": "^0.6.1",
         "@tanstack/query-db-collection": "^1.0.36",
         "@tanstack/react-db": "^0.1.79",
