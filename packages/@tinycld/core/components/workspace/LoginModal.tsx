@@ -93,6 +93,7 @@ export function LoginModal() {
                     <Text className="mb-1.5 text-sm font-semibold text-foreground">Password</Text>
                     <TextInput
                         className="border border-border rounded-lg p-3 text-base text-foreground bg-surface-secondary"
+                        testID="login-password"
                         value={password}
                         onChangeText={setPassword}
                         placeholder="Password"
@@ -105,6 +106,7 @@ export function LoginModal() {
                 </View>
 
                 <Pressable
+                    testID="login-submit"
                     className={`rounded-lg items-center mt-2 p-3.5 bg-primary ${canSubmit ? 'opacity-100' : 'opacity-50'}`}
                     onPress={handleSubmit}
                     disabled={!canSubmit}

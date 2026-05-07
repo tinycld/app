@@ -249,6 +249,7 @@ export function MoreDrawer() {
                                     return (
                                         <Pressable
                                             key={pkg.slug}
+                                            testID={`nav-${pkg.slug}`}
                                             className="flex-row items-center gap-3.5 px-4 py-3.5 rounded-lg"
                                             onPress={() =>
                                                 handleNav(() =>

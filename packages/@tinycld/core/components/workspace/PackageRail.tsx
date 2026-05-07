@@ -29,6 +29,7 @@ export function PackageRail() {
         >
             <View className="items-center gap-1">
                 <Link
+                    testID="nav-home"
                     href={orgHref('')}
                     className="flex w-11 h-11 rounded-xl justify-center items-center relative"
                     aria-label="Organization home"
@@ -67,6 +68,7 @@ export function PackageRail() {
                 <NotificationBell color={railText} />
 
                 <Link
+                    testID="nav-settings"
                     href={orgHref('settings')}
                     className="flex w-11 h-11 rounded-xl justify-center items-center relative"
                     aria-label="Settings"
@@ -99,6 +101,7 @@ function PackageRailItem({
 
     return (
         <Link
+            testID={`nav-${slug}`}
             href={orgHref(slug as never)}
             className="flex w-11 h-11 rounded-xl justify-center items-center relative"
             style={isActive ? { backgroundColor: `${activeColor}22` } : undefined}

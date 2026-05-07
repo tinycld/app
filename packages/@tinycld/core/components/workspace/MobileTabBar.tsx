@@ -39,6 +39,7 @@ export function MobileTabBar() {
                 return (
                     <Pressable
                         key={pkg.slug}
+                        testID={`nav-${pkg.slug}`}
                         className="flex-1 items-center justify-center gap-1 py-1 relative"
                         onPress={() => {
                             setMoreOpen(false)
@@ -60,6 +61,7 @@ export function MobileTabBar() {
                 )
             })}
             <Pressable
+                testID="nav-more"
                 className="flex-1 items-center justify-center gap-1 py-1 relative"
                 onPress={() => setMoreOpen(!isMoreOpen)}
                 accessibilityLabel="More"
