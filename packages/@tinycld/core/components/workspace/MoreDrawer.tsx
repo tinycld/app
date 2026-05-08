@@ -14,13 +14,13 @@ import Animated, {
 import { useAuth } from '@tinycld/core/lib/auth'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { navigateToOrg } from '@tinycld/core/lib/org-url'
+import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useOrgSlug } from '@tinycld/core/lib/use-org-slug'
 import { useSortedPackages } from '@tinycld/core/lib/use-sorted-packages'
 import { MAX_VISIBLE_TABS } from './MobileTabBar'
 import { getIcon } from './package-icon-map'
 import { useUserOrgs } from './useUserOrgs'
-import { useWorkspaceLayout } from './useWorkspaceLayout'
 
 const SPRING_CONFIG = {
     damping: 28,
@@ -29,7 +29,10 @@ const SPRING_CONFIG = {
 }
 
 export function MoreDrawer() {
-    const { isMoreOpen, setMoreOpen, activePkgSlug, setNotificationsOpen } = useWorkspaceLayout()
+    const isMoreOpen = useWorkspaceStore(s => s.isMoreOpen)
+    const setMoreOpen = useWorkspaceStore(s => s.setMoreOpen)
+    const activePkgSlug = useWorkspaceStore(s => s.activePkgSlug)
+    const setNotificationsOpen = useWorkspaceStore(s => s.setNotificationsOpen)
     const railBg = useThemeColor('rail-background')
     const railText = useThemeColor('rail-text')
     const railActive = useThemeColor('rail-active-text')

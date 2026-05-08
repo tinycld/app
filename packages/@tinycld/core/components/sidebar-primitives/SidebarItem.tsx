@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react-native'
 import { Pressable, Text, View } from 'react-native'
 import { useBreakpoint } from '@tinycld/core/components/workspace/useBreakpoint'
-import { useWorkspaceLayout } from '@tinycld/core/components/workspace/useWorkspaceLayout'
+import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 
 interface SidebarItemProps {
@@ -25,7 +25,7 @@ export function SidebarItem({
 }: SidebarItemProps) {
     const activeIndicatorColor = useThemeColor('active-indicator')
     const mutedColor = useThemeColor('muted-foreground')
-    const { setDrawerOpen } = useWorkspaceLayout()
+    const setDrawerOpen = useWorkspaceStore(s => s.setDrawerOpen)
     const isMobile = useBreakpoint() === 'mobile'
 
     const handlePress = () => {

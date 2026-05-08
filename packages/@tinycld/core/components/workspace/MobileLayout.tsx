@@ -1,17 +1,17 @@
-import { Slot } from 'expo-router'
 import { Platform, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { DemoBanner } from '@tinycld/core/components/DemoBanner'
 import { NotificationDrawer } from '@tinycld/core/components/NotificationDrawer'
+import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { FrozenStack } from './FrozenStack'
 import { MobileDrawer } from './MobileDrawer'
 import { MobileTabBar } from './MobileTabBar'
 import { MoreDrawer } from './MoreDrawer'
 import { PackageProviderWrapper } from './PackageProviderWrapper'
-import { useWorkspaceLayout } from './useWorkspaceLayout'
 
 export function MobileLayout({ isReady = true }: { isReady?: boolean }) {
-    const { isDrawerOpen } = useWorkspaceLayout()
+    const isDrawerOpen = useWorkspaceStore(s => s.isDrawerOpen)
     const insets = useSafeAreaInsets()
     const bgColor = useThemeColor('background')
 
@@ -29,7 +29,7 @@ export function MobileLayout({ isReady = true }: { isReady?: boolean }) {
             >
                 <DemoBanner />
                 <View className="flex-1 overflow-hidden">
-                    <Slot />
+                    <FrozenStack />
                     {isReady && <MoreDrawer />}
                     {isReady && <NotificationDrawer mobile />}
                 </View>

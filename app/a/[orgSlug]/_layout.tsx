@@ -48,16 +48,16 @@ function OrgLayoutInner() {
 
 function ActivePkgSync() {
     const pathname = usePathname()
-    const setActivePkgSlug = useWorkspaceStore(s => s.setActivePkgSlug)
-    const setDrawerOpen = useWorkspaceStore(s => s.setDrawerOpen)
 
     useEffect(() => {
-        setDrawerOpen(false)
-
         const match = pathname.match(/^\/a\/[^/]+\/([^/?]+)/)
         const slug = match?.[1] ?? null
-        setActivePkgSlug(slug === 'settings' ? null : slug)
-    }, [pathname, setActivePkgSlug, setDrawerOpen])
+        const nextSlug = slug === 'settings' ? null : slug
+
+        const state = useWorkspaceStore.getState()
+        if (state.isDrawerOpen) state.setDrawerOpen(false)
+        if (state.activePkgSlug !== nextSlug) state.setActivePkgSlug(nextSlug)
+    }, [pathname])
 
     return null
 }

@@ -2,17 +2,18 @@ import { packageSidebars } from '@tinycld/app-generated/package-sidebars'
 import { Suspense } from 'react'
 import { Platform, View } from 'react-native'
 import { usePackage } from '@tinycld/core/lib/packages/use-packages'
+import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { PackageSidebarFallback } from './PackageSidebarFallback'
 import { SkeletonSidebar } from './SkeletonLayout'
-import { useWorkspaceLayout } from './useWorkspaceLayout'
 
 interface PackageSidebarProps {
     width: number
 }
 
 export function PackageSidebar({ width }: PackageSidebarProps) {
-    const { activePkgSlug, isSidebarOpen } = useWorkspaceLayout()
+    const activePkgSlug = useWorkspaceStore(s => s.activePkgSlug)
+    const isSidebarOpen = useWorkspaceStore(s => s.isSidebarOpen)
     const pkg = usePackage(activePkgSlug ?? '')
     const sidebarBg = useThemeColor('sidebar-background')
 

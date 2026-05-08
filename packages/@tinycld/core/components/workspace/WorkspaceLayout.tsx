@@ -1,14 +1,15 @@
-import { Slot } from 'expo-router'
 import { Platform, Pressable, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { DemoBanner } from '@tinycld/core/components/DemoBanner'
 import { NotificationDrawer } from '@tinycld/core/components/NotificationDrawer'
+import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { FrozenStack } from './FrozenStack'
+import { useBreakpoint } from './useBreakpoint'
 import { MobileLayout } from './MobileLayout'
 import { PackageProviderWrapper } from './PackageProviderWrapper'
 import { PackageRail } from './PackageRail'
 import { PackageSidebar } from './PackageSidebar'
-import { useWorkspaceLayout } from './useWorkspaceLayout'
 
 const SIDEBAR_WIDTH = 260
 const RAIL_WIDTH = 64
@@ -17,7 +18,9 @@ const TRANSITION = 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
 export function WorkspaceLayout({ isReady = true }: { isReady?: boolean }) {
     const bgColor = useThemeColor('background')
     const overlayColor = useThemeColor('overlay-backdrop')
-    const { breakpoint, isSidebarOpen, setSidebarOpen } = useWorkspaceLayout()
+    const breakpoint = useBreakpoint()
+    const isSidebarOpen = useWorkspaceStore(s => s.isSidebarOpen)
+    const setSidebarOpen = useWorkspaceStore(s => s.setSidebarOpen)
     const insets = useSafeAreaInsets()
 
     if (breakpoint === 'mobile') return <MobileLayout isReady={isReady} />
@@ -63,7 +66,7 @@ export function WorkspaceLayout({ isReady = true }: { isReady?: boolean }) {
                             minHeight: 0,
                         }}
                     >
-                        <Slot />
+                        <FrozenStack />
                     </View>
                 </PackageProviderWrapper>
             </View>

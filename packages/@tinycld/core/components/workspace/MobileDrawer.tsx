@@ -1,5 +1,5 @@
 import { packageSidebars } from '@tinycld/app-generated/package-sidebars'
-import { Suspense, useCallback, useEffect } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
@@ -10,9 +10,9 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { usePackage } from '@tinycld/core/lib/packages/use-packages'
+import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { PackageSidebarFallback } from './PackageSidebarFallback'
-import { useWorkspaceLayout } from './useWorkspaceLayout'
 
 const PANEL_WIDTH = 280
 const EDGE_WIDTH = 20
@@ -32,16 +32,29 @@ export function MobileDrawer({ isVisible }: MobileDrawerProps) {
     const overlayBg = useThemeColor('overlay-backdrop')
     const sidebarBg = useThemeColor('sidebar-background')
     const insets = useSafeAreaInsets()
-    const { activePkgSlug, setDrawerOpen } = useWorkspaceLayout()
+    const activePkgSlug = useWorkspaceStore(s => s.activePkgSlug)
+    const setDrawerOpen = useWorkspaceStore(s => s.setDrawerOpen)
     const pkg = usePackage(activePkgSlug ?? '')
     const translateX = useSharedValue(-PANEL_WIDTH)
+
+    // Defer mounting the active package's sidebar until the drawer has been
+    // opened at least once for this package. The sidebar runs live queries
+    // (folder counts, calendar lists, etc.) that block the JS thread on mount;
+    // pre-mounting it on every tab switch was the dominant cost of bottom-tab
+    // navigation. Reset when the package changes so a freshly-tabbed-to package
+    // doesn't pre-mount its sidebar before the user actually asks for it.
+    const [openedForSlug, setOpenedForSlug] = useState<string | null>(null)
+    const hasOpened = openedForSlug === activePkgSlug && activePkgSlug != null
 
     const openDrawer = useCallback(() => setDrawerOpen(true), [setDrawerOpen])
     const closeDrawer = useCallback(() => setDrawerOpen(false), [setDrawerOpen])
 
     useEffect(() => {
         translateX.value = withSpring(isVisible ? 0 : -PANEL_WIDTH, SPRING_CONFIG)
-    }, [isVisible, translateX])
+        if (isVisible && activePkgSlug && openedForSlug !== activePkgSlug) {
+            setOpenedForSlug(activePkgSlug)
+        }
+    }, [isVisible, translateX, activePkgSlug, openedForSlug])
 
     const edgeGesture = Gesture.Pan()
         .activeOffsetX(10)
@@ -137,16 +150,18 @@ export function MobileDrawer({ isVisible }: MobileDrawerProps) {
                             panelStyle,
                         ]}
                     >
-                        {SidebarComponent ? (
-                            <Suspense fallback={null}>
-                                <SidebarComponent isCollapsed={false} />
-                            </Suspense>
-                        ) : (
-                            <PackageSidebarFallback
-                                pkgSlug={pkg?.slug ?? ''}
-                                pkgLabel={pkg?.nav?.label ?? 'Menu'}
-                            />
-                        )}
+                        {hasOpened ? (
+                            SidebarComponent ? (
+                                <Suspense fallback={null}>
+                                    <SidebarComponent isCollapsed={false} />
+                                </Suspense>
+                            ) : (
+                                <PackageSidebarFallback
+                                    pkgSlug={pkg?.slug ?? ''}
+                                    pkgLabel={pkg?.nav?.label ?? 'Menu'}
+                                />
+                            )
+                        ) : null}
                     </Animated.View>
                 </View>
             </GestureDetector>

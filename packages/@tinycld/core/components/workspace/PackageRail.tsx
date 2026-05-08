@@ -5,12 +5,12 @@ import { NotificationBell } from '@tinycld/core/components/NotificationBell'
 import { OrgLogo } from '@tinycld/core/components/OrgLogo'
 import { ImportIndicator } from '@tinycld/core/components/workspace/ImportIndicator'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
+import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
 import { useOrgInfo } from '@tinycld/core/lib/use-org-info'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useSortedPackages } from '@tinycld/core/lib/use-sorted-packages'
 import { getIcon } from './package-icon-map'
 import { UserMenu } from './UserMenu'
-import { useWorkspaceLayout } from './useWorkspaceLayout'
 
 export function PackageRail() {
     const railBg = useThemeColor('rail-background')
@@ -18,7 +18,7 @@ export function PackageRail() {
     const railActive = useThemeColor('rail-active-text')
     const indicatorColor = useThemeColor('active-indicator')
     const sorted = useSortedPackages()
-    const { activePkgSlug } = useWorkspaceLayout()
+    const activePkgSlug = useWorkspaceStore(s => s.activePkgSlug)
     const orgHref = useOrgHref()
     const { org } = useOrgInfo()
 

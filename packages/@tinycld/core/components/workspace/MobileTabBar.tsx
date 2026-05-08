@@ -2,11 +2,11 @@ import { useRouter } from 'expo-router'
 import { Ellipsis } from 'lucide-react-native'
 import { Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useOrgSlug } from '@tinycld/core/lib/use-org-slug'
 import { useSortedPackages } from '@tinycld/core/lib/use-sorted-packages'
 import { getIcon } from './package-icon-map'
-import { useWorkspaceLayout } from './useWorkspaceLayout'
 
 export const MAX_VISIBLE_TABS = 4
 
@@ -16,7 +16,9 @@ export function MobileTabBar() {
     const railActive = useThemeColor('rail-active-text')
     const indicatorColor = useThemeColor('active-indicator')
     const sorted = useSortedPackages()
-    const { activePkgSlug, isMoreOpen, setMoreOpen } = useWorkspaceLayout()
+    const activePkgSlug = useWorkspaceStore(s => s.activePkgSlug)
+    const isMoreOpen = useWorkspaceStore(s => s.isMoreOpen)
+    const setMoreOpen = useWorkspaceStore(s => s.setMoreOpen)
     const router = useRouter()
     const insets = useSafeAreaInsets()
     const orgSlug = useOrgSlug()
