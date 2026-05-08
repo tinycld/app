@@ -50,8 +50,7 @@ test.describe('demo lead capture', () => {
         await page.getByRole('button', { name: 'Submit and explore' }).click()
 
         await expect(page.getByText("You're in the demo workspace")).not.toBeVisible()
-        await expect(page.getByTestId('demo-banner-thanks')).toBeVisible()
-        await expect(page.getByTestId('demo-banner-cta')).not.toBeVisible()
+        await expect(page.getByTestId('demo-banner-cta')).toBeVisible()
     })
 
     test('skipped on first arrival, submitted later via banner link', async ({ page }) => {
@@ -70,7 +69,7 @@ test.describe('demo lead capture', () => {
         await page.getByTestId('demo-followup-submit').click()
 
         await expect(page.getByText('Tell us about yourself')).not.toBeVisible()
-        await expect(page.getByTestId('demo-banner-thanks')).toBeVisible()
+        await expect(page.getByTestId('demo-banner-cta')).toBeVisible()
     })
 
     test('invalid email keeps the welcome modal open with an error', async ({ page }) => {
