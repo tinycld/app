@@ -216,6 +216,37 @@ async function startPocketBase(): Promise<ReturnType<typeof spawn>> {
     return pb
 }
 
+// SIGTERM gets PocketBase to start shutting down (background goroutines like
+// the push scheduler and drive watcher get notified), but exit can take more
+// than 5s on a busy machine. Critically, the SQLite WAL only checkpoints on
+// graceful exit — if we proceed before PB is gone, dev.ts opens the same DB
+// while seed-PB is still flushing and we get stale/inconsistent reads.
+// So: SIGTERM, wait up to 15s, escalate to SIGKILL, then wait for the
+// process to actually be reaped before returning.
+async function stopPocketBase(child: ReturnType<typeof spawn>): Promise<void> {
+    if (child.exitCode !== null || child.signalCode !== null) return
+
+    const waitForExit = (timeoutMs: number) =>
+        new Promise<boolean>(resolve => {
+            const timer = setTimeout(() => resolve(false), timeoutMs)
+            child.once('exit', () => {
+                clearTimeout(timer)
+                resolve(true)
+            })
+        })
+
+    child.kill('SIGTERM')
+    if (await waitForExit(15_000)) return
+
+    log('PocketBase did not exit after SIGTERM, sending SIGKILL...')
+    try {
+        child.kill('SIGKILL')
+    } catch {
+        // process may already be gone between the SIGTERM check and here
+    }
+    await waitForExit(5_000)
+}
+
 async function runSeedScript(): Promise<void> {
     log('Running seed script...')
     const { email, password } = getCredentials()
@@ -289,13 +320,7 @@ async function main() {
     } finally {
         if (pb) {
             const child = pb
-            child.kill('SIGTERM')
-            // Give PocketBase time to shut down gracefully so goroutines
-            // (push scheduler, drive watcher, etc.) can clean up.
-            await new Promise<void>(resolve => {
-                child.on('exit', resolve)
-                setTimeout(() => resolve(), 5_000)
-            })
+            await stopPocketBase(child)
         }
     }
 }

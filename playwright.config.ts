@@ -8,7 +8,7 @@ try {
     // .env may not exist in CI
 }
 
-const TEST_EXPO_PORT = 7101
+const TEST_EXPO_PORT = 7200
 const CORE_ROOT = import.meta.dirname
 
 // Sibling packages are symlinks under packages/. Playwright's glob walker
@@ -59,7 +59,6 @@ export default defineConfig({
     workers: process.env.CI ? 1 : undefined,
     reporter: 'html',
     globalSetup: './tests/playwright-global-setup.ts',
-    globalTeardown: './tests/playwright-global-teardown.ts',
     use: {
         baseURL: `http://localhost:${TEST_EXPO_PORT}`,
         trace: 'on-first-retry',
@@ -82,6 +81,20 @@ export default defineConfig({
         command: 'bun run expo:test',
         url: `http://localhost:${TEST_EXPO_PORT}`,
         reuseExistingServer: !process.env.CI,
-        timeout: 120_000,
+        // dev.ts spawns PB + Expo + a proxy. PB starts fast but Expo's cold
+        // --clear bundle can take 2-3 minutes; dev.ts itself waits up to
+        // 180s, so the webServer timeout has to be at least that plus buffer.
+        timeout: 240_000,
+        // Test-mode env passthrough for the PB child that dev.ts spawns.
+        // SKIP_SENDING_MAIL keeps tests offline; TINYCLD_EMAIL_LOG lets
+        // email-log-helpers assert what would have gone out; the IMAP/SMTP
+        // address overrides keep PB's mail listeners off the dev ports.
+        env: {
+            SKIP_SENDING_MAIL: 'true',
+            TINYCLD_EMAIL_LOG: path.join(CORE_ROOT, 'tmp/emails.log'),
+            IMAP_ADDR: ':1193',
+            IMAPS_ADDR: ':11993',
+            SMTP_ADDR: ':1587',
+        },
     },
 })

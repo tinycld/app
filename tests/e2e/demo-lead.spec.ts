@@ -1,10 +1,10 @@
 import { expect, type Page, test } from '@playwright/test'
 
-// The test PocketBase server runs on this address (see tests/playwright-global-setup.ts).
-// /api/demo/start lives on PB itself, so the test fires against the absolute URL even
-// though the app's relative fetch in the form happens to share the same origin via
-// EXPO_PUBLIC_ENV=test (where PB_SERVER_ADDR resolves to this address).
-const PB_TEST_URL = 'http://127.0.0.1:7091'
+// The webServer started by playwright.config.ts is a dev.ts proxy on this
+// port; it forwards /api/* to PocketBase and everything else to Expo. The
+// test fires against the absolute URL because page.request runs outside
+// the page's origin, but the proxy itself bridges to PB transparently.
+const PB_TEST_URL = 'http://127.0.0.1:7200'
 
 // AsyncAuthStore (configured in packages/@tinycld/core/lib/pocketbase.ts) persists the
 // PocketBase auth state via @react-native-async-storage/async-storage. On web, AsyncStorage
