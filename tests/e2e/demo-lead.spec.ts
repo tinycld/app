@@ -82,6 +82,9 @@ test.describe('demo lead capture', () => {
         await page.getByRole('button', { name: 'Submit and explore' }).click()
 
         await expect(page.getByText("You're in the demo workspace")).toBeVisible()
-        await expect(page.getByText('Enter a valid email')).toBeVisible()
+        // FormErrorSummary surfaces the same message at the top of the form
+        // in addition to the per-field error, so the unscoped match is
+        // ambiguous; .first() picks whichever renders first.
+        await expect(page.getByText('Enter a valid email').first()).toBeVisible()
     })
 })
