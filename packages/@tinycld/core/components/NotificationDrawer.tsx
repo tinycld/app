@@ -46,18 +46,27 @@ function DesktopNotificationPanel() {
     const isOpen = useWorkspaceStore(s => s.isNotificationsOpen)
     const close = useWorkspaceStore(s => s.setNotificationsOpen)
     const overlayColor = useThemeColor('overlay-backdrop')
+    const [isMounted, setIsMounted] = useState(isOpen)
+
+    useEffect(() => {
+        if (isOpen) {
+            setIsMounted(true)
+            return
+        }
+        const timeout = setTimeout(() => setIsMounted(false), 250)
+        return () => clearTimeout(timeout)
+    }, [isOpen])
+
+    if (!isMounted) return null
 
     return (
         <View
             className="absolute top-0 right-0 bottom-0"
-            style={
-                {
-                    left: RAIL_WIDTH,
-                    zIndex: 200,
-                    visibility: isOpen ? 'visible' : 'hidden',
-                    transition: isOpen ? undefined : 'visibility 0s 0.25s',
-                } as object
-            }
+            style={{
+                left: RAIL_WIDTH,
+                zIndex: 200,
+            }}
+            pointerEvents={isOpen ? 'auto' : 'none'}
         >
             <Pressable
                 className="absolute top-0 left-0 right-0 bottom-0"

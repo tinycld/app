@@ -1,5 +1,6 @@
 import { Slot } from 'expo-router'
 import { Platform, Pressable, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { DemoBanner } from '@tinycld/core/components/DemoBanner'
 import { NotificationDrawer } from '@tinycld/core/components/NotificationDrawer'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
@@ -17,6 +18,7 @@ export function WorkspaceLayout({ isReady = true }: { isReady?: boolean }) {
     const bgColor = useThemeColor('background')
     const overlayColor = useThemeColor('overlay-backdrop')
     const { breakpoint, isSidebarOpen, setSidebarOpen } = useWorkspaceLayout()
+    const insets = useSafeAreaInsets()
 
     if (breakpoint === 'mobile') return <MobileLayout isReady={isReady} />
 
@@ -29,6 +31,9 @@ export function WorkspaceLayout({ isReady = true }: { isReady?: boolean }) {
             style={[
                 {
                     backgroundColor: bgColor,
+                    paddingTop: insets.top,
+                    paddingLeft: insets.left,
+                    paddingRight: insets.right,
                 },
                 Platform.OS === 'web' ? ({ height: '100vh' } as object) : undefined,
             ]}
@@ -51,7 +56,13 @@ export function WorkspaceLayout({ isReady = true }: { isReady?: boolean }) {
                             <PackageSidebar width={SIDEBAR_WIDTH} />
                         ))}
 
-                    <View className="flex-1" style={{ backgroundColor: bgColor, minHeight: 0 }}>
+                    <View
+                        className="flex-1"
+                        style={{
+                            backgroundColor: bgColor,
+                            minHeight: 0,
+                        }}
+                    >
                         <Slot />
                     </View>
                 </PackageProviderWrapper>
