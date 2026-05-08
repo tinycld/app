@@ -89,9 +89,10 @@ function SidebarOverlay({
             pointerEvents={isVisible ? 'auto' : 'none'}
         >
             <Pressable
-                className="absolute top-0 left-0 right-0 bottom-0"
+                className="absolute top-0 right-0 bottom-0"
                 style={
                     {
+                        left: RAIL_WIDTH,
                         backgroundColor: overlayColor,
                         opacity: isVisible ? 1 : 0,
                         transition: TRANSITION,

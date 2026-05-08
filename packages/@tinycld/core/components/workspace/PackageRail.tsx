@@ -24,7 +24,7 @@ export function PackageRail() {
 
     return (
         <View
-            className="w-16 justify-between items-center py-3 z-[300]"
+            className="w-16 justify-between items-center py-3"
             style={{ backgroundColor: railBg }}
         >
             <View className="items-center gap-1">
