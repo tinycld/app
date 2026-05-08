@@ -240,23 +240,17 @@ const Content = forwardRef<View, ContentProps>(function Content(
                     prev?.width === width && prev?.height === height ? prev : { width, height }
                 )
             }}
-            className={`absolute min-w-[200px] border rounded-lg py-1 ${className ?? ''}`}
+            className={`absolute min-w-[200px] border border-border bg-background rounded-lg py-1 ${className ?? ''}`}
             style={[
-                {
-                    backgroundColor: 'var(--color-background)' as string,
-                    borderColor: 'var(--color-border)' as string,
-                    ...(Platform.OS === 'web'
-                        ? {
-                              boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-                          }
-                        : {
-                              elevation: 8,
-                              shadowColor: '#000',
-                              shadowOffset: { width: 0, height: 4 },
-                              shadowOpacity: 0.15,
-                              shadowRadius: 12,
-                          }),
-                },
+                Platform.OS === 'web'
+                    ? ({ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' } as object)
+                    : {
+                          elevation: 8,
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 4 },
+                          shadowOpacity: 0.15,
+                          shadowRadius: 12,
+                      },
                 positionStyle,
                 styleProp,
             ]}
@@ -293,9 +287,8 @@ const Item = forwardRef<View, ItemProps>(function Item(
         [isDisabled, onPressProp, onOpenChange]
     )
 
-    const itemClass = `flex-row items-center gap-2 px-3 py-2 ${isDisabled ? 'opacity-40' : 'opacity-100'} ${className ?? ''}`
-    const hoverStyle =
-        hovered && !isDisabled ? { backgroundColor: 'var(--color-accent)' } : undefined
+    const hoverBg = hovered && !isDisabled ? 'bg-accent' : ''
+    const itemClass = `flex-row items-center gap-2 px-3 py-2 ${hoverBg} ${isDisabled ? 'opacity-40' : 'opacity-100'} ${className ?? ''}`
 
     if (Platform.OS === 'web' && href) {
         return (
@@ -316,7 +309,6 @@ const Item = forwardRef<View, ItemProps>(function Item(
                     textDecoration: 'none',
                     color: 'inherit',
                     cursor: isDisabled ? 'default' : 'pointer',
-                    ...hoverStyle,
                     ...(styleProp as React.CSSProperties),
                 }}
             >
@@ -334,7 +326,7 @@ const Item = forwardRef<View, ItemProps>(function Item(
             onHoverIn={() => setHovered(true)}
             onHoverOut={() => setHovered(false)}
             className={itemClass}
-            style={[hoverStyle as { backgroundColor: string } | undefined, styleProp]}
+            style={styleProp}
         >
             {children}
         </Pressable>
@@ -350,8 +342,8 @@ const ItemTitle = forwardRef<
     return (
         <Text
             ref={ref}
-            className={className}
-            style={[{ fontSize: 14, color: 'var(--color-foreground)' as string }, styleProp]}
+            className={`text-foreground ${className ?? ''}`}
+            style={[{ fontSize: 14 }, styleProp]}
         >
             {children}
         </Text>
@@ -363,11 +355,10 @@ const ItemTitle = forwardRef<
 function Label({ children, className }: { children: React.ReactNode; className?: string }) {
     return (
         <Text
-            className={`uppercase px-3 py-1 ${className ?? ''}`}
+            className={`uppercase px-3 py-1 text-muted-foreground ${className ?? ''}`}
             style={{
                 fontSize: 11,
                 fontWeight: '600',
-                color: 'var(--color-muted-foreground)' as string,
                 letterSpacing: 0.5,
             }}
         >
@@ -381,11 +372,7 @@ function Label({ children, className }: { children: React.ReactNode; className?:
 function Separator({ className }: { className?: string }) {
     return (
         <View
-            className={`my-1 ${className ?? ''}`}
-            style={{
-                height: 1,
-                backgroundColor: 'var(--color-border)' as string,
-            }}
+            className={`my-1 h-px bg-border ${className ?? ''}`}
         />
     )
 }
