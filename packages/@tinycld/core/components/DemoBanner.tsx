@@ -12,15 +12,13 @@ import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
  * the user-visible cue.
  *
  * Also hosts the deferred lead-capture entry point: a "Tell us about you"
- * link on the right side opens DemoFollowUpModal. Once a lead has been
- * submitted from this device (tracked in useDemoLeadStore.hasSubmitted),
- * the link is replaced with a quiet "Thanks!" tag so we don't keep asking.
+ * link on the right side always opens DemoFollowUpModal — even after a
+ * previous submit, so users can send updates or correct their info.
  *
  * Returns null for non-demo users.
  */
 export function DemoBanner() {
     const { user, isLoggedIn } = useAuth({ throwIfAnon: false })
-    const hasSubmitted = useDemoLeadStore(s => s.hasSubmitted)
     const setFollowUpOpen = useDemoLeadStore(s => s.setFollowUpOpen)
     const warning = useThemeColor('warning')
     const primary = useThemeColor('primary')
@@ -36,30 +34,19 @@ export function DemoBanner() {
             }}
         >
             <Info size={14} color={warning} />
-            <Text className="text-xs font-semibold text-foreground">Demo mode</Text>
-            <Text className="text-xs text-muted-foreground">
-                outbound email and notifications are simulated.
-            </Text>
+            <Text className="text-xs font-semibold text-foreground">Demo</Text>
+            <Text className="text-xs text-muted-foreground">sends are simulated</Text>
             <View className="flex-1" />
-            {hasSubmitted ? (
-                <Text
-                    className="text-xs text-muted-foreground"
-                    testID="demo-banner-thanks"
-                >
-                    Thanks!
+            <Pressable
+                onPress={() => setFollowUpOpen(true)}
+                testID="demo-banner-cta"
+                accessibilityRole="link"
+                accessibilityLabel="Tell us about yourself"
+            >
+                <Text className="text-xs font-semibold" style={{ color: primary }}>
+                    Tell us about you →
                 </Text>
-            ) : (
-                <Pressable
-                    onPress={() => setFollowUpOpen(true)}
-                    testID="demo-banner-cta"
-                    accessibilityRole="link"
-                    accessibilityLabel="Tell us about yourself"
-                >
-                    <Text className="text-xs font-semibold" style={{ color: primary }}>
-                        Tell us about you →
-                    </Text>
-                </Pressable>
-            )}
+            </Pressable>
         </View>
     )
 }

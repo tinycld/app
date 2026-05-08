@@ -6,7 +6,6 @@ import {
     type DemoLeadFormHandle,
 } from '@tinycld/core/components/DemoLeadForm'
 import { FirstRunModal } from '@tinycld/core/components/FirstRunModal'
-import { useDemoLeadStore } from '@tinycld/core/lib/stores/demo-lead-store'
 
 /**
  * One-shot orientation modal for users entering via /api/demo/start. Renders
@@ -15,7 +14,7 @@ import { useDemoLeadStore } from '@tinycld/core/lib/stores/demo-lead-store'
  *
  * Pairs with the always-on DemoBanner: the modal asks for an email + reason
  * on first arrival; the banner reminds users they're in demo mode and
- * exposes a deferred "Tell us about you" link for visitors who skipped.
+ * exposes a "Tell us about you" link that stays available afterward.
  *
  * Mounted from app/a/[orgSlug]/_layout.tsx so it appears on the first demo
  * screen regardless of which package the user lands in (mail, calendar, etc.).
@@ -27,17 +26,7 @@ export function DemoIntroModal() {
     const enabled = !isInitializing && isLoggedIn && !!user?.isDemo
 
     const handlePrimary = (): boolean => {
-        const ok = formRef.current?.submit() ?? false
-        if (ok) {
-            useDemoLeadStore.getState().setSubmitted()
-        }
-        return ok
-    }
-
-    const handleSkip = () => {
-        // Skipping leaves hasSubmitted=false so the banner link stays visible.
-        // The FirstRunModal storage marker still fires from the dismiss path,
-        // so this modal won't reappear on the same device.
+        return formRef.current?.submit() ?? false
     }
 
     return (
@@ -51,7 +40,6 @@ export function DemoIntroModal() {
             primaryLabel="Submit and explore"
             onPrimary={handlePrimary}
             secondaryLabel="Skip for now"
-            onSecondary={handleSkip}
         >
             <DemoLeadForm ref={formRef} source="intro_modal" />
         </FirstRunModal>

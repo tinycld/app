@@ -11,8 +11,8 @@ import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 
 /**
  * Banner-triggered demo-lead form. Opens when the user taps the demo banner's
- * "Tell us about you" link; closes on submit (which also flips
- * hasSubmitted=true, swapping the link for a Thanks! tag) or cancel.
+ * "Tell us about you" link; closes on submit or cancel. The link stays
+ * available afterward so users can send updates or correct their info.
  *
  * Renders nothing for non-demo users — the demo banner is the only place
  * that calls setFollowUpOpen(true).
