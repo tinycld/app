@@ -21,7 +21,7 @@
         "dev": "bunx tsx scripts/dev.ts",
         "start": "bunx tsx scripts/dev.ts",
         "ssl:generate": "scripts/generate-ssl.sh",
-        "expo:test": "EXPO_PUBLIC_ENV=test bunx expo start --port 7101",
+        "expo:test": "bunx tsx scripts/dev.ts --no-ssl --port 7200 --pb-data-dir server/pb_test_data",
         "simulator": "scripts/ios-simulator.sh",
         "ios": "bunx expo run:ios",
         "ios:build-only": "bunx expo run:ios --no-bundler",

@@ -8,6 +8,10 @@
 //
 // Defaults: proxy 7100, PB 7101, Expo 7102. If any port in the block is
 // taken we shift the whole block by +10 and re-probe so they stay grouped.
+// Override with --port <n> to pin the user-facing port (PB = n+1, Expo =
+// n+2); fail fast instead of probing alternatives. --pb-data-dir <path>
+// points PB at a non-default data directory (used by the Playwright test
+// mode to share state with the seed scripts).
 //
 // On web, the app always resolves PB at window.location.origin, so the
 // dev proxy at the user-facing port handles /api and /_ same-origin. No
@@ -28,6 +32,34 @@ const KEY_PATH = path.join(ROOT, 'assets', 'localhost-key.pem')
 const DEFAULT_PROXY_PORT = 7100
 const BLOCK_SHIFT = 10
 const MAX_BLOCK_ATTEMPTS = 5
+
+// Pull a flag value (`--name value`) out of process.argv. Returns null if
+// the flag isn't present; throws if it's the last token (no value follows).
+function flagValue(name: string): string | null {
+    const i = process.argv.indexOf(name)
+    if (i === -1) return null
+    const v = process.argv[i + 1]
+    if (v === undefined || v.startsWith('-')) {
+        throw new Error(`dev: flag ${name} requires a value`)
+    }
+    return v
+}
+
+function resolveExplicitPort(): number | null {
+    const raw = flagValue('--port')
+    if (raw === null) return null
+    const n = Number.parseInt(raw, 10)
+    if (!Number.isFinite(n) || n <= 0 || n > 65_533) {
+        throw new Error(`dev: --port must be a port number (got ${raw})`)
+    }
+    return n
+}
+
+function resolvePbDataDir(): string | null {
+    const raw = flagValue('--pb-data-dir')
+    if (raw === null) return null
+    return path.isAbsolute(raw) ? raw : path.join(ROOT, raw)
+}
 
 // SSL is on when both cert files exist, unless explicitly disabled with
 // --no-ssl. --ssl forces it on (and fails if certs are missing).
@@ -74,7 +106,7 @@ async function tryConnect(port: number, host = '127.0.0.1'): Promise<boolean> {
     })
 }
 
-async function waitForUpstream(port: number, label: string, timeoutMs = 60_000): Promise<void> {
+async function waitForUpstream(port: number, label: string, timeoutMs: number): Promise<void> {
     const start = Date.now()
     while (Date.now() - start < timeoutMs) {
         if (await tryConnect(port)) return
@@ -146,6 +178,24 @@ async function findFreeBlock(startIndex: number): Promise<PortBlock | null> {
 }
 
 async function pickBlock(): Promise<PortBlock> {
+    const explicit = resolveExplicitPort()
+    if (explicit !== null) {
+        const block: PortBlock = { proxy: explicit, pb: explicit + 1, expo: explicit + 2 }
+        if (await isBlockFree(block)) return block
+        // Don't fall back when the user pinned a port — they almost certainly
+        // want to know that it's busy. List the holders so the failure is
+        // actionable.
+        const holders = [block.proxy, block.pb, block.expo]
+            .map(p => ({ port: p, holder: findPortHolder(p) }))
+            .filter(h => h.holder !== null)
+        const detail = holders
+            .map(h => `:${h.port} pid ${h.holder?.pid} (${h.holder?.command})`)
+            .join(', ')
+        throw new Error(
+            `dev: --port ${explicit} block (${block.proxy}/${block.pb}/${block.expo}) is in use${detail ? ` — ${detail}` : ''}`
+        )
+    }
+
     const preferred = blockAt(0)
     if (await isBlockFree(preferred)) return preferred
 
@@ -244,29 +294,21 @@ function buildPbSync() {
     })
 }
 
-function spawnPbBinary(pbPort: number, publicUrl: string): ChildProcess {
+function spawnPbBinary(pbPort: number, publicUrl: string, dataDir: string | null): ChildProcess {
     const onPbOut = withPrefix('pb', '\x1b[36m') // cyan
     const onPbErr = withPrefix('pb', '\x1b[31m') // red
-    const child = spawn(
-        path.join(ROOT, 'server', 'tinycld'),
-        [
-            '--dev',
-            '--http',
-            `127.0.0.1:${pbPort}`,
-            '--typesDir',
-            path.join(ROOT, 'packages', '@tinycld/core', 'types'),
-            'serve',
-        ],
-        {
-            cwd: ROOT,
-            stdio: ['inherit', 'pipe', 'pipe'],
-            // PB's first-run installer prints a /setup URL using the address
-            // it bound to. Override with the public proxy URL so the printed
-            // URL points where the user actually browses, not at PB's
-            // internal port.
-            env: { ...process.env, TINYCLD_PUBLIC_URL: publicUrl },
-        }
-    )
+    const args = ['--dev', '--http', `127.0.0.1:${pbPort}`]
+    if (dataDir) args.push('--dir', dataDir)
+    args.push('--typesDir', path.join(ROOT, 'packages', '@tinycld/core', 'types'), 'serve')
+    const child = spawn(path.join(ROOT, 'server', 'tinycld'), args, {
+        cwd: ROOT,
+        stdio: ['inherit', 'pipe', 'pipe'],
+        // PB's first-run installer prints a /setup URL using the address
+        // it bound to. Override with the public proxy URL so the printed
+        // URL points where the user actually browses, not at PB's
+        // internal port.
+        env: { ...process.env, TINYCLD_PUBLIC_URL: publicUrl },
+    })
     child.stdout?.on('data', onPbOut)
     child.stderr?.on('data', onPbErr)
     return child
@@ -298,9 +340,35 @@ function spawnExpo(expoPort: number, onReady: () => void): ChildProcess {
     return child
 }
 
+// Path segments that belong to PocketBase, not Expo. Each entry matches
+// the segment exactly or as a path prefix (i.e. followed by '/'), so
+// '/api' catches '/api' and '/api/foo' but not '/apiv2'. Mirrors the
+// Go-side list in coreserver/server.go::isDavPath plus PB's own /api and
+// /_ surfaces so the same set bypasses Expo when tests hit them via the
+// proxy.
+//   /api                  REST + SSE realtime + custom routes
+//   /_                    admin UI
+//   /caldav               calendar package's CalDAV handler
+//   /carddav              contacts package's CardDAV handler
+//   /drive                drive package's WebDAV handler (the in-app
+//                         /a/.../drive routes are caught by /a, which
+//                         Expo owns)
+//   /.well-known/caldav   service discovery (302s)
+//   /.well-known/carddav
+//   /.well-known/webdav
+const PB_PREFIXES = [
+    '/api',
+    '/_',
+    '/caldav',
+    '/carddav',
+    '/drive',
+    '/.well-known/caldav',
+    '/.well-known/carddav',
+    '/.well-known/webdav',
+]
+
 function isPbPath(url: string): boolean {
-    // PB owns /api/* (REST + SSE realtime + custom routes) and /_/* (admin UI).
-    return url.startsWith('/api') || url.startsWith('/_/') || url === '/_'
+    return PB_PREFIXES.some(prefix => url === prefix || url.startsWith(`${prefix}/`))
 }
 
 function startProxy(opts: { proxyPort: number; pbPort: number; expoPort: number; ssl: boolean }) {
@@ -308,6 +376,15 @@ function startProxy(opts: { proxyPort: number; pbPort: number; expoPort: number;
 
     const handler: http.RequestListener = (req, res) => {
         const target = isPbPath(req.url ?? '/') ? opts.pbPort : opts.expoPort
+
+        // Browsers and Playwright cancel in-flight requests aggressively.
+        // Once the client socket goes away, any further write to req/res
+        // surfaces as EPIPE/ECONNRESET on the underlying socket — and a bare
+        // 'error' event on a Socket crashes Node. Attach handlers to swallow
+        // those instead of taking the proxy down.
+        req.on('error', err => log(`client req error: ${err.message}\n`))
+        res.on('error', err => log(`client res error: ${err.message}\n`))
+
         const upstream = http.request(
             {
                 host: '127.0.0.1',
@@ -317,15 +394,22 @@ function startProxy(opts: { proxyPort: number; pbPort: number; expoPort: number;
                 headers: { ...req.headers, host: `127.0.0.1:${target}` },
             },
             upstreamRes => {
-                res.writeHead(upstreamRes.statusCode ?? 502, upstreamRes.headers)
+                upstreamRes.on('error', err =>
+                    log(`upstream res :${target} error: ${err.message}\n`)
+                )
+                if (!res.writableEnded)
+                    res.writeHead(upstreamRes.statusCode ?? 502, upstreamRes.headers)
                 upstreamRes.pipe(res)
             }
         )
         upstream.on('error', err => {
             log(`upstream :${target} error: ${err.message}\n`)
-            if (!res.headersSent) res.writeHead(502)
-            res.end('Bad Gateway')
+            if (!res.headersSent && !res.writableEnded) res.writeHead(502)
+            if (!res.writableEnded) res.end('Bad Gateway')
         })
+        // If the client disconnects mid-flight, abort the upstream so we
+        // don't pile up half-open sockets to PB/Expo.
+        res.on('close', () => upstream.destroy())
         req.pipe(upstream)
     }
 
@@ -333,6 +417,8 @@ function startProxy(opts: { proxyPort: number; pbPort: number; expoPort: number;
     // (its realtime is SSE, plain HTTP), but route by path anyway.
     const onUpgrade = (req: http.IncomingMessage, clientSocket: NodeJS.Socket, head: Buffer) => {
         const target = isPbPath(req.url ?? '/') ? opts.pbPort : opts.expoPort
+        // Same EPIPE-class crash protection on the upgrade path.
+        clientSocket.on('error', err => log(`client ws error: ${err.message}\n`))
         const upstreamSocket = net.connect(target, '127.0.0.1', () => {
             const headerLines = [
                 `${req.method} ${req.url} HTTP/${req.httpVersion}`,
@@ -381,6 +467,22 @@ function printBanner(block: PortBlock, ssl: boolean, suffix?: string) {
     process.stdout.write(`${lines.join('\n')}\n`)
 }
 
+// Belt-and-suspenders: if any socket-class error escapes handler-level
+// catch blocks, log and continue rather than letting Node tear down the
+// whole proxy. EPIPE / ECONNRESET / ECONNABORTED happen routinely when a
+// client (browser, Playwright) cancels a request mid-flight; they're
+// transient by definition and there's nothing for us to do about them.
+const TRANSIENT_SOCKET_ERRORS = new Set(['EPIPE', 'ECONNRESET', 'ECONNABORTED'])
+process.on('uncaughtException', err => {
+    const code = (err as NodeJS.ErrnoException).code
+    if (code && TRANSIENT_SOCKET_ERRORS.has(code)) {
+        process.stdout.write(`\x1b[33m[proxy]\x1b[0m transient socket ${code}, ignoring\n`)
+        return
+    }
+    process.stderr.write(`uncaughtException: ${err.stack ?? String(err)}\n`)
+    process.exit(1)
+})
+
 async function main() {
     const block = await pickBlock()
 
@@ -409,7 +511,8 @@ async function main() {
     }
 
     const publicUrl = `${useSsl ? 'https' : 'http'}://localhost:${block.proxy}`
-    const pb = spawnPbBinary(block.pb, publicUrl)
+    const pbDataDir = resolvePbDataDir()
+    const pb = spawnPbBinary(block.pb, publicUrl, pbDataDir)
     const expo = spawnExpo(block.expo, () => printOnce())
 
     // Wait for both upstreams to accept TCP connections before binding the
@@ -418,7 +521,13 @@ async function main() {
     // 502s + ECONNREFUSED noise during cold start. A few seconds of
     // "connection refused" on :proxy is fine — browsers retry, and the
     // banner only prints once Expo signals ready anyway.
-    await Promise.all([waitForUpstream(block.pb, 'pb'), waitForUpstream(block.expo, 'expo')])
+    // PB starts in seconds (no bundling). Expo can take 2-3 minutes on a
+    // cold --clear start while it bundles the entire dependency graph, so
+    // give it a longer rope.
+    await Promise.all([
+        waitForUpstream(block.pb, 'pb', 30_000),
+        waitForUpstream(block.expo, 'expo', 180_000),
+    ])
 
     const server = startProxy({
         proxyPort: block.proxy,

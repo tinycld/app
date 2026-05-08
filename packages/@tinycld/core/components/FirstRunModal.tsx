@@ -161,6 +161,8 @@ export function FirstRunModal({
                     <View className="flex-row gap-2.5 justify-end">
                         {secondaryLabel ? (
                             <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel={secondaryLabel}
                                 onPress={() => dismiss('secondary')}
                                 className="py-2.5 px-4 rounded-[10px]"
                             >
@@ -170,6 +172,8 @@ export function FirstRunModal({
                             </Pressable>
                         ) : null}
                         <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={primaryLabel}
                             onPress={() => dismiss('primary')}
                             className="py-2.5 px-[18px] rounded-[10px]"
                             style={{ backgroundColor: accent }}

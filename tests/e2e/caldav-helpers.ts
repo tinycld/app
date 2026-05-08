@@ -1,7 +1,11 @@
 import ICAL from 'ical.js'
 import { TEST_USER_EMAIL, TEST_USER_PASSWORD } from './helpers'
 
-const CALDAV_BASE = 'http://127.0.0.1:7091/caldav'
+// Tests now go through the dev.ts proxy on TEST_EXPO_PORT (see
+// playwright.config.ts), which fans /caldav to the same PB instance the
+// app is talking to. Same-origin via the proxy keeps cookies/auth aligned
+// with the browser context.
+const CALDAV_BASE = 'http://127.0.0.1:7200/caldav'
 
 export interface CalDAVCalendar {
     id: string
