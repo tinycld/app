@@ -34,8 +34,8 @@ export function DemoBanner() {
             }}
         >
             <Info size={14} color={warning} />
-            <Text className="text-xs font-semibold text-foreground">Demo</Text>
-            <Text className="text-xs text-muted-foreground">sends are simulated</Text>
+            <Text className="text-xs font-semibold text-foreground">Demo Only:</Text>
+            <Text className="text-xs text-muted-foreground">Sends are simulated</Text>
             <View className="flex-1" />
             <Pressable
                 onPress={() => setFollowUpOpen(true)}
