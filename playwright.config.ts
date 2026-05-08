@@ -80,7 +80,14 @@ export default defineConfig({
     webServer: {
         command: 'bun run expo:test',
         url: `http://localhost:${TEST_EXPO_PORT}`,
-        reuseExistingServer: !process.env.CI,
+        // Always start a fresh dev.ts. expo:test chains
+        // `reset-dev-db.ts && dev.ts`, so the data dir is wiped and reseeded
+        // every run. If Playwright reused a previous dev.ts instance, its
+        // PB would still hold cached auth/collection state pointing at the
+        // old user/org IDs — every API call would return stale or empty
+        // data and tests would see "0 contacts" while the DB on disk is
+        // freshly populated.
+        reuseExistingServer: false,
         // dev.ts spawns PB + Expo + a proxy. PB starts fast but Expo's cold
         // --clear bundle can take 2-3 minutes; dev.ts itself waits up to
         // 180s, so the webServer timeout has to be at least that plus buffer.
