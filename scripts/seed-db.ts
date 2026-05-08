@@ -13,7 +13,14 @@
  *                            demo: demo@tinycld.org (is_demo=true) + demo org, single org
  *   --user-email <email>   Override user email
  *   --user-name <name>     Override user display name
- *   --user-pw <pw>         Override user password (test mode only — ignored in demo)
+ *   --user-pw <pw>         Override user password. In demo mode also honors
+ *                          $REVIEW_DEMO_PASSWORD from .env, so the App Review
+ *                          reviewer account has a stable password.
+ *
+ * Demo mode also honors $REVIEW_DEMO_EMAIL for the user's email field. Keep
+ * it set to the demo singleton ("demo@tinycld.org") unless you also patch
+ * demo_start.go's demoUserEmail constant; the demo-token flow looks the user
+ * up by that email.
  *   --org-slug <slug>      Override primary org slug
  *   --org-name <name>      Override primary org name
  *   --url <url>            PocketBase URL (default: http://127.0.0.1:7100)
@@ -67,8 +74,11 @@ const TEST_DEFAULTS = {
 
 // These mirror the singleton constants in
 // packages/@tinycld/core/server/coreserver/demo_start.go. Keep in sync.
+// REVIEW_DEMO_EMAIL overrides userEmail at runtime; if you set it to
+// something other than demo@tinycld.org you must also patch demo_start.go's
+// demoUserEmail constant or the demo-token flow won't find the user.
 const DEMO_DEFAULTS = {
-    userEmail: 'demo@tinycld.org',
+    userEmail: process.env.REVIEW_DEMO_EMAIL || 'demo@tinycld.org',
     userUsername: 'demo',
     userName: 'Demo Tour',
     orgSlug: 'demo',
@@ -152,7 +162,11 @@ function parseArgs(): SeedConfig {
         userEmail: overrides.userEmail ?? defaults.userEmail,
         userUsername: overrides.userUsername ?? defaults.userUsername,
         userName: overrides.userName ?? defaults.userName,
-        userPassword: overrides.userPassword ?? (mode === 'test' ? TEST_DEFAULTS.userPassword : ''),
+        userPassword:
+            overrides.userPassword ??
+            (mode === 'test'
+                ? TEST_DEFAULTS.userPassword
+                : (process.env.REVIEW_DEMO_PASSWORD ?? '')),
         isDemo: mode === 'demo',
         orgSlug: overrides.orgSlug ?? defaults.orgSlug,
         orgName: overrides.orgName ?? defaults.orgName,
@@ -467,7 +481,14 @@ export async function seedForUser(pb: PocketBase, config: SeedConfig) {
             // update, email/password via the confirmation endpoints) would
             // otherwise persist forever. Force-reset every visitor-mutable
             // field on each reset so the next session starts clean.
-            const newPassword = `Demo${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}!`
+            //
+            // Password: when REVIEW_DEMO_PASSWORD is set (or --user-pw was
+            // passed) we set that stable password so App Review can sign in
+            // directly. Otherwise reroll to a random value — the normal
+            // /api/demo/start token flow doesn't need a known password.
+            const newPassword =
+                config.userPassword ||
+                `Demo${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}!`
             await pb.collection('users').update(user.id, {
                 is_demo: true,
                 email: config.userEmail,
@@ -478,10 +499,11 @@ export async function seedForUser(pb: PocketBase, config: SeedConfig) {
         }
     } else {
         log('Creating user:', config.userUsername)
-        // Demo accounts are created by the Go endpoint with a random password;
-        // when we create one here from the CLI we still need *some* password
-        // to satisfy the auth collection. The user authenticates via
-        // /api/demo/start tokens, not via this password.
+        // Auth collections require *some* password. In demo mode the user
+        // normally signs in via /api/demo/start tokens, not credentials, so
+        // a random password is fine — but if REVIEW_DEMO_PASSWORD was set
+        // (or --user-pw was passed), config.userPassword is non-empty and we
+        // use that so App Review can sign in directly.
         const password =
             config.userPassword ||
             `Demo${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}!`

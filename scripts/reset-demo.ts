@@ -37,8 +37,11 @@ try {
     // .env may not exist in CI/Docker
 }
 
-// Mirror demo_start.go constants exactly.
-const DEMO_USER_EMAIL = 'demo@tinycld.org'
+// Mirror demo_start.go constants exactly. REVIEW_DEMO_EMAIL overrides the
+// email so App Review can sign in directly; if it differs from
+// demo@tinycld.org, demo_start.go's demoUserEmail constant must be patched
+// too or the demo-token flow won't find the user.
+const DEMO_USER_EMAIL = process.env.REVIEW_DEMO_EMAIL || 'demo@tinycld.org'
 const DEMO_USER_USERNAME = 'demo'
 const DEMO_USER_NAME = 'Demo Tour'
 const DEMO_ORG_SLUG = 'demo'
@@ -109,7 +112,11 @@ async function main() {
         userEmail: DEMO_USER_EMAIL,
         userUsername: DEMO_USER_USERNAME,
         userName: DEMO_USER_NAME,
-        userPassword: '',
+        // Passing through REVIEW_DEMO_PASSWORD here keeps App Review's demo
+        // creds stable across nightly resets. When unset, seedForUser falls
+        // back to a random password (the normal /api/demo/start flow doesn't
+        // need a known password).
+        userPassword: process.env.REVIEW_DEMO_PASSWORD ?? '',
         isDemo: true,
         orgSlug: DEMO_ORG_SLUG,
         orgName: DEMO_ORG_NAME,
