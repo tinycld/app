@@ -266,7 +266,11 @@ async function runSeedScript(): Promise<void> {
             ],
             {
                 stdio: 'inherit',
-                env: process.env,
+                // Sibling packages link in via symlinks; without
+                // --preserve-symlinks Node resolves seed.ts to its
+                // realpath inside the sibling repo and can't find peer
+                // deps (exceljs, etc.) in the app shell's node_modules.
+                env: { ...process.env, NODE_OPTIONS: '--preserve-symlinks' },
             }
         )
 
