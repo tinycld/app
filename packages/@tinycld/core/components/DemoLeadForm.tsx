@@ -39,7 +39,9 @@ export const DemoLeadForm = forwardRef<DemoLeadFormHandle, DemoLeadFormProps>(
     function DemoLeadForm({ source }, ref) {
         const {
             control,
-            handleSubmit,
+            getValues,
+            setError,
+            clearErrors,
             formState: { errors, isSubmitted },
         } = useForm<DemoLeadFormValues>({
             resolver: zodResolver(schema),
@@ -49,40 +51,44 @@ export const DemoLeadForm = forwardRef<DemoLeadFormHandle, DemoLeadFormProps>(
 
         useImperativeHandle(ref, () => ({
             submit: () => {
-                let valid = false
-                // handleSubmit returns an async function, but with a sync zod
-                // resolver and a sync onValid body, the success callback runs
-                // before the wrapper returns. We capture validity in the
-                // callback so the surrounding modal can synchronously decide
-                // whether to dismiss. If the schema ever gains an async
-                // refinement, this synchronous read becomes unreliable.
-                handleSubmit(
-                    data => {
-                        valid = true
-                        const body = JSON.stringify({
-                            email: data.email,
-                            reason: data.reason ?? '',
-                            source,
-                        })
-                        // Fire-and-forget. Network failures are logged but not
-                        // surfaced — the user has already left the form mentally.
-                        // Address PB explicitly via PB_SERVER_ADDR (matching
-                        // SetupPage / PackageManager) — the dev / native /
-                        // self-hosted topologies all run PB on a different
-                        // origin from the client, so a relative path would 404.
-                        fetch(`${PB_SERVER_ADDR}/api/demo/lead`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body,
-                        }).catch(err => {
-                            captureException('demo-lead-submit', err, { source })
-                        })
-                    },
-                    () => {
-                        valid = false
+                // Validate synchronously via the schema so the surrounding
+                // modal can decide whether to dismiss in the same tick.
+                // react-hook-form's handleSubmit() returns a Promise even
+                // for sync resolvers, so reading a closure flag right after
+                // calling it always sees the initial value and the modal
+                // never closes.
+                const values = getValues()
+                const result = schema.safeParse(values)
+                if (!result.success) {
+                    clearErrors()
+                    for (const issue of result.error.issues) {
+                        const fieldName = issue.path.join('.') as keyof DemoLeadFormValues
+                        if (fieldName) {
+                            setError(fieldName, { type: 'manual', message: issue.message })
+                        }
                     }
-                )()
-                return valid
+                    return false
+                }
+
+                const body = JSON.stringify({
+                    email: result.data.email,
+                    reason: result.data.reason ?? '',
+                    source,
+                })
+                // Fire-and-forget. Network failures are logged but not
+                // surfaced — the user has already left the form mentally.
+                // Address PB explicitly via PB_SERVER_ADDR (matching
+                // SetupPage / PackageManager) — the dev / native /
+                // self-hosted topologies all run PB on a different origin
+                // from the client, so a relative path would 404.
+                fetch(`${PB_SERVER_ADDR}/api/demo/lead`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body,
+                }).catch(err => {
+                    captureException('demo-lead-submit', err, { source })
+                })
+                return true
             },
         }))
 
