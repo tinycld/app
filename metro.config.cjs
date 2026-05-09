@@ -186,14 +186,23 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     // with "Unexpected content type." Pin both packages to the app
     // shell's single install. Same shape as zustand above; same
     // reasoning as the vitest alias in vitest.config.ts.
-    if (
-        moduleName === 'yjs' ||
-        moduleName === 'y-protocols' ||
-        moduleName.startsWith('y-protocols/')
-    ) {
+    //
+    // For y-protocols subpaths we resolve to the explicit ESM file
+    // (e.g. .../y-protocols/awareness.js) rather than letting
+    // require.resolve pick the CJS export — y-protocols's package.json
+    // has both, and Node's CJS-flavored require.resolve picks the
+    // .cjs sibling, which breaks Metro's ESM-side bundling and
+    // surfaces as "Unexpected end of array" at module-load time.
+    if (moduleName === 'yjs' || moduleName === 'y-protocols') {
         const resolved = require.resolve(moduleName, {
             paths: [path.join(__dirname, 'node_modules')],
         })
+        return { type: 'sourceFile', filePath: resolved }
+    }
+    if (moduleName.startsWith('y-protocols/')) {
+        const sub = moduleName.slice('y-protocols/'.length)
+        const filename = sub.endsWith('.js') ? sub : `${sub}.js`
+        const resolved = path.join(__dirname, 'node_modules', 'y-protocols', filename)
         return { type: 'sourceFile', filePath: resolved }
     }
 

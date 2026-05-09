@@ -90,6 +90,37 @@ function validateNavShortcuts(packagesInfo: { packageName: string; manifest: Pac
     }
 }
 
+// topologicallyOrderForSeeds returns the packages in dependency order:
+// for any package P, every package listed in `P.manifest.dependencies` (by
+// slug) appears before P. Falls back to insertion order for packages
+// that have no dependency relation. Cycles fall back to insertion order
+// without throwing — seed ordering is best-effort and the caller has
+// already accepted whatever order the manifest declares.
+function topologicallyOrderForSeeds(
+    packagesInfo: { packageName: string; manifest: PackageManifest }[]
+): { packageName: string; manifest: PackageManifest }[] {
+    const bySlug = new Map(packagesInfo.map(p => [p.manifest.slug, p]))
+    const visited = new Set<string>()
+    const result: { packageName: string; manifest: PackageManifest }[] = []
+    const inProgress = new Set<string>()
+
+    const visit = (pkg: { packageName: string; manifest: PackageManifest }) => {
+        if (visited.has(pkg.manifest.slug)) return
+        if (inProgress.has(pkg.manifest.slug)) return
+        inProgress.add(pkg.manifest.slug)
+        for (const depSlug of pkg.manifest.dependencies ?? []) {
+            const dep = bySlug.get(depSlug)
+            if (dep) visit(dep)
+        }
+        inProgress.delete(pkg.manifest.slug)
+        visited.add(pkg.manifest.slug)
+        result.push(pkg)
+    }
+
+    for (const pkg of packagesInfo) visit(pkg)
+    return result
+}
+
 interface InstalledPackageEntry {
     npmPackage: string
     slug: string
@@ -675,7 +706,11 @@ function generateUniwindSourcesFile(
 function generateSeedsFile(
     packagesInfo: { packageName: string; manifest: PackageManifest }[]
 ): string {
-    const withSeeds = packagesInfo.filter(a => a.manifest.seed?.script)
+    // Topologically order seeds so a package's `dependencies` run first.
+    // Without this, alphabetical insertion order breaks seeds that
+    // observe earlier-package state — e.g. drive seed early-returns when
+    // any drive_items already exist, so calc must seed AFTER drive.
+    const withSeeds = topologicallyOrderForSeeds(packagesInfo.filter(a => a.manifest.seed?.script))
 
     if (withSeeds.length === 0) {
         return [
