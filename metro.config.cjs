@@ -180,6 +180,23 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
         return { type: 'sourceFile', filePath: resolved }
     }
 
+    // yjs and y-protocols use instanceof checks throughout (Y.Map,
+    // Y.Array, AbstractType). When sibling-symlinked code resolves a
+    // separate copy via Node's normal walk, nested type writes fail
+    // with "Unexpected content type." Pin both packages to the app
+    // shell's single install. Same shape as zustand above; same
+    // reasoning as the vitest alias in vitest.config.ts.
+    if (
+        moduleName === 'yjs' ||
+        moduleName === 'y-protocols' ||
+        moduleName.startsWith('y-protocols/')
+    ) {
+        const resolved = require.resolve(moduleName, {
+            paths: [path.join(__dirname, 'node_modules')],
+        })
+        return { type: 'sourceFile', filePath: resolved }
+    }
+
     // Worker bundle URL fetches. When the browser hits
     // `/<sibling-real-base>/<rest>/worker.bundle?...`, Metro's Server calls
     // resolveRequest with `originModulePath = <projectRoot>/.` and

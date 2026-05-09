@@ -1,0 +1,281 @@
+package realtime
+
+import (
+	"bytes"
+	"log/slog"
+	"sync"
+)
+
+// sendBufferSize is the number of frames buffered per client. A slow
+// reader that backs up past this many frames is dropped — that is, the
+// broker prefers to disconnect a stuck client over blocking the room.
+const sendBufferSize = 64
+
+// Room holds the set of currently-connected clients for one (kind, id)
+// pair plus the fan-out routing logic. Members access mu via add, remove,
+// and the routing methods.
+type Room struct {
+	broker *Broker
+	key    roomKey
+	opts   RoomKindOptions
+
+	// serverDoc is the broker's authoritative mirror of the room's
+	// document state. Non-nil iff the room kind registered a
+	// RuntimeProvider. When non-nil, every inbound MsgDocUpdate is
+	// applied here before fan-out, and MsgSyncRequest replies are
+	// served from EncodeStateAsUpdate. Closed exactly once on
+	// teardown after the OnEmpty callback (if any) returns.
+	serverDoc DocHandle
+
+	mu      sync.Mutex
+	members map[*Client]struct{}
+}
+
+func newRoom(b *Broker, key roomKey, opts RoomKindOptions) *Room {
+	r := &Room{
+		broker:  b,
+		key:     key,
+		opts:    opts,
+		members: map[*Client]struct{}{},
+	}
+	if opts.RuntimeProvider != nil {
+		handle, err := opts.RuntimeProvider.NewDoc(key.id)
+		if err != nil {
+			// Construction failure falls back to pure-relay
+			// behavior: clients can still join and fan out frames
+			// among themselves; only the server-side mirror (and
+			// therefore persistence) is disabled for this room.
+			slog.Error(
+				"realtime: DocRuntime.NewDoc failed; falling back to pure relay",
+				"kind", key.kind, "roomID", key.id, "err", err,
+			)
+		} else {
+			r.serverDoc = handle
+			if opts.OnRoomCreate != nil {
+				opts.OnRoomCreate(key.id, handle)
+			}
+		}
+	}
+	return r
+}
+
+func (r *Room) add(c *Client) {
+	c.room = r
+	c.send = make(chan []byte, sendBufferSize)
+	r.mu.Lock()
+	r.members[c] = struct{}{}
+	r.mu.Unlock()
+}
+
+// remove drops a client from the room and releases the empty room back
+// to the broker. broadcastLeave should be called separately by the
+// transport layer once the client's send loop has stopped, so that
+// remaining members get a synthetic "this user left" frame.
+//
+// When this drops the last member, the room invokes its OnEmpty
+// callback (synchronously) before closing the server-side DocHandle.
+// OnEmpty is allowed to take time (e.g. a final persistence flush);
+// the broker's removeRoom call is what frees the room key, and that
+// is intentionally deferred until OnEmpty returns so a quick rejoin
+// of the same room observes a fresh slate.
+func (r *Room) remove(c *Client) {
+	r.mu.Lock()
+	delete(r.members, c)
+	empty := len(r.members) == 0
+	r.mu.Unlock()
+	close(c.send)
+	if empty {
+		if r.opts.OnEmpty != nil {
+			r.opts.OnEmpty(r.key.id)
+		}
+		if r.serverDoc != nil {
+			if err := r.serverDoc.Close(); err != nil {
+				slog.Warn(
+					"realtime: DocHandle.Close failed",
+					"kind", r.key.kind, "roomID", r.key.id, "err", err,
+				)
+			}
+			r.serverDoc = nil
+		}
+		r.broker.removeRoom(r.key)
+	}
+}
+
+func (r *Room) isEmpty() bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return len(r.members) == 0
+}
+
+// route handles a single frame the transport layer just read off `from`'s
+// WebSocket. The frame is the full wire bytes (clientID || msgType || payload).
+// The broker decides who else should receive it.
+func (r *Room) route(from *Client, frame []byte) {
+	if len(frame) < frameOverhead {
+		return
+	}
+	msgType := MessageType(frame[clientIDLen])
+	switch msgType {
+	case MsgDocUpdate:
+		// Apply to the server-side mirror first so a malformed update
+		// fails fast and we don't fan out a corrupt frame to peers.
+		// If no server mirror is configured, the broker is in pure-
+		// relay mode for this kind and we just forward.
+		if r.serverDoc != nil {
+			payload := frame[frameOverhead:]
+			if err := r.serverDoc.ApplyUpdate(payload); err != nil {
+				slog.Warn(
+					"realtime: ApplyUpdate rejected an inbound MsgDocUpdate; dropping frame",
+					"kind", r.key.kind, "roomID", r.key.id, "err", err,
+				)
+				return
+			}
+		}
+		r.fanOut(from, frame)
+		if r.opts.OnDocUpdate != nil {
+			r.opts.OnDocUpdate(r.key.id)
+		}
+	case MsgAwarenessUpdate:
+		r.fanOut(from, frame)
+	case MsgSyncRequest:
+		// If a server-side mirror is configured, the server is the
+		// source of truth: build a SyncReply directly from the
+		// mirror and send it to the requester. Skip the peer-bounce
+		// path entirely.
+		if r.serverDoc != nil {
+			state, err := r.serverDoc.EncodeStateAsUpdate()
+			if err != nil {
+				slog.Warn(
+					"realtime: EncodeStateAsUpdate failed; falling back to peer bounce",
+					"kind", r.key.kind, "roomID", r.key.id, "err", err,
+				)
+			} else {
+				deliver(from, makeServerSyncReply(state))
+				return
+			}
+		}
+		// Fall back to the legacy pure-relay path: forward to one
+		// current peer (longest-connected).
+		peer := r.pickSyncPeer(from)
+		if peer != nil {
+			deliver(peer, frame)
+			return
+		}
+		// No peer: the requester is alone. Send back an empty reply so
+		// the client knows to fall back to its bootstrap path
+		// (e.g. parsing the .xlsx for sheets).
+		deliver(from, makeEmptySyncReply())
+	case MsgSyncReply:
+		// SyncReply targets one specific client by ID. The first
+		// clientID prefix in the frame is the *replying* peer (whoever
+		// they are); the recipient is identified by an additional
+		// 16-byte target ID immediately after the message-type tag.
+		if len(frame) < frameOverhead+clientIDLen {
+			return
+		}
+		var target [clientIDLen]byte
+		copy(target[:], frame[frameOverhead:frameOverhead+clientIDLen])
+		// Strip the routing target from the frame the recipient sees;
+		// the recipient only needs the sender ID + reply payload.
+		// Single allocation + two copies into pre-sized buffer
+		// instead of two appends.
+		stripped := make([]byte, len(frame)-clientIDLen)
+		copy(stripped, frame[:frameOverhead])
+		copy(stripped[frameOverhead:], frame[frameOverhead+clientIDLen:])
+		r.deliverByID(target, stripped)
+	}
+}
+
+// fanOut writes frame to every member of the room except `from`.
+func (r *Room) fanOut(from *Client, frame []byte) {
+	r.mu.Lock()
+	peers := make([]*Client, 0, len(r.members))
+	for c := range r.members {
+		if c != from {
+			peers = append(peers, c)
+		}
+	}
+	r.mu.Unlock()
+	for _, c := range peers {
+		deliver(c, frame)
+	}
+}
+
+// pickSyncPeer chooses the longest-connected peer that isn't the requester.
+// Returns nil if no peer exists.
+func (r *Room) pickSyncPeer(from *Client) *Client {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	var best *Client
+	for c := range r.members {
+		if c == from {
+			continue
+		}
+		if best == nil || c.joinedAt.Before(best.joinedAt) {
+			best = c
+		}
+	}
+	return best
+}
+
+// deliverByID sends frame to the room member whose id matches target.
+func (r *Room) deliverByID(target [clientIDLen]byte, frame []byte) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for c := range r.members {
+		if bytes.Equal(c.id[:], target[:]) {
+			deliver(c, frame)
+			return
+		}
+	}
+}
+
+// broadcastLeave synthesizes a frame announcing that `c` has disconnected
+// and fans it out to remaining members. Called by the transport once the
+// client's read/write loop has finished.
+//
+// Convention: a leave is signaled as an awareness frame from `c` with a
+// zero-byte payload. The y-protocols/awareness encoding for "remove this
+// client" is what clients should send on graceful close, but we send our
+// own zero-length frame as a fallback so that ungraceful disconnects (TCP
+// reset, killed tab) also surface to peers.
+func (r *Room) broadcastLeave(c *Client) {
+	frame := make([]byte, frameOverhead)
+	copy(frame[:clientIDLen], c.id[:])
+	frame[clientIDLen] = byte(MsgAwarenessUpdate)
+	r.fanOut(c, frame)
+}
+
+// deliver pushes a frame to a client's send buffer. If the buffer is
+// full, the frame is dropped — the read loop in register.go is expected
+// to detect a stuck client via separate liveness checks.
+func deliver(c *Client, frame []byte) {
+	select {
+	case c.send <- frame:
+	default:
+		// Buffer overflow: drop. A persistently slow client will be
+		// disconnected by the transport's idle/keepalive logic.
+	}
+}
+
+// makeEmptySyncReply builds a "you are alone, no peers" reply. The
+// route handler delivers it to the requester directly by pointer, so
+// no target ID is needed inside the frame. The sender-ID prefix is
+// left as 16 zero bytes; the client doesn't validate inbound sender
+// IDs (only outbound), so this is a routing detail rather than an
+// authenticated marker.
+func makeEmptySyncReply() []byte {
+	frame := make([]byte, frameOverhead)
+	frame[clientIDLen] = byte(MsgSyncReply)
+	return frame
+}
+
+// makeServerSyncReply builds a SyncReply frame whose payload is the
+// server-side mirror's encoded state. Sender-ID prefix is left zero
+// for the same reason as makeEmptySyncReply.
+func makeServerSyncReply(state []byte) []byte {
+	frame := make([]byte, frameOverhead+len(state))
+	frame[clientIDLen] = byte(MsgSyncReply)
+	copy(frame[frameOverhead:], state)
+	return frame
+}

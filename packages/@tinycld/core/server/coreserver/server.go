@@ -14,6 +14,7 @@ import (
 	"github.com/pocketbase/pocketbase/tools/hook"
 
 	"tinycld.org/core/notify"
+	"tinycld.org/core/realtime"
 )
 
 // Options configure the core server's registered plugins, flags, and wiring.
@@ -110,6 +111,7 @@ func Register(app *pocketbase.PocketBase, opts Options) {
 	}
 
 	notify.Register(app)
+	realtime.Register(app, realtime.Options{})
 	RegisterInviteEndpoint(app)
 	RegisterInviteLinkEndpoints(app)
 	RegisterInviteLifecycle(app)
