@@ -111,24 +111,26 @@ function PreviewModalContent({
                             <ChevronRight size={20} color={mutedColor} />
                         </Pressable>
                     )}
-                    {actions?.map((action) => {
-                        const ActionIcon = action.icon
-                        return (
-                            <Pressable
-                                key={action.id}
-                                onPress={() => action.onPress(source)}
-                                disabled={action.isPending}
-                                className="flex-row items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-surface-secondary border border-border"
-                                hitSlop={8}
-                                accessibilityLabel={action.label}
-                            >
-                                <ActionIcon size={16} color={mutedColor} />
-                                <Text className="text-foreground" style={{ fontSize: 13, fontWeight: '500' }}>
-                                    {action.label}
-                                </Text>
-                            </Pressable>
-                        )
-                    })}
+                    {actions
+                        ?.filter((action) => action.isApplicable?.(source) ?? true)
+                        .map((action) => {
+                            const ActionIcon = action.icon
+                            return (
+                                <Pressable
+                                    key={action.id}
+                                    onPress={() => action.onPress(source, { close: onClose })}
+                                    disabled={action.isPending}
+                                    className="flex-row items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-surface-secondary border border-border"
+                                    hitSlop={8}
+                                    accessibilityLabel={action.label}
+                                >
+                                    <ActionIcon size={16} color={mutedColor} />
+                                    <Text className="text-foreground" style={{ fontSize: 13, fontWeight: '500' }}>
+                                        {action.label}
+                                    </Text>
+                                </Pressable>
+                            )
+                        })}
                     {onDownload && (
                         <Pressable onPress={onDownload} className="p-1.5 rounded-md" hitSlop={8}>
                             <Download size={18} color={mutedColor} />

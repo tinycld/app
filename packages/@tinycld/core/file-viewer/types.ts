@@ -41,6 +41,23 @@ export interface PreviewRegistryEntry {
 }
 
 /**
+ * Context handed to a PreviewAction's onPress, alongside the source.
+ * Surfaces are responsible for supplying these — drive's PreviewModal
+ * and mail's AttachmentStrip each pass their own concrete `close`
+ * implementation.
+ */
+export interface PreviewActionContext {
+    /**
+     * Closes the preview surface that hosts this action. Sheets's
+     * "Open in Sheets" calls this after navigating away so the modal
+     * doesn't sit open over the destination screen. "Save to Drive"
+     * intentionally doesn't call this — it keeps the preview up so
+     * the user can cancel the save and remain on the preview.
+     */
+    close: () => void
+}
+
+/**
  * A consumer-supplied action button rendered in the PreviewModal toolbar.
  * Mail uses this to inject a "Save to Drive" entry without core needing to
  * know anything about drive.
@@ -54,6 +71,19 @@ export interface PreviewAction {
     label: string
     /** Disable the button while async work is in flight. */
     isPending?: boolean
-    /** Invoked with the currently-displayed source when the user taps the icon. */
-    onPress: (source: FilePreviewSource) => void
+    /**
+     * Optional per-source predicate. When supplied, the action is only
+     * rendered for sources where this returns true. Sheets uses this to
+     * limit "Open in Sheets" to xlsx mime types; "Save to Drive" needs
+     * no such filter (any attachment can be saved). Default: always
+     * applicable.
+     */
+    isApplicable?: (source: FilePreviewSource) => boolean
+    /**
+     * Invoked with the currently-displayed source and a context bag
+     * carrying surface-level callbacks (e.g. `close()` to dismiss the
+     * preview). Actions that navigate away should call `ctx.close()`
+     * so the preview doesn't sit open over the destination.
+     */
+    onPress: (source: FilePreviewSource, ctx: PreviewActionContext) => void
 }
