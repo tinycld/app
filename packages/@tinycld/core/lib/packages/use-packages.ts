@@ -44,6 +44,7 @@ export function usePackages(): PackageEntry[] {
                 hooks: manifest.hooks,
                 collections: manifest.collections,
                 sidebar: manifest.sidebar,
+                hideSidebar: manifest.hideSidebar,
                 settings: manifest.settings,
                 seed: manifest.seed,
                 tests: manifest.tests,

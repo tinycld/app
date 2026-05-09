@@ -92,6 +92,8 @@ export function MobileDrawer({ isVisible }: MobileDrawerProps) {
 
     const SidebarComponent = pkg ? packageSidebars[pkg.slug] : null
 
+    if (pkg?.hideSidebar) return null
+
     return (
         <>
             {!isVisible ? (

@@ -41,6 +41,8 @@ export interface PackageManifest {
         component: string
     }
 
+    hideSidebar?: boolean
+
     settings?: {
         slug: string
         component: string

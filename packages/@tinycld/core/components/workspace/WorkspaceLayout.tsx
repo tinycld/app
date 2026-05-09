@@ -2,6 +2,7 @@ import { Platform, Pressable, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { DemoBanner } from '@tinycld/core/components/DemoBanner'
 import { NotificationDrawer } from '@tinycld/core/components/NotificationDrawer'
+import { usePackage } from '@tinycld/core/lib/packages/use-packages'
 import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { FrozenStack } from './FrozenStack'
@@ -21,12 +22,15 @@ export function WorkspaceLayout({ isReady = true }: { isReady?: boolean }) {
     const breakpoint = useBreakpoint()
     const isSidebarOpen = useWorkspaceStore(s => s.isSidebarOpen)
     const setSidebarOpen = useWorkspaceStore(s => s.setSidebarOpen)
+    const activePkgSlug = useWorkspaceStore(s => s.activePkgSlug)
+    const activePkg = usePackage(activePkgSlug ?? '')
     const insets = useSafeAreaInsets()
 
     if (breakpoint === 'mobile') return <MobileLayout isReady={isReady} />
 
     const isTablet = breakpoint === 'tablet'
-    const showSidebarOverlay = isTablet && isSidebarOpen
+    const hideSidebar = activePkg?.hideSidebar === true
+    const showSidebarOverlay = isTablet && isSidebarOpen && !hideSidebar
 
     return (
         <View
@@ -49,6 +53,7 @@ export function WorkspaceLayout({ isReady = true }: { isReady?: boolean }) {
 
                 <PackageProviderWrapper>
                     {isReady &&
+                        !hideSidebar &&
                         (isTablet ? (
                             <SidebarOverlay
                                 isVisible={showSidebarOverlay}
