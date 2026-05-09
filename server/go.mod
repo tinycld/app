@@ -13,6 +13,7 @@ replace tinycld.org/core => ../packages/@tinycld/core/server
 require (
 	github.com/SherClockHolmes/webpush-go v1.4.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
+	github.com/coder/websocket v1.8.14 // indirect
 	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/domodwyer/mailyak/v3 v3.6.2 // indirect

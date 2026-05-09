@@ -28,6 +28,18 @@ export default defineConfig({
                 replacement: path.resolve(__dirname, 'lib/generated/$1'),
             },
             { find: /^~\/(.+)$/, replacement: path.resolve(__dirname, '$1') },
+            // yjs and y-protocols are stateful CRDT libs whose internal
+            // type checks rely on instanceof. Without an alias, code
+            // imported through the package symlinks (siblings) resolves
+            // a separate copy of yjs from `node_modules`, and nested
+            // Y.Map.set calls fail with "Unexpected content type" when
+            // a Y.Map from one copy is set inside a Y.Map from another.
+            // Force every import to the single root install.
+            { find: /^yjs$/, replacement: path.resolve(__dirname, 'node_modules/yjs') },
+            {
+                find: /^y-protocols\/(.+)$/,
+                replacement: path.resolve(__dirname, 'node_modules/y-protocols/$1'),
+            },
         ],
     },
     test: {
