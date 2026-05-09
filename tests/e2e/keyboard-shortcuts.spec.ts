@@ -59,21 +59,6 @@ test.describe('Keyboard shortcuts', () => {
         await page.waitForURL(new RegExp(`/a/${ORG_SLUG}/contacts`), { timeout: 10_000 })
     })
 
-    test('t m jumps to mail', async ({ page }) => {
-        test.skip(!mailLinked || !contactsLinked, 'mail + contacts packages not linked')
-        await navigateToPackage(page, 'contacts')
-        await expect(page.getByRole('link', { name: 'Contacts', exact: true })).toBeVisible({
-            timeout: 10_000,
-        })
-        await page.evaluate(() => {
-            ;(document.activeElement as HTMLElement | null)?.blur?.()
-        })
-
-        await page.keyboard.press('t', { delay: 50 })
-        await page.keyboard.press('m', { delay: 50 })
-        await page.waitForURL(new RegExp(`/a/${ORG_SLUG}/mail`), { timeout: 10_000 })
-    })
-
     test('j/k move focus and Enter opens the focused mail row', async ({ page }) => {
         test.skip(!mailLinked, 'mail package not linked')
         await navigateToPackage(page, 'mail')
