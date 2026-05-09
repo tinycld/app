@@ -271,11 +271,57 @@ func makeEmptySyncReply() []byte {
 }
 
 // makeServerSyncReply builds a SyncReply frame whose payload is the
-// server-side mirror's encoded state. Sender-ID prefix is left zero
-// for the same reason as makeEmptySyncReply.
+// server-side mirror's encoded state, wrapped in a y-protocols/sync
+// "step2" envelope so the client's readSyncMessage handler dispatches
+// it correctly.
+//
+// The y-protocols sync wire shape for step2 is:
+//
+//	varUint(messageYjsSyncStep2 == 1) || varUint8Array(updateBytes)
+//
+// Without this envelope, the raw update bytes are interpreted by the
+// client as a y-protocols message — and for an empty server-side doc
+// the leading byte happens to parse as messageYjsSyncStep1 (==0),
+// triggering a degenerate decode path that throws "Unexpected end of
+// array". Sender-ID prefix is left zero for the same reason as
+// makeEmptySyncReply.
 func makeServerSyncReply(state []byte) []byte {
-	frame := make([]byte, frameOverhead+len(state))
+	envelope := encodeSyncStep2(state)
+	frame := make([]byte, frameOverhead+len(envelope))
 	frame[clientIDLen] = byte(MsgSyncReply)
-	copy(frame[frameOverhead:], state)
+	copy(frame[frameOverhead:], envelope)
 	return frame
+}
+
+// encodeSyncStep2 writes the y-protocols/sync step2 envelope: a
+// varuint message-type tag (==1) followed by a length-prefixed copy
+// of the update bytes. Mirrors writeSyncStep2 in y-protocols/sync.js.
+func encodeSyncStep2(update []byte) []byte {
+	const messageYjsSyncStep2 = 1
+	out := make([]byte, 0, 1+varUintSize(uint64(len(update)))+len(update))
+	out = appendVarUint(out, messageYjsSyncStep2)
+	out = appendVarUint(out, uint64(len(update)))
+	out = append(out, update...)
+	return out
+}
+
+// appendVarUint writes lib0-compatible varuint encoding (7 bits per
+// byte little-endian, MSB set on continuation). lib0/encoding's
+// writeVarUint produces the same bytes.
+func appendVarUint(dst []byte, n uint64) []byte {
+	for n >= 0x80 {
+		dst = append(dst, byte(n)|0x80)
+		n >>= 7
+	}
+	return append(dst, byte(n))
+}
+
+// varUintSize returns how many bytes appendVarUint would write for n.
+func varUintSize(n uint64) int {
+	size := 1
+	for n >= 0x80 {
+		n >>= 7
+		size++
+	}
+	return size
 }
