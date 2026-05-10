@@ -28,6 +28,15 @@ export default defineConfig({
                 replacement: path.resolve(__dirname, 'lib/generated/$1'),
             },
             { find: /^~\/(.+)$/, replacement: path.resolve(__dirname, '$1') },
+            // expo-clipboard transitively pulls in expo-modules-core,
+            // whose module-load-time side effects (touching `__DEV__`,
+            // `expo` global, EventEmitter wiring) don't survive a
+            // bare Node test environment. Tests that need clipboard
+            // behaviour go through this small in-memory stub instead.
+            {
+                find: /^expo-clipboard$/,
+                replacement: path.resolve(__dirname, 'tests/expo-clipboard-stub.ts'),
+            },
             // yjs and y-protocols are stateful CRDT libs whose internal
             // type checks rely on instanceof. Without an alias, code
             // imported through the package symlinks (siblings) resolves
