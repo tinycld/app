@@ -1,3 +1,9 @@
+// polyfill-dom-shim must run before anything that pulls in prosemirror-view
+// (tentap → @tiptap/core → @tiptap/pm/view). Something in our Expo SDK 55
+// stack now installs a partial `document` on Hermes that breaks
+// prosemirror-view's top-level browser sniff. The shim fills the missing
+// `documentElement.style` slot. See lib/polyfill-dom-shim.ts for the why.
+import '~/lib/polyfill-dom-shim'
 // polyfill-crypto MUST run before configure-core: @tanstack/db's collection
 // constructor calls crypto.randomUUID() at module init, and Hermes has no
 // global crypto.
