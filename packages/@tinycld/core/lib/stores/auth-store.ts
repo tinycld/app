@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { captureException } from '@tinycld/core/lib/errors'
 import {
     authStoreReady,
     fetchAndSeedUserOrg,
@@ -63,18 +64,30 @@ export const useAuthStore = create<AuthStoreState>()((set, get) => ({
     hasHydrated: false,
 
     initAuth: () => {
+        // Hydrate auth and preload server data BEFORE flipping isLoggedIn.
+        // The previous order set user first and then awaited preloads, which
+        // left a window where components mounted with isLoggedIn=true against
+        // empty TanStack DB collections — rendering as "everything empty"
+        // until the user signed out and back in. We also wrap everything so
+        // a failed preload (timeout, transient 5xx, EventSource hiccup) can't
+        // strand the app with hasHydrated=false forever.
         const hydrate = async () => {
-            await authStoreReady
+            try {
+                await authStoreReady
 
-            const primaryOrgSlug = await loadPrimaryOrgFromStorage()
-            const currentUser = getUserFromAuthStore(primaryOrgSlug)
+                const primaryOrgSlug = await loadPrimaryOrgFromStorage()
+                const currentUser = getUserFromAuthStore(primaryOrgSlug)
 
-            if (currentUser) {
-                set({ user: currentUser })
-                await fetchAndSeedUserOrg()
-                await preloadStores()
+                if (currentUser) {
+                    await fetchAndSeedUserOrg()
+                    await preloadStores()
+                    set({ user: currentUser })
+                }
+            } catch (err) {
+                captureException('auth-store.initAuth hydration failed', err)
+            } finally {
+                set({ hasHydrated: true })
             }
-            set({ hasHydrated: true })
         }
 
         hydrate()

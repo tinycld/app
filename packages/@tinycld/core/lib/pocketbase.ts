@@ -31,17 +31,30 @@ const initialAuthPromise =
 
 const store = new AsyncAuthStore({
     save: async serialized => AsyncStorage.setItem('pb_auth', serialized),
-    initial: initialAuthPromise,
     clear: async () => await AsyncStorage.removeItem('pb_auth'),
 })
 
-export const authStoreReady = initialAuthPromise.then(async storedAuth => {
-    if (storedAuth) {
-        let attempts = 0
-        while (!store.token && attempts < 10) {
-            await new Promise(resolve => setTimeout(resolve, 10))
-            attempts++
+// AsyncAuthStore's own `initial` option runs through a private
+// fire-and-forget _loadInitial that swallows errors, races consumers, and
+// gives no readiness signal. Instead we hydrate explicitly: read storage,
+// parse, call store.save(). authStoreReady resolves only after that
+// completes, so anyone awaiting it sees a settled pb.authStore.
+export const authStoreReady = initialAuthPromise.then(storedAuth => {
+    if (!storedAuth) return
+    try {
+        const parsed = JSON.parse(storedAuth) as {
+            token?: string
+            record?: unknown
+            model?: unknown
         }
+        if (parsed.token) {
+            store.save(parsed.token, (parsed.record ?? parsed.model) as never)
+        }
+    } catch {
+        // Corrupt stored auth — leave the store empty and let the user
+        // re-authenticate. Clearing storage avoids replaying the corruption
+        // on next boot.
+        AsyncStorage.removeItem('pb_auth')
     }
 })
 
