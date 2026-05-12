@@ -1,13 +1,14 @@
 'use client'
 import { createModal } from '@gluestack-ui/core/modal/creator'
+import { ExitAnimationContext } from '@gluestack-ui/core/overlay/creator'
 import type { VariantProps } from '@gluestack-ui/utils/nativewind-utils'
 import { tva, useStyleContext, withStyleContext } from '@gluestack-ui/utils/nativewind-utils'
+import { useShortcutScope } from '@tinycld/core/lib/shortcuts/scopes'
+import { useRegisterShortcut } from '@tinycld/core/lib/shortcuts/use-register'
 import React from 'react'
 import { Pressable, ScrollView, View } from 'react-native'
 import Animated, { Easing, FadeIn, FadeOut, ZoomIn } from 'react-native-reanimated'
 import { withUniwind } from 'uniwind'
-import { useShortcutScope } from '@tinycld/core/lib/shortcuts/scopes'
-import { useRegisterShortcut } from '@tinycld/core/lib/shortcuts/use-register'
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 const AnimatedView = Animated.createAnimatedComponent(View)
@@ -15,6 +16,30 @@ const SCOPE = 'MODAL'
 
 const StyledAnimatedPressable = withUniwind(AnimatedPressable)
 const StyledAnimatedView = withUniwind(AnimatedView)
+
+// GlueStack's OverlayAnimatePresence drives its exit handshake via the
+// react-native `Animated` API with useNativeDriver:true, whose start()
+// callback never fires under react-native-web. That leaves
+// animationState stuck at 'exiting' and `setExited(true)` is never
+// called — so the Overlay's outer container keeps `display:flex` and
+// the dialog node stays mounted in the DOM after `onClose()` runs,
+// blocking clicks even though `visible` is false.
+//
+// This shim renders children as-is (our own enter/exit animations live
+// on Backdrop/Content via Reanimated props) AND explicitly flips
+// `exited` in the ExitAnimationContext whenever children transition
+// to null. That lets the Overlay unmount immediately on close.
+const AnimatePresenceShim = React.forwardRef<unknown, { children?: React.ReactNode }>(
+    function AnimatePresenceShim({ children }, _ref) {
+        const { setExited } = React.useContext(ExitAnimationContext)
+        const isPresent = children != null
+        React.useEffect(() => {
+            setExited(!isPresent)
+        }, [isPresent, setExited])
+        return <>{children}</>
+    }
+)
+
 const UIModal = createModal({
     // biome-ignore lint/suspicious/noExplicitAny: GlueStack factory requires generic View cast
     Root: withStyleContext(View as any, SCOPE),
@@ -24,6 +49,8 @@ const UIModal = createModal({
     CloseButton: Pressable,
     Footer: View,
     Header: View,
+    // biome-ignore lint/suspicious/noExplicitAny: GlueStack AnimatePresence type is too narrow
+    AnimatePresence: AnimatePresenceShim as any,
 })
 
 const modalStyle = tva({
