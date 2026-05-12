@@ -102,6 +102,7 @@
         "expo-image-picker": "~55.0.20",
         "expo-linking": "~55.0.15",
         "expo-notifications": "~55.0.22",
+        "expo-print": "^55.0.14",
         "expo-router": "~55.0.14",
         "expo-sharing": "~55.0.18",
         "expo-updates": "~55.0.21",
