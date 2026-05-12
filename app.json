@@ -31,8 +31,8 @@
             [
                 "@sentry/react-native/expo",
                 {
-                    "organization": "tinycld",
-                    "project": "tinycld-app"
+                    "organization": "argosity",
+                    "project": "tinycld"
                 }
             ]
         ],
