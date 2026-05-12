@@ -16,10 +16,7 @@ export function ScreenHeader({ children, isScrolled = false }: ScreenHeaderProps
             : undefined
 
     return (
-        <View
-            className="border-b border-border z-[1] overflow-visible"
-            style={webShadow}
-        >
+        <View className="border-b border-border z-[1] overflow-visible" style={webShadow}>
             {children}
         </View>
     )

@@ -1,6 +1,6 @@
+import { ThemedSwitch } from '@tinycld/core/ui/ThemedSwitch'
 import { type Control, type FieldValues, type Path, useController } from 'react-hook-form'
 import { Text, View, type ViewProps } from 'react-native'
-import { ThemedSwitch } from '@tinycld/core/ui/ThemedSwitch'
 
 export type ToggleProps<T extends FieldValues = Record<string, unknown>> = {
     name: Path<T>

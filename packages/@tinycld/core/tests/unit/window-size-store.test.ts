@@ -1,7 +1,6 @@
-import { describe, expect, it } from 'vitest'
-
 import { useBreakpoint } from '@tinycld/core/components/workspace/useBreakpoint'
 import { useWindowSizeStore } from '@tinycld/core/lib/stores/window-size-store'
+import { describe, expect, it } from 'vitest'
 
 describe('window-size-store', () => {
     it('exposes setSize that updates width/height', () => {
@@ -14,13 +13,11 @@ describe('window-size-store', () => {
         const select = (w: number) => {
             useWindowSizeStore.getState().setSize(w, 800)
             // selector inlined to avoid mounting React for a synchronous read
-            return useWindowSizeStore
-                .getState()
-                .width >= 1024
+            return useWindowSizeStore.getState().width >= 1024
                 ? 'desktop'
                 : useWindowSizeStore.getState().width >= 768
-                    ? 'tablet'
-                    : 'mobile'
+                  ? 'tablet'
+                  : 'mobile'
         }
         expect(select(1280)).toBe('desktop')
         expect(select(1024)).toBe('desktop')

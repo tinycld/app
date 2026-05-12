@@ -1,6 +1,6 @@
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useEffect, useRef } from 'react'
 import { Animated, Platform, View } from 'react-native'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useBreakpoint } from './useBreakpoint'
 
 function SkeletonBlock({
@@ -164,10 +164,7 @@ function SkeletonLayoutWeb() {
     }
 
     return (
-        <View
-            className="flex-1 flex-row bg-background"
-            style={{ height: '100vh' as never }}
-        >
+        <View className="flex-1 flex-row bg-background" style={{ height: '100vh' as never }}>
             <SkeletonRail />
             <SkeletonSidebar width={SIDEBAR_WIDTH} />
             <SkeletonMain />

@@ -1,8 +1,8 @@
-import { newRecordId } from 'pbtsdb/core'
 import type { DispatchInput, NotifyChannel } from '@tinycld/core/lib/notify/channels/types'
 import { getNotifyContext } from '@tinycld/core/lib/notify/context'
 import { notificationsCollection } from '@tinycld/core/lib/pocketbase'
 import { captureExceptionToSentry as captureException } from '@tinycld/core/lib/sentry'
+import { newRecordId } from 'pbtsdb/core'
 
 export const bellChannel: NotifyChannel = {
     name: 'bell',

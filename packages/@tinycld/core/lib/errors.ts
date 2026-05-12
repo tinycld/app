@@ -1,5 +1,5 @@
-import type { FieldValues, Path, UseFormSetError } from 'react-hook-form'
 import { notify } from '@tinycld/core/lib/notify/dispatcher'
+import type { FieldValues, Path, UseFormSetError } from 'react-hook-form'
 import { captureExceptionToSentry } from './sentry'
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

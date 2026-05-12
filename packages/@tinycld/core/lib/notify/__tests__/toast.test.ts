@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { toastChannel } from '@tinycld/core/lib/notify/channels/toast'
 import { useToastStore } from '@tinycld/core/lib/stores/toast-store'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 describe('ToastChannel', () => {
     beforeEach(() => {

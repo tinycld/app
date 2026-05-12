@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
 import { useConnectivityStore } from '@tinycld/core/lib/stores/connectivity-store'
+import { useEffect } from 'react'
 
 const OFFLINE_DEBOUNCE_MS = 1500
 

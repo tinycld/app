@@ -1,7 +1,7 @@
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import type { LucideIcon } from 'lucide-react-native'
 import { useState } from 'react'
 import { Platform, Pressable, Text, View } from 'react-native'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 
 interface SidebarActionButtonProps {
     label: string

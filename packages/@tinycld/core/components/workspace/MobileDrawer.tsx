@@ -1,4 +1,7 @@
 import { packageSidebars } from '@tinycld/app-generated/package-sidebars'
+import { usePackage } from '@tinycld/core/lib/packages/use-packages'
+import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { Suspense, useCallback, useEffect, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
@@ -9,9 +12,6 @@ import Animated, {
     withSpring,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { usePackage } from '@tinycld/core/lib/packages/use-packages'
-import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { PackageSidebarFallback } from './PackageSidebarFallback'
 
 const PANEL_WIDTH = 280

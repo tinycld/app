@@ -1,9 +1,9 @@
-import { Info } from 'lucide-react-native'
-import { Pressable, Text, View } from 'react-native'
 import { useAuth } from '@tinycld/core/lib/auth'
 import { hexToRgba } from '@tinycld/core/lib/color-utils'
 import { useDemoLeadStore } from '@tinycld/core/lib/stores/demo-lead-store'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { Info } from 'lucide-react-native'
+import { Pressable, Text, View } from 'react-native'
 
 /**
  * Persistent ribbon shown to demo accounts so reviewers and prospects don't

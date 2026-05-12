@@ -1,5 +1,5 @@
-import type { Href } from 'expo-router'
 import { useOrgSlug } from '@tinycld/core/lib/use-org-slug'
+import type { Href } from 'expo-router'
 
 type QueryParams = Record<string, string | number | string[]>
 

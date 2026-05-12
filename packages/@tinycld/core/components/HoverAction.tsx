@@ -1,7 +1,7 @@
-import type { LucideIcon } from 'lucide-react-native'
-import { Platform, Pressable } from 'react-native'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useWebStyles } from '@tinycld/core/lib/use-web-styles'
+import type { LucideIcon } from 'lucide-react-native'
+import { Platform, Pressable } from 'react-native'
 
 const tooltipCSS = `
     .hover-action-tooltip {

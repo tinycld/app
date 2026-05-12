@@ -141,7 +141,7 @@ without `no_ui` so the admin UI is available in production.
 - `bun run dev:local` starts both the PocketBase backend and Expo dev server together.
 - `bun run typecheck` runs `tsc --noEmit --skipLibCheck`.
 - `bun run checks` runs lint and typechecks
-- `bun run lint` (or `bun run lint:fix`) runs Biome linting/formatting.
+- `bun run lint` (or `bun run lint:fix`) runs Biome linting/formatting. Biome lives only in the app shell; `tinycld/biome.json` is the single config for the app **and** every linked package. Sibling repos do not ship their own `biome.json` or `lint`/`checks` scripts — `bun run lint` walks through the symlinks under `packages/` and lints sibling source under each sibling's actual filesystem path.
 - `bun run test:e2e` and `bun run test:server` cover the Playwright suite and supporting services.
    - never start or kill servers when running Playwright. It will manage it's own service and test data. If you see network errors or other issues, stop and ask for advice
 - `bun run test:e2e <test file>` will run a single test.  This will also start the dev server for testing.

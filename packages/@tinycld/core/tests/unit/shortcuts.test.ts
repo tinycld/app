@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMatcher } from '@tinycld/core/lib/shortcuts/matcher'
 import { useShortcutRegistry } from '@tinycld/core/lib/shortcuts/registry'
 import { popScope, pushScope, resetScopes } from '@tinycld/core/lib/shortcuts/scopes'
 import type { Shortcut } from '@tinycld/core/lib/shortcuts/types'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 function register(shortcut: Shortcut) {
     useShortcutRegistry.getState().register(shortcut)

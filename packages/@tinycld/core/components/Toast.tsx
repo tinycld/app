@@ -1,8 +1,8 @@
+import { type Toast as ToastType, useToastStore } from '@tinycld/core/lib/stores/toast-store'
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { AlertTriangle, CheckCircle, Info, X, XCircle } from 'lucide-react-native'
 import { useEffect, useRef } from 'react'
 import { Animated, Platform, Pressable, Text, View } from 'react-native'
-import { type Toast as ToastType, useToastStore } from '@tinycld/core/lib/stores/toast-store'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 
 export function ToastRenderer() {
     const toasts = useToastStore(s => s.toasts)

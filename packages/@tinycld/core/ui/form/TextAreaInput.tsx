@@ -1,8 +1,8 @@
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import type { ComponentType } from 'react'
 import { type Control, type FieldValues, type Path, useController } from 'react-hook-form'
 import type { TextInputProps as RNTextInputProps } from 'react-native'
 import { TextInput as RNTextInput, Text, View, type ViewProps } from 'react-native'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 
 function LabelRow({
     label,

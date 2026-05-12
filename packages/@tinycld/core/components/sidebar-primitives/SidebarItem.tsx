@@ -1,8 +1,8 @@
-import type { LucideIcon } from 'lucide-react-native'
-import { Pressable, Text, View } from 'react-native'
 import { useBreakpoint } from '@tinycld/core/components/workspace/useBreakpoint'
 import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import type { LucideIcon } from 'lucide-react-native'
+import { Pressable, Text, View } from 'react-native'
 
 interface SidebarItemProps {
     label: string

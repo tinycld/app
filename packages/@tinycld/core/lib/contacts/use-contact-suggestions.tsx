@@ -40,7 +40,7 @@ interface ContactSuggestionsProps {
  */
 export function ContactSuggestionsProvider({ children }: ContactSuggestionsProps) {
     const packages = usePackages()
-    const isContactsLinked = packages.some((p) => p.slug === 'contacts')
+    const isContactsLinked = packages.some(p => p.slug === 'contacts')
     if (!isContactsLinked) return null
     return <ActiveContactSuggestions>{children}</ActiveContactSuggestions>
 }

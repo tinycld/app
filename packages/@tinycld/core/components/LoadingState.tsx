@@ -1,5 +1,5 @@
-import { ActivityIndicator, Text, View } from 'react-native'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { ActivityIndicator, Text, View } from 'react-native'
 
 interface LoadingStateProps {
     /** Optional caption shown under the spinner. Omit for a bare indicator. */

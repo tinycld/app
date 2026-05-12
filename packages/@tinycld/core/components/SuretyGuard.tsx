@@ -1,6 +1,3 @@
-import type { ReactNode } from 'react'
-import { useState } from 'react'
-import { Pressable, Text } from 'react-native'
 import {
     AlertDialog,
     AlertDialogBackdrop,
@@ -9,6 +6,9 @@ import {
     AlertDialogFooter,
 } from '@tinycld/core/ui/alert-dialog'
 import { Button, ButtonText } from '@tinycld/core/ui/button'
+import type { ReactNode } from 'react'
+import { useState } from 'react'
+import { Pressable, Text } from 'react-native'
 
 interface SuretyGuardProps {
     children: (onOpen: () => void) => ReactNode

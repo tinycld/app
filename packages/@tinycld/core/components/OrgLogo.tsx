@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react'
-import { Image, View } from 'react-native'
 import { NameAvatar } from '@tinycld/core/components/NameAvatar'
 import { getOrgLogoUrl } from '@tinycld/core/lib/use-org-info'
+import type { ReactNode } from 'react'
+import { Image, View } from 'react-native'
 
 interface OrgLogoProps {
     org: { id: string; name: string; logo?: string } | null | undefined

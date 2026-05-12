@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
 import {
     documentAssetToPickedFile,
     imageAssetToPickedFile,
     webFileToPickedFile,
 } from '@tinycld/core/file-viewer/picked-file'
+import { describe, expect, it } from 'vitest'
 
 describe('documentAssetToPickedFile', () => {
     it('uses the asset name and mimeType when present', () => {
@@ -29,7 +29,12 @@ describe('documentAssetToPickedFile', () => {
     })
 
     it('falls back to "document" and octet-stream when nothing else is known', () => {
-        const result = documentAssetToPickedFile({ uri: '', name: null, mimeType: null, size: null })
+        const result = documentAssetToPickedFile({
+            uri: '',
+            name: null,
+            mimeType: null,
+            size: null,
+        })
         expect(result.name).toBe('document')
         expect(result.type).toBe('application/octet-stream')
         expect(result.size).toBe(0)

@@ -1,5 +1,5 @@
-import { Text, View } from 'react-native'
 import { hexToRgba } from '@tinycld/core/lib/color-utils'
+import { Text, View } from 'react-native'
 
 interface LabelBadgeProps {
     name: string

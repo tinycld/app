@@ -1,4 +1,4 @@
-import type { PreviewAction, FilePreviewSource } from './types'
+import type { FilePreviewSource, PreviewAction } from './types'
 
 /**
  * A "factory hook" — called from React rendering so it can use other hooks
@@ -36,4 +36,4 @@ export function __resetPreviewActionRegistryForTests() {
     factories.clear()
 }
 
-export type { PreviewAction, FilePreviewSource }
+export type { FilePreviewSource, PreviewAction }

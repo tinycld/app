@@ -85,4 +85,3 @@ async function saveOnNative(url: string, fileName: string, mimeType: string) {
         })
     }
 }
-

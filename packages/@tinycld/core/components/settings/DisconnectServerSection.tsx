@@ -1,6 +1,6 @@
+import { disconnectServer } from '@tinycld/core/lib/pocketbase'
 import { router } from 'expo-router'
 import { Pressable, Text, View } from 'react-native'
-import { disconnectServer } from '@tinycld/core/lib/pocketbase'
 
 export function DisconnectServerSection() {
     async function onDisconnect() {

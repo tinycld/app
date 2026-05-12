@@ -1,3 +1,10 @@
+import { DragHandle } from '@tinycld/core/components/DragHandle'
+import { PB_SERVER_ADDR } from '@tinycld/core/lib/config'
+import { captureException } from '@tinycld/core/lib/errors'
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { Divider } from '@tinycld/core/ui/divider'
+import { FormErrorSummary, TextInput, useForm, z, zodResolver } from '@tinycld/core/ui/form'
+import { ThemedSwitch } from '@tinycld/core/ui/ThemedSwitch'
 import { Download, Package, Pencil, Trash2, X } from 'lucide-react-native'
 import type PocketBase from 'pocketbase'
 import { useCallback, useEffect, useState } from 'react'
@@ -6,13 +13,6 @@ import DraggableFlatList, {
     type RenderItemParams,
     ScaleDecorator,
 } from 'react-native-draggable-flatlist'
-import { DragHandle } from '@tinycld/core/components/DragHandle'
-import { PB_SERVER_ADDR } from '@tinycld/core/lib/config'
-import { captureException } from '@tinycld/core/lib/errors'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
-import { Divider } from '@tinycld/core/ui/divider'
-import { FormErrorSummary, TextInput, useForm, z, zodResolver } from '@tinycld/core/ui/form'
-import { ThemedSwitch } from '@tinycld/core/ui/ThemedSwitch'
 import { InstallProgressModal } from './InstallProgressModal'
 import { PackageStatusBadge } from './PackageStatusBadge'
 

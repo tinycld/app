@@ -1,13 +1,9 @@
-import { Check, Mail, Send, Trash2, UserPlus, X } from 'lucide-react-native'
-import { useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
 import { useAuth } from '@tinycld/core/lib/auth'
 import { handleMutationErrorsWithForm } from '@tinycld/core/lib/errors'
 import { mutation, useMutation } from '@tinycld/core/lib/mutations'
 import { pb, useStore } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useOrgInfo } from '@tinycld/core/lib/use-org-info'
-import { ThemedSwitch } from '@tinycld/core/ui/ThemedSwitch'
 import {
     Drawer,
     DrawerBackdrop,
@@ -25,6 +21,10 @@ import {
     z,
     zodResolver,
 } from '@tinycld/core/ui/form'
+import { ThemedSwitch } from '@tinycld/core/ui/ThemedSwitch'
+import { Check, Mail, Send, Trash2, UserPlus, X } from 'lucide-react-native'
+import { useState } from 'react'
+import { Pressable, Text, View } from 'react-native'
 import { InviteLinkPanel } from './InviteLinkPanel'
 import { MemberAvatar } from './MemberAvatar'
 import { PendingBadge, RoleBadge, YouBadge } from './MemberBadges'
@@ -91,7 +91,6 @@ function ViewMember({
     onClose: () => void
 }) {
     const { user } = useAuth()
-    const { orgId } = useOrgInfo()
     const [userOrgCollection, usersCollection] = useStore('user_org', 'users')
 
     const mutedColor = useThemeColor('muted-foreground')
@@ -276,7 +275,6 @@ function RolePicker({
     isSelf: boolean
     onChange: (role: OrgRole) => void
 }) {
-    const mutedColor = useThemeColor('muted-foreground')
     const fgColor = useThemeColor('foreground')
     const borderColor = useThemeColor('border')
 
@@ -300,10 +298,7 @@ function RolePicker({
                 >
                     Role
                 </Text>
-                <Text
-                    className="text-muted-foreground"
-                    style={{ fontSize: 12, lineHeight: 16 }}
-                >
+                <Text className="text-muted-foreground" style={{ fontSize: 12, lineHeight: 16 }}>
                     {ROLE_DESCRIPTIONS[currentRole]}
                 </Text>
             </View>
@@ -392,16 +387,10 @@ function RemoveSection({
     return (
         <View className="flex-row items-center justify-between gap-3">
             <View className="flex-1">
-                <Text
-                    className="text-foreground"
-                    style={{ fontSize: 12.5, fontWeight: '600' }}
-                >
+                <Text className="text-foreground" style={{ fontSize: 12.5, fontWeight: '600' }}>
                     Remove {name}
                 </Text>
-                <Text
-                    className="text-muted-foreground"
-                    style={{ fontSize: 11.5, marginTop: 1 }}
-                >
+                <Text className="text-muted-foreground" style={{ fontSize: 11.5, marginTop: 1 }}>
                     They’ll lose all access immediately. You can re-invite later.
                 </Text>
             </View>
@@ -418,10 +407,7 @@ function RemoveSection({
                 }}
             >
                 <Trash2 size={12} color={dangerColor} />
-                <Text
-                    className="text-danger"
-                    style={{ fontSize: 12, fontWeight: '700' }}
-                >
+                <Text className="text-danger" style={{ fontSize: 12, fontWeight: '700' }}>
                     {isPending ? 'Removing…' : 'Remove'}
                 </Text>
             </Pressable>
@@ -436,11 +422,7 @@ const inviteSchema = z.object({
             /^[a-z0-9][a-z0-9_-]{2,31}$/,
             'Use 3-32 chars: lowercase letters, digits, dash or underscore'
         ),
-    email: z
-        .string()
-        .email('Enter a valid email address')
-        .or(z.literal(''))
-        .optional(),
+    email: z.string().email('Enter a valid email address').or(z.literal('')).optional(),
     role: z.enum(['admin', 'member', 'guest']),
 })
 
@@ -794,8 +776,8 @@ function DemoToggle({
                         className="text-muted-foreground"
                         style={{ fontSize: 12, lineHeight: 16, marginTop: 2 }}
                     >
-                        Sandboxed: outbound email and notifications are simulated. The user
-                        sees the full app but nothing leaves the box.
+                        Sandboxed: outbound email and notifications are simulated. The user sees the
+                        full app but nothing leaves the box.
                     </Text>
                 </View>
                 <ThemedSwitch
@@ -806,10 +788,7 @@ function DemoToggle({
                 />
             </View>
             {isSelf ? (
-                <Text
-                    className="text-muted-foreground"
-                    style={{ fontSize: 11, marginTop: 2 }}
-                >
+                <Text className="text-muted-foreground" style={{ fontSize: 11, marginTop: 2 }}>
                     You can’t change your own demo flag. Ask another admin.
                 </Text>
             ) : null}

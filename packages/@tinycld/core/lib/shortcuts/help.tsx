@@ -1,8 +1,8 @@
-import { useMemo } from 'react'
-import { ScrollView, Text, View } from 'react-native'
 import { create } from '@tinycld/core/lib/store'
 import { Kbd } from '@tinycld/core/ui/Kbd'
 import { Modal, ModalBackdrop, ModalContent } from '@tinycld/core/ui/modal'
+import { useMemo } from 'react'
+import { ScrollView, Text, View } from 'react-native'
 import { useShortcutRegistry } from './registry'
 import type { Shortcut } from './types'
 

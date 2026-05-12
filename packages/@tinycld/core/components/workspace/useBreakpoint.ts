@@ -13,9 +13,9 @@ function bucketFor(width: number): Breakpoint {
 // — strictly cheaper than the previous useWindowDimensions implementation,
 // which fired on every pixel-level resize event for every consumer.
 export function useBreakpoint(): Breakpoint {
-    return useWindowSizeStore((s) => bucketFor(s.width))
+    return useWindowSizeStore(s => bucketFor(s.width))
 }
 
 export function useWindowWidth(): number {
-    return useWindowSizeStore((s) => s.width)
+    return useWindowSizeStore(s => s.width)
 }

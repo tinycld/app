@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { NotifyChannel } from '@tinycld/core/lib/notify/channels/types'
 import { __setChannelsForTests, notify } from '@tinycld/core/lib/notify/dispatcher'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 // Channel modules are imported eagerly by the dispatcher; stub their deps so
 // loading this test does not require runtime env (pocketbase client, RN APIs).

@@ -1,7 +1,7 @@
-import { useRouter } from 'expo-router'
-import { Home } from 'lucide-react-native'
 import { SidebarItem, SidebarNav } from '@tinycld/core/components/sidebar-primitives'
 import { useOrgSlug } from '@tinycld/core/lib/use-org-slug'
+import { useRouter } from 'expo-router'
+import { Home } from 'lucide-react-native'
 
 interface PackageSidebarFallbackProps {
     pkgSlug: string

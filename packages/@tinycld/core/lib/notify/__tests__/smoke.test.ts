@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { notify } from '@tinycld/core/lib/notify'
 import { useToastStore } from '@tinycld/core/lib/stores/toast-store'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // The dispatcher imports all three channel modules eagerly. In a node/vitest
 // environment bellChannel and osChannel transitively load modules that throw

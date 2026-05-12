@@ -1,8 +1,8 @@
+import { DEFAULT_COLOR_THEME } from '@tinycld/core/lib/color-themes'
+import { GluestackUIProvider } from '@tinycld/core/ui/gluestack-ui-provider'
 import type { ReactNode } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
-import { DEFAULT_COLOR_THEME } from '@tinycld/core/lib/color-themes'
-import { GluestackUIProvider } from '@tinycld/core/ui/gluestack-ui-provider'
 
 // Provider stack for screens that must render before a server address is
 // resolved (e.g. the /connect onboarding screen). Skips PBTSDB / Auth /

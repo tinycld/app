@@ -1,9 +1,9 @@
+import { PB_SERVER_ADDR } from '@tinycld/core/lib/config'
+import { FormErrorSummary, TextInput, useForm, z, zodResolver } from '@tinycld/core/ui/form'
 import PocketBase from 'pocketbase'
 import { useRef, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { PB_SERVER_ADDR } from '@tinycld/core/lib/config'
-import { FormErrorSummary, TextInput, useForm, z, zodResolver } from '@tinycld/core/ui/form'
 import { SetupDashboard } from './SetupDashboard'
 
 const bootstrapSchema = z
@@ -33,7 +33,6 @@ export function SetupWizard({ token }: SetupWizardProps) {
     const [isComplete, setIsComplete] = useState(false)
     const [submitError, setSubmitError] = useState<string | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
-
 
     const defaultAppUrl = typeof window !== 'undefined' ? window.location.origin : PB_SERVER_ADDR
 

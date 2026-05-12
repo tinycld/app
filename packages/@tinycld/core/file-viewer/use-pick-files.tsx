@@ -49,35 +49,32 @@ export function usePickFiles() {
     const finishPending = useCallback((next: PendingPick | null, files: PickedFile[]) => {
         // Caller is responsible for passing the same `pending` snapshot they observed
         // so we resolve exactly the right awaiter.
-        setPending((prev) => (prev === next ? null : prev))
+        setPending(prev => (prev === next ? null : prev))
         next?.resolve(files)
     }, [])
 
-    const pickFiles = useCallback(
-        (options: PickFilesOptions = {}): Promise<PickedFile[]> => {
-            const normalized: NormalizedOptions = {
-                sources: options.sources ?? ['photoLibrary', 'camera', 'documents'],
-                multiple: options.multiple ?? true,
-                mimeTypes: options.mimeTypes,
-            }
-            // Web: skip the ActionSheet entirely; open a hidden file input.
-            if (Platform.OS === 'web') {
-                return openWebFileInput(normalized)
-            }
-            // If only one source is requested, skip the chooser and launch directly.
-            if (normalized.sources.length === 1) {
-                return launchSource(normalized.sources[0], normalized)
-            }
-            return new Promise((resolve) => {
-                setPending({ options: normalized, resolve })
-            })
-        },
-        []
-    )
+    const pickFiles = useCallback((options: PickFilesOptions = {}): Promise<PickedFile[]> => {
+        const normalized: NormalizedOptions = {
+            sources: options.sources ?? ['photoLibrary', 'camera', 'documents'],
+            multiple: options.multiple ?? true,
+            mimeTypes: options.mimeTypes,
+        }
+        // Web: skip the ActionSheet entirely; open a hidden file input.
+        if (Platform.OS === 'web') {
+            return openWebFileInput(normalized)
+        }
+        // If only one source is requested, skip the chooser and launch directly.
+        if (normalized.sources.length === 1) {
+            return launchSource(normalized.sources[0], normalized)
+        }
+        return new Promise(resolve => {
+            setPending({ options: normalized, resolve })
+        })
+    }, [])
 
     const handleClose = useCallback(() => {
         // Resolve whichever pending we were holding with [].
-        setPending((prev) => {
+        setPending(prev => {
             prev?.resolve([])
             return null
         })
@@ -133,9 +130,12 @@ export function usePickFiles() {
     return { pickFiles, ActionSheetElement }
 }
 
-function openWebFileInput(options: { multiple: boolean; mimeTypes?: string[] }): Promise<PickedFile[]> {
+function openWebFileInput(options: {
+    multiple: boolean
+    mimeTypes?: string[]
+}): Promise<PickedFile[]> {
     if (typeof document === 'undefined') return Promise.resolve([])
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         const input = document.createElement('input')
         input.type = 'file'
         if (options.multiple) input.multiple = true
@@ -166,7 +166,10 @@ function openWebFileInput(options: { multiple: boolean; mimeTypes?: string[] }):
     })
 }
 
-async function launchSource(source: PickerSource, options: NormalizedOptions): Promise<PickedFile[]> {
+async function launchSource(
+    source: PickerSource,
+    options: NormalizedOptions
+): Promise<PickedFile[]> {
     if (source === 'documents') {
         const result = await DocumentPicker.getDocumentAsync({
             multiple: options.multiple,

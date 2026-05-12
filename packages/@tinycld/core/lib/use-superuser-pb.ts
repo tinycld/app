@@ -1,6 +1,6 @@
+import { PB_SERVER_ADDR } from '@tinycld/core/lib/config'
 import PocketBase from 'pocketbase'
 import { useCallback, useRef, useState } from 'react'
-import { PB_SERVER_ADDR } from '@tinycld/core/lib/config'
 
 export function useSuperUserPB() {
     const pbRef = useRef<PocketBase | null>(null)

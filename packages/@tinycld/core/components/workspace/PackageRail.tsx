@@ -1,14 +1,14 @@
-import { Link } from 'expo-router'
-import { Building2, type LucideIcon, Settings } from 'lucide-react-native'
-import { Pressable, View } from 'react-native'
 import { NotificationBell } from '@tinycld/core/components/NotificationBell'
 import { OrgLogo } from '@tinycld/core/components/OrgLogo'
 import { ImportIndicator } from '@tinycld/core/components/workspace/ImportIndicator'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
-import { useOrgInfo } from '@tinycld/core/lib/use-org-info'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { useOrgInfo } from '@tinycld/core/lib/use-org-info'
 import { useSortedPackages } from '@tinycld/core/lib/use-sorted-packages'
+import { Link } from 'expo-router'
+import { Building2, type LucideIcon, Settings } from 'lucide-react-native'
+import { Pressable, View } from 'react-native'
 import { getIcon } from './package-icon-map'
 import { UserMenu } from './UserMenu'
 
@@ -42,10 +42,7 @@ export function PackageRail() {
                     </Pressable>
                 </Link>
 
-                <View
-                    className="w-7 h-px opacity-20 my-2"
-                    style={{ backgroundColor: railText }}
-                />
+                <View className="w-7 h-px opacity-20 my-2" style={{ backgroundColor: railText }} />
 
                 {sorted.map(pkg => {
                     const Icon = getIcon(pkg.nav?.icon ?? '')

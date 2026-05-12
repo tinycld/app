@@ -1,6 +1,6 @@
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { type Control, type FieldValues, type Path, useController } from 'react-hook-form'
 import { Pressable, TextInput as RNTextInput, Text, View, type ViewProps } from 'react-native'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 
 export type NumberInputProps<T extends FieldValues = Record<string, unknown>> = {
     name: Path<T>

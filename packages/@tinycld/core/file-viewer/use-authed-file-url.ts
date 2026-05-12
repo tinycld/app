@@ -24,7 +24,10 @@ export function useFileToken() {
     })
 }
 
-export function buildAuthedFileURL(source: FilePreviewSource | undefined, token: string | undefined) {
+export function buildAuthedFileURL(
+    source: FilePreviewSource | undefined,
+    token: string | undefined
+) {
     if (!source?.fileName) return ''
     return pb.files.getURL(
         { collectionId: source.collectionId, id: source.recordId },

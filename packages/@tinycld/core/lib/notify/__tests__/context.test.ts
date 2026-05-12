@@ -1,9 +1,9 @@
-import { afterEach, describe, expect, it } from 'vitest'
 import {
     clearNotifyContext,
     getNotifyContext,
     setNotifyContext,
 } from '@tinycld/core/lib/notify/context'
+import { afterEach, describe, expect, it } from 'vitest'
 
 describe('notify/context', () => {
     afterEach(() => {

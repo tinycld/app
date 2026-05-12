@@ -1,6 +1,10 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { __resetRegistryForTests, getPreviewEntry, registerPreview } from '@tinycld/core/file-viewer/registry'
+import {
+    __resetRegistryForTests,
+    getPreviewEntry,
+    registerPreview,
+} from '@tinycld/core/file-viewer/registry'
 import type { PreviewProps } from '@tinycld/core/file-viewer/types'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 const StubViewer = (_props: PreviewProps) => null
 

@@ -15,7 +15,9 @@ export function useOrgInfo() {
 }
 
 /** Returns a fully-qualified URL for an org's logo, or null when unset. */
-export function getOrgLogoUrl(org: { id: string; logo?: string } | null | undefined): string | null {
+export function getOrgLogoUrl(
+    org: { id: string; logo?: string } | null | undefined
+): string | null {
     if (!org?.id || !org.logo) return null
     return pb.files.getURL({ collectionId: 'orgs', id: org.id }, org.logo)
 }

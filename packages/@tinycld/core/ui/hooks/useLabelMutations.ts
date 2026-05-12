@@ -1,11 +1,11 @@
 import { and, eq } from '@tanstack/db'
-import { newRecordId } from 'pbtsdb/core'
 import { captureException } from '@tinycld/core/lib/errors'
 import { mutation, useMutation } from '@tinycld/core/lib/mutations'
 import { pb, useStore } from '@tinycld/core/lib/pocketbase'
 import { useCurrentRole } from '@tinycld/core/lib/use-current-role'
 import { useOrgInfo } from '@tinycld/core/lib/use-org-info'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
+import { newRecordId } from 'pbtsdb/core'
 
 export function useLabelMutations() {
     const [labelsCollection, assignmentsCollection] = useStore('labels', 'label_assignments')

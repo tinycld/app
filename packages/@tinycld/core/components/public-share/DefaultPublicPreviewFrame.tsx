@@ -4,7 +4,9 @@ import { lazy, Suspense } from 'react'
 import { ActivityIndicator, Image, Platform, Text, View } from 'react-native'
 
 const PdfCanvasViewer = lazy(() =>
-    import('@tinycld/core/file-viewer/previews/PdfCanvasViewer').then((m) => ({ default: m.PdfCanvasViewer }))
+    import('@tinycld/core/file-viewer/previews/PdfCanvasViewer').then(m => ({
+        default: m.PdfCanvasViewer,
+    }))
 )
 
 interface DefaultPublicPreviewFrameProps {
@@ -29,13 +31,20 @@ function formatFileSize(bytes: number) {
  * file-icon fallback for everything else. Packages can pass a custom
  * `renderPreview` to PublicShareLayout to override.
  */
-export function DefaultPublicPreviewFrame({ name, mimeType, category, fileUrl, size }: DefaultPublicPreviewFrameProps) {
+export function DefaultPublicPreviewFrame({
+    name,
+    mimeType,
+    category,
+    fileUrl,
+    size,
+}: DefaultPublicPreviewFrameProps) {
     const inlineUrl = `${fileUrl}${fileUrl.includes('?') ? '&' : '?'}inline=1`
 
     if (category === 'image') return <ImagePreview url={inlineUrl} name={name} />
     if (category === 'pdf') return <PdfPreview url={inlineUrl} />
     if (category === 'video') return <VideoPreview url={inlineUrl} mimeType={mimeType} />
-    if (category === 'audio') return <AudioPreview url={inlineUrl} name={name} mimeType={mimeType} />
+    if (category === 'audio')
+        return <AudioPreview url={inlineUrl} name={name} mimeType={mimeType} />
 
     return <GenericPreview name={name} mimeType={mimeType} size={size} />
 }
@@ -43,7 +52,12 @@ export function DefaultPublicPreviewFrame({ name, mimeType, category, fileUrl, s
 function ImagePreview({ url, name }: { url: string; name: string }) {
     return (
         <View className="flex-1 items-center justify-center p-6">
-            <Image source={{ uri: url }} accessibilityLabel={name} resizeMode="contain" className="w-full h-full" />
+            <Image
+                source={{ uri: url }}
+                accessibilityLabel={name}
+                resizeMode="contain"
+                className="w-full h-full"
+            />
         </View>
     )
 }
@@ -92,7 +106,15 @@ function AudioPreview({ url, name, mimeType }: { url: string; name: string; mime
     )
 }
 
-function GenericPreview({ name, mimeType, size }: { name: string; mimeType: string; size: number }) {
+function GenericPreview({
+    name,
+    mimeType,
+    size,
+}: {
+    name: string
+    mimeType: string
+    size: number
+}) {
     const mutedColor = useThemeColor('muted-foreground')
 
     return (

@@ -1,11 +1,11 @@
 import { OverlayProvider } from '@gluestack-ui/core/overlay/creator'
 import { ToastProvider } from '@gluestack-ui/core/toast/creator'
+import type { ColorThemeSlug } from '@tinycld/core/lib/color-themes'
+import { findColorTheme } from '@tinycld/core/lib/color-themes'
 import type React from 'react'
 import { useEffect } from 'react'
 import { View, type ViewProps } from 'react-native'
 import { Uniwind } from 'uniwind'
-import type { ColorThemeSlug } from '@tinycld/core/lib/color-themes'
-import { findColorTheme } from '@tinycld/core/lib/color-themes'
 
 export type ModeType = 'light' | 'dark' | 'system'
 

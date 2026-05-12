@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import type { LucideIcon } from 'lucide-react-native'
-import { useEffect, useState, type ReactNode } from 'react'
-import { Pressable, Text, View } from 'react-native'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import type { LucideIcon } from 'lucide-react-native'
+import { type ReactNode, useEffect, useState } from 'react'
+import { Pressable, Text, View } from 'react-native'
 
 /**
  * Headline + body shell for one-shot first-run education modals.
@@ -44,7 +44,7 @@ export interface FirstRunModalProps {
      * slot owns validation that should keep the modal open on failure.
      * Default (return undefined or `true`) preserves dismiss-on-press.
      */
-    onPrimary: () => void | boolean
+    onPrimary: () => boolean | undefined
     /**
      * Optional secondary action. When omitted, the modal renders the primary
      * button alone — useful for "got it" confirmations where there's nothing

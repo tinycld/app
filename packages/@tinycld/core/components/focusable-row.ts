@@ -1,5 +1,5 @@
-import { Platform } from 'react-native'
 import { hexToRgba } from '@tinycld/core/lib/color-utils'
+import { Platform } from 'react-native'
 
 interface UseRowFocusStyleArgs {
     isFocused?: boolean

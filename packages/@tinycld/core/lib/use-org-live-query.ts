@@ -1,8 +1,8 @@
 import type { Context, InitialQueryBuilder, QueryBuilder } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
-import { useMemo } from 'react'
 import { useCurrentRole } from '@tinycld/core/lib/use-current-role'
 import { useOrgInfo } from '@tinycld/core/lib/use-org-info'
+import { useMemo } from 'react'
 
 export interface OrgScope {
     orgId: string

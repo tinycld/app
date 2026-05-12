@@ -3,7 +3,9 @@ import { ActivityIndicator } from 'react-native'
 import type { PreviewProps } from '../types'
 import { useAuthedFileURL } from '../use-authed-file-url'
 
-const PdfCanvasViewer = lazy(() => import('./PdfCanvasViewer').then((m) => ({ default: m.PdfCanvasViewer })))
+const PdfCanvasViewer = lazy(() =>
+    import('./PdfCanvasViewer').then(m => ({ default: m.PdfCanvasViewer }))
+)
 
 export function PdfPreview(props: PreviewProps) {
     const { url, isLoading } = useAuthedFileURL(props.source)

@@ -1,8 +1,8 @@
+import { ScreenHeader } from '@tinycld/core/components/ScreenHeader'
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { ChevronDown, ChevronUp } from 'lucide-react-native'
 import type { ReactNode } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
-import { ScreenHeader } from '@tinycld/core/components/ScreenHeader'
 
 interface Column<F extends string = string> {
     label: string

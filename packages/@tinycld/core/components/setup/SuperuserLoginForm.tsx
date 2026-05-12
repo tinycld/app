@@ -1,7 +1,7 @@
-import { Lock } from 'lucide-react-native'
-import { Pressable, Text, View } from 'react-native'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { FormErrorSummary, TextInput, useForm, z, zodResolver } from '@tinycld/core/ui/form'
+import { Lock } from 'lucide-react-native'
+import { Pressable, Text, View } from 'react-native'
 
 const loginSchema = z.object({
     email: z.string().email(),

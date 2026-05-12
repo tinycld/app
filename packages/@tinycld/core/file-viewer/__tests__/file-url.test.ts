@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { pickThumbnailBase } from '@tinycld/core/file-viewer/pick-thumbnail-base'
+import { describe, expect, it } from 'vitest'
 
 describe('pickThumbnailBase', () => {
     it('returns the dedicated thumbnail filename when present', () => {
@@ -13,7 +13,9 @@ describe('pickThumbnailBase', () => {
     })
 
     it('falls back to the original file for image MIME types', () => {
-        expect(pickThumbnailBase({ mimeType: 'image/jpeg', fileName: 'photo_xyz.jpg' })).toBe('photo_xyz.jpg')
+        expect(pickThumbnailBase({ mimeType: 'image/jpeg', fileName: 'photo_xyz.jpg' })).toBe(
+            'photo_xyz.jpg'
+        )
         expect(pickThumbnailBase({ mimeType: 'image/png', fileName: 'pic.png' })).toBe('pic.png')
     })
 

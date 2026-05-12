@@ -1,6 +1,6 @@
-import { Pressable, Text, View } from 'react-native'
 import { isReviewBuild } from '@tinycld/core/lib/build-mode'
 import { getCoreConfigOptional } from '@tinycld/core/lib/core-config'
+import { Pressable, Text, View } from 'react-native'
 
 const FALLBACK_DEMO_EMAIL = 'appreview@tinycld.org'
 

@@ -1,11 +1,11 @@
-import { router } from 'expo-router'
-import { useState } from 'react'
-import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native'
 import { deleteMyAccount } from '@tinycld/core/lib/account-delete'
 import { useAuth } from '@tinycld/core/lib/auth'
 import { errorToString } from '@tinycld/core/lib/errors'
 import { useMutation } from '@tinycld/core/lib/mutations'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { router } from 'expo-router'
+import { useState } from 'react'
+import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native'
 
 interface DeleteAccountModalProps {
     isVisible: boolean
@@ -72,8 +72,7 @@ export function DeleteAccountModal({ isVisible, onClose }: DeleteAccountModalPro
                     This action is permanent and cannot be undone. All your data will be deleted.
                 </Text>
                 <Text className="text-sm mb-6 text-muted-foreground">
-                    Signed in as{' '}
-                    <Text className="font-semibold text-foreground">{user.email}</Text>
+                    Signed in as <Text className="font-semibold text-foreground">{user.email}</Text>
                 </Text>
 
                 {error && (

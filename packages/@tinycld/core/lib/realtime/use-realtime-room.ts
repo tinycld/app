@@ -81,7 +81,9 @@ export function useRealtimeRoom({
 }: UseRealtimeRoomOptions): RealtimeRoomHandle | null {
     const [isReady, setIsReady] = useState(false)
     const [isConnected, setIsConnected] = useState(false)
-    const handleRef = useRef<{ doc: Y.Doc; awareness: Awareness; client: RealtimeClient } | null>(null)
+    const handleRef = useRef<{ doc: Y.Doc; awareness: Awareness; client: RealtimeClient } | null>(
+        null
+    )
     // Force a re-render once the doc + awareness are constructed. The
     // ref-only-mutation in the effect would otherwise be invisible to
     // React.
@@ -111,7 +113,7 @@ export function useRealtimeRoom({
             onClose: () => {
                 if (!cancelled) setIsConnected(false)
             },
-            onSyncReply: async (hadPeer) => {
+            onSyncReply: async hadPeer => {
                 if (cancelled) return
                 // Bootstrap when there is no peer at all OR when the
                 // peer gave us a reply that left us with no state.
@@ -140,7 +142,7 @@ export function useRealtimeRoom({
         })
 
         handleRef.current = { doc, awareness, client }
-        setBumpKey((n) => n + 1)
+        setBumpKey(n => n + 1)
         client.connect()
 
         return () => {

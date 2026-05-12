@@ -1,9 +1,9 @@
 import { packageSidebars } from '@tinycld/app-generated/package-sidebars'
-import { Suspense } from 'react'
-import { Platform, View } from 'react-native'
 import { usePackage } from '@tinycld/core/lib/packages/use-packages'
 import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { Suspense } from 'react'
+import { Platform, View } from 'react-native'
 import { PackageSidebarFallback } from './PackageSidebarFallback'
 import { SkeletonSidebar } from './SkeletonLayout'
 

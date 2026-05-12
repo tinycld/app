@@ -1,13 +1,10 @@
-import { MessageCircle } from 'lucide-react-native'
-import { useRef } from 'react'
-import { Pressable, Text, View } from 'react-native'
-import {
-    DemoLeadForm,
-    type DemoLeadFormHandle,
-} from '@tinycld/core/components/DemoLeadForm'
+import { DemoLeadForm, type DemoLeadFormHandle } from '@tinycld/core/components/DemoLeadForm'
 import { useAuth } from '@tinycld/core/lib/auth'
 import { useDemoLeadStore } from '@tinycld/core/lib/stores/demo-lead-store'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { MessageCircle } from 'lucide-react-native'
+import { useRef } from 'react'
+import { Pressable, Text, View } from 'react-native'
 
 /**
  * Banner-triggered demo-lead form. Opens when the user taps the demo banner's

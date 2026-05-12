@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react'
-import { Platform } from 'react-native'
 import { useAuth } from '@tinycld/core/lib/auth'
 import { registerExpoPushToken } from '@tinycld/core/lib/expo-push'
+import { useEffect, useRef } from 'react'
+import { Platform } from 'react-native'
 
 export function useExpoPushRegistration() {
     const { user } = useAuth()

@@ -1,5 +1,5 @@
-import { Text, View } from 'react-native'
 import { formatKeys } from '@tinycld/core/lib/shortcuts/keys'
+import { Text, View } from 'react-native'
 
 interface KbdProps {
     keys: string
@@ -15,11 +15,7 @@ export function Kbd({ keys }: KbdProps) {
     return (
         <View className="flex-row items-center gap-1">
             {groups.map((parts, atomIndex) => (
-                <KbdBadge
-                    // biome-ignore lint/suspicious/noArrayIndexKey: atoms are positional by design
-                    key={atomIndex}
-                    parts={parts}
-                />
+                <KbdBadge key={atomIndex} parts={parts} />
             ))}
         </View>
     )

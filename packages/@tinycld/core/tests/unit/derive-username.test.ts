@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { deriveUsername } from '@tinycld/core/lib/derive-username'
+import { describe, expect, it } from 'vitest'
 
 describe('deriveUsername', () => {
     // Cases mirror coreserver/users_username_migration_test.go::TestDeriveUsername

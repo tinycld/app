@@ -1,5 +1,5 @@
-import { Star } from 'lucide-react-native'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { Star } from 'lucide-react-native'
 
 interface StarIconProps {
     isStarred: boolean

@@ -1,6 +1,3 @@
-import { Check, Plus, Trash2, X } from 'lucide-react-native'
-import { useState } from 'react'
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { LABEL_COLORS } from '@tinycld/core/lib/label-colors'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { Divider } from '@tinycld/core/ui/divider'
@@ -8,6 +5,9 @@ import { useForm, z, zodResolver } from '@tinycld/core/ui/form'
 import { useLabelMutations } from '@tinycld/core/ui/hooks/useLabelMutations'
 import { useLabels } from '@tinycld/core/ui/hooks/useLabels'
 import { Modal, ModalBackdrop, ModalContent } from '@tinycld/core/ui/modal'
+import { Check, Plus, Trash2, X } from 'lucide-react-native'
+import { useState } from 'react'
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 
 const labelSchema = z.object({
     name: z.string().min(1, 'Name is required').max(50, 'Name must be 50 characters or fewer'),
@@ -236,10 +236,7 @@ function CreateLabelRow({ onCreated }: { onCreated: () => void }) {
     return (
         <View className="bg-surface-secondary">
             <View className="flex-row items-center px-3 py-2 gap-2">
-                <View
-                    className="w-3.5 h-3.5 rounded-full"
-                    style={{ backgroundColor: color }}
-                />
+                <View className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: color }} />
                 <TextInput
                     className="flex-1 text-sm p-2 border border-border rounded-md bg-background text-foreground"
                     value={name}

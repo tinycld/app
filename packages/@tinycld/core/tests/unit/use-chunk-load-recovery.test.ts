@@ -1,6 +1,5 @@
-import { describe, expect, it } from 'vitest'
-
 import { isChunkLoadError } from '@tinycld/core/lib/use-chunk-load-recovery'
+import { describe, expect, it } from 'vitest'
 
 describe('isChunkLoadError', () => {
     it('matches errors with name=ChunkLoadError', () => {
@@ -11,7 +10,10 @@ describe('isChunkLoadError', () => {
     it.each([
         ['webpack/metro chunk-load text', 'Loading chunk 23 failed'],
         ['raw ChunkLoadError text', 'ChunkLoadError: failed'],
-        ['chrome/firefox dynamic-import failure', 'Failed to fetch dynamically imported module: /a.js'],
+        [
+            'chrome/firefox dynamic-import failure',
+            'Failed to fetch dynamically imported module: /a.js',
+        ],
         ['safari dynamic-import failure', 'Importing a module script failed'],
         ['lower-case dynamic import failure', 'error loading dynamically imported module'],
     ])('matches via message: %s', (_label, msg) => {

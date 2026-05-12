@@ -1,11 +1,8 @@
+import { DemoLeadForm, type DemoLeadFormHandle } from '@tinycld/core/components/DemoLeadForm'
+import { FirstRunModal } from '@tinycld/core/components/FirstRunModal'
+import { useAuth } from '@tinycld/core/lib/auth'
 import { Sparkles } from 'lucide-react-native'
 import { useRef } from 'react'
-import { useAuth } from '@tinycld/core/lib/auth'
-import {
-    DemoLeadForm,
-    type DemoLeadFormHandle,
-} from '@tinycld/core/components/DemoLeadForm'
-import { FirstRunModal } from '@tinycld/core/components/FirstRunModal'
 
 /**
  * One-shot orientation modal for users entering via /api/demo/start. Renders

@@ -1,5 +1,5 @@
-import Svg, { Circle, Defs, G, Line, Path, Pattern, Rect, Text as SvgText } from 'react-native-svg'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import Svg, { Circle, Defs, G, Line, Path, Pattern, Rect, Text as SvgText } from 'react-native-svg'
 
 interface ConnectIllustrationProps {
     height?: number
@@ -14,12 +14,7 @@ export function ConnectIllustration({ height = 130 }: ConnectIllustrationProps) 
     const accentSoft = `${accent}33`
 
     return (
-        <Svg
-            viewBox="0 0 320 130"
-            width="100%"
-            height={height}
-            preserveAspectRatio="xMidYMid meet"
-        >
+        <Svg viewBox="0 0 320 130" width="100%" height={height} preserveAspectRatio="xMidYMid meet">
             <Defs>
                 <Pattern id="connect-dots" width="6" height="6" patternUnits="userSpaceOnUse">
                     <Circle cx="3" cy="3" r="0.6" fill={dotPattern} />

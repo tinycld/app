@@ -1,6 +1,5 @@
-import { Platform, Pressable, Text, View } from 'react-native'
-
 import { useVersionStore } from '@tinycld/core/lib/stores/version-store'
+import { Platform, Pressable, Text, View } from 'react-native'
 
 // NewVersionToast renders a small floating "click to refresh" pill in the
 // bottom-right corner when the version-check hook has detected a deployed

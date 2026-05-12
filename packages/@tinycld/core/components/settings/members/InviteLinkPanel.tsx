@@ -1,8 +1,8 @@
+import { useMutation } from '@tinycld/core/lib/mutations'
+import { pb } from '@tinycld/core/lib/pocketbase'
 import * as Clipboard from 'expo-clipboard'
 import { useEffect, useState } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
-import { useMutation } from '@tinycld/core/lib/mutations'
-import { pb } from '@tinycld/core/lib/pocketbase'
 
 export type InviteLinkPanelProps = {
     userOrgId: string
@@ -25,10 +25,9 @@ export function InviteLinkPanel({ userOrgId, initialUrl }: InviteLinkPanelProps)
         let cancelled = false
         ;(async () => {
             try {
-                const res = await pb.send<{ inviteUrl: string }>(
-                    `/api/invite-link/${userOrgId}`,
-                    { method: 'GET' }
-                )
+                const res = await pb.send<{ inviteUrl: string }>(`/api/invite-link/${userOrgId}`, {
+                    method: 'GET',
+                })
                 if (!cancelled) setState({ kind: 'ready', url: res.inviteUrl })
             } catch (err) {
                 if (cancelled) return
@@ -64,9 +63,7 @@ export function InviteLinkPanel({ userOrgId, initialUrl }: InviteLinkPanelProps)
         )
     }
     if (state.kind === 'expired') {
-        return (
-            <ExpiredView onRotate={() => rotate.mutate()} pending={rotate.isPending} />
-        )
+        return <ExpiredView onRotate={() => rotate.mutate()} pending={rotate.isPending} />
     }
     if (state.kind === 'error') {
         return (
@@ -134,20 +131,13 @@ function ReadyView({ url, userOrgId, onRotate, rotatePending }: ReadyViewProps) 
             <Pressable testID="invite-link-copy" onPress={copy}>
                 <Text className="text-primary">{copied ? 'Copied!' : 'Copy link'}</Text>
             </Pressable>
-            <Pressable
-                testID="invite-link-rotate"
-                onPress={onRotate}
-                disabled={rotatePending}
-            >
+            <Pressable testID="invite-link-rotate" onPress={onRotate} disabled={rotatePending}>
                 <Text className="text-muted-foreground">
                     {rotatePending ? 'Generating…' : 'Generate new link'}
                 </Text>
             </Pressable>
 
-            <Pressable
-                testID="invite-link-send-toggle"
-                onPress={() => setShowSend(s => !s)}
-            >
+            <Pressable testID="invite-link-send-toggle" onPress={() => setShowSend(s => !s)}>
                 <Text className="text-foreground">
                     {showSend ? 'Hide email send' : 'Or email this link to a different address'}
                 </Text>

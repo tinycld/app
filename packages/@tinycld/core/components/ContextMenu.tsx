@@ -1,7 +1,7 @@
+import { Menu } from '@tinycld/core/ui/menu'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Platform, Pressable, StyleSheet, View } from 'react-native'
-import { Menu } from '@tinycld/core/ui/menu'
 
 interface ContextMenuProps {
     children: ReactNode
@@ -22,7 +22,7 @@ interface ContextMenuProps {
      * pressed, because the item's action already implies the user
      * intended the selection.
      */
-    onOpen?: () => void | (() => void)
+    onOpen?: () => undefined | (() => void)
 }
 
 // Lazy-mount the Menu apparatus (Provider, Portal, Overlay, Content) only
@@ -67,12 +67,15 @@ function ContextMenuWeb({ children, content, onOpen }: ContextMenuProps) {
     // on item press so the action commits.
     const cleanupRef = useRef<(() => void) | undefined>(undefined)
 
-    const handleContextMenu = useCallback((e: { preventDefault: () => void; clientX: number; clientY: number }) => {
-        e.preventDefault()
-        setCursorPos({ x: e.clientX, y: e.clientY, width: 0, height: 0 })
-        const cleanup = onOpenRef.current?.()
-        cleanupRef.current = typeof cleanup === 'function' ? cleanup : undefined
-    }, [])
+    const handleContextMenu = useCallback(
+        (e: { preventDefault: () => void; clientX: number; clientY: number }) => {
+            e.preventDefault()
+            setCursorPos({ x: e.clientX, y: e.clientY, width: 0, height: 0 })
+            const cleanup = onOpenRef.current?.()
+            cleanupRef.current = typeof cleanup === 'function' ? cleanup : undefined
+        },
+        []
+    )
 
     const handleDismissed = useCallback(() => {
         cleanupRef.current?.()
@@ -150,7 +153,12 @@ function LazyMenuOverlay({ content, onDismissed, onActioned, cursorPos }: LazyMe
     return (
         <Menu isOpen={true} onOpenChange={handleOpenChange} triggerPosition={cursorPos}>
             <Menu.Portal>
-                <Menu.Content ref={contentRef} presentation="popover" placement="bottom" align="start">
+                <Menu.Content
+                    ref={contentRef}
+                    presentation="popover"
+                    placement="bottom"
+                    align="start"
+                >
                     {renderedContent}
                 </Menu.Content>
             </Menu.Portal>
@@ -176,7 +184,7 @@ function useCloseMenuOnOutsideClick(params: {
         const handler = (event: PointerEvent) => {
             const target = event.target as Node | null
             const node = contentRef.current as unknown as Node | null
-            if (target && node && node.contains(target)) return
+            if (target && node?.contains(target)) return
             onCloseRef.current()
         }
         document.addEventListener('pointerdown', handler, true)

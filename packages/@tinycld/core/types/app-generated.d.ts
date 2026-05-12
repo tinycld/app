@@ -16,8 +16,8 @@ declare module '@tinycld/app-generated/package-registry' {
 }
 
 declare module '@tinycld/app-generated/package-collections' {
-    import type { Schema } from '@tinycld/core/types/pbSchema'
     import type { CoreStores } from '@tinycld/core/lib/pocketbase'
+    import type { Schema } from '@tinycld/core/types/pbSchema'
     import type { createCollection } from 'pbtsdb/core'
     export type MergedSchema = Schema
     type NewCollection = ReturnType<typeof createCollection<MergedSchema>>
@@ -29,17 +29,16 @@ declare module '@tinycld/app-generated/package-collections' {
 
 declare module '@tinycld/app-generated/package-providers' {
     import type { ComponentType, ReactNode } from 'react'
+
     interface PackageProviderProps {
         children: ReactNode
     }
-    export const packageProviders: Record<
-        string,
-        ComponentType<PackageProviderProps> | null
-    >
+    export const packageProviders: Record<string, ComponentType<PackageProviderProps> | null>
 }
 
 declare module '@tinycld/app-generated/package-sidebars' {
     import type { ComponentType, LazyExoticComponent } from 'react'
+
     interface PackageSidebarProps {
         isCollapsed: boolean
     }

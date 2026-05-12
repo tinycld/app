@@ -1,6 +1,6 @@
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import type { ReactNode } from 'react'
 import { Pressable, View } from 'react-native'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 
 interface RowHoverActionsProps {
     /** Whether the row is currently hovered (web-only behavior). */
@@ -30,7 +30,13 @@ interface RowHoverActionsProps {
  * Tap handling (e.g. tapping a static star to toggle favourite) belongs in
  * `rest` itself.
  */
-export function RowHoverActions({ isHovered, rest, hover, width = 96, backgroundColor }: RowHoverActionsProps) {
+export function RowHoverActions({
+    isHovered,
+    rest,
+    hover,
+    width = 96,
+    backgroundColor,
+}: RowHoverActionsProps) {
     const themeBg = useThemeColor('background')
     const bg = backgroundColor ?? themeBg
 
@@ -43,7 +49,9 @@ export function RowHoverActions({ isHovered, rest, hover, width = 96, background
                 position: 'relative',
             }}
         >
-            <View style={isHovered ? { opacity: 0, pointerEvents: 'none' } : undefined}>{rest}</View>
+            <View style={isHovered ? { opacity: 0, pointerEvents: 'none' } : undefined}>
+                {rest}
+            </View>
             <Pressable
                 style={{
                     position: 'absolute',
@@ -55,7 +63,7 @@ export function RowHoverActions({ isHovered, rest, hover, width = 96, background
                     backgroundColor: bg,
                     ...(isHovered ? {} : { opacity: 0, pointerEvents: 'none' as const }),
                 }}
-                onPress={(e) => e.stopPropagation()}
+                onPress={e => e.stopPropagation()}
             >
                 {hover}
             </Pressable>

@@ -1,11 +1,11 @@
-import { useRouter } from 'expo-router'
-import { Ellipsis } from 'lucide-react-native'
-import { Pressable, Text, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useOrgSlug } from '@tinycld/core/lib/use-org-slug'
 import { useSortedPackages } from '@tinycld/core/lib/use-sorted-packages'
+import { useRouter } from 'expo-router'
+import { Ellipsis } from 'lucide-react-native'
+import { Pressable, Text, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getIcon } from './package-icon-map'
 
 export const MAX_VISIBLE_TABS = 4

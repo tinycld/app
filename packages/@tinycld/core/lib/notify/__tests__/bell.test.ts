@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { bellChannel } from '@tinycld/core/lib/notify/channels/bell'
 import { clearNotifyContext, setNotifyContext } from '@tinycld/core/lib/notify/context'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@tinycld/core/lib/pocketbase', () => ({
     notificationsCollection: {

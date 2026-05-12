@@ -1,16 +1,16 @@
-import { Platform, Pressable, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { DemoBanner } from '@tinycld/core/components/DemoBanner'
 import { NotificationDrawer } from '@tinycld/core/components/NotificationDrawer'
 import { usePackage } from '@tinycld/core/lib/packages/use-packages'
 import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { Platform, Pressable, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { FrozenStack } from './FrozenStack'
-import { useBreakpoint } from './useBreakpoint'
 import { MobileLayout } from './MobileLayout'
 import { PackageProviderWrapper } from './PackageProviderWrapper'
 import { PackageRail } from './PackageRail'
 import { PackageSidebar } from './PackageSidebar'
+import { useBreakpoint } from './useBreakpoint'
 
 const SIDEBAR_WIDTH = 260
 const RAIL_WIDTH = 64

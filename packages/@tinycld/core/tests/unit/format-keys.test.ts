@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { formatKeys } from '@tinycld/core/lib/shortcuts/keys'
+import { describe, expect, it } from 'vitest'
 
 describe('formatKeys', () => {
     it('splits sequences into separate atoms', () => {

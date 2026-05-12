@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
 import { useAccessiblePackages } from '@tinycld/core/lib/use-accessible-packages'
 import { useUserPreference } from '@tinycld/core/lib/use-user-preference'
+import { useMemo } from 'react'
 
 export function useSortedPackages() {
     const packages = useAccessiblePackages()
@@ -9,7 +9,7 @@ export function useSortedPackages() {
     return useMemo(() => {
         // Packages without a nav entry (e.g. settings-only contributors like
         // google-takeout-import) must not appear in the rail.
-        const navPackages = packages.filter((p) => p.nav)
+        const navPackages = packages.filter(p => p.nav)
         if (!pkgOrder.length) {
             return [...navPackages].sort((a, b) => (a.nav?.order ?? 99) - (b.nav?.order ?? 99))
         }

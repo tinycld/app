@@ -112,8 +112,8 @@ function PreviewModalContent({
                         </Pressable>
                     )}
                     {actions
-                        ?.filter((action) => action.isApplicable?.(source) ?? true)
-                        .map((action) => {
+                        ?.filter(action => action.isApplicable?.(source) ?? true)
+                        .map(action => {
                             const ActionIcon = action.icon
                             return (
                                 <Pressable
@@ -125,7 +125,10 @@ function PreviewModalContent({
                                     accessibilityLabel={action.label}
                                 >
                                     <ActionIcon size={16} color={mutedColor} />
-                                    <Text className="text-foreground" style={{ fontSize: 13, fontWeight: '500' }}>
+                                    <Text
+                                        className="text-foreground"
+                                        style={{ fontSize: 13, fontWeight: '500' }}
+                                    >
                                         {action.label}
                                     </Text>
                                 </Pressable>
@@ -142,7 +145,12 @@ function PreviewModalContent({
                 </View>
             </View>
             <View className="flex-1 overflow-hidden">
-                <PreviewComponent source={source} onClose={onClose} onNext={onNext} onPrevious={onPrevious} />
+                <PreviewComponent
+                    source={source}
+                    onClose={onClose}
+                    onNext={onNext}
+                    onPrevious={onPrevious}
+                />
             </View>
         </>
     )

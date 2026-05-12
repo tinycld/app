@@ -1,7 +1,6 @@
+import { captureException } from '@tinycld/core/lib/errors'
 import { useEffect } from 'react'
 import { Platform } from 'react-native'
-
-import { captureException } from '@tinycld/core/lib/errors'
 
 const RELOAD_THROTTLE_KEY = 'tinycld_chunk_reload_at'
 const RELOAD_THROTTLE_MS = 30 * 1000

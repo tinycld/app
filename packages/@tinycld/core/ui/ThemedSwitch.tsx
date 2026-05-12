@@ -1,5 +1,5 @@
-import { Switch, type SwitchProps } from 'react-native'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { Switch, type SwitchProps } from 'react-native'
 
 export function ThemedSwitch(props: SwitchProps) {
     const borderColor = useThemeColor('border')

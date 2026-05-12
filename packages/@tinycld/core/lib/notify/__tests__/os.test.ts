@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
 import { osChannel } from '@tinycld/core/lib/notify/channels/os'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@tinycld/core/lib/notifications', () => ({
     notify: vi.fn(() => Promise.resolve()),

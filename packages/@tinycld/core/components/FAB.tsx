@@ -1,6 +1,6 @@
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import type { LucideIcon } from 'lucide-react-native'
 import { Pressable } from 'react-native'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 
 interface FABProps {
     icon: LucideIcon

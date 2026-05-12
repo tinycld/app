@@ -6,13 +6,14 @@
  * Packages can register additional viewers (or override these) by calling
  * registerPreview() at module load time.
  */
-import { registerPreview } from './registry'
+
 import { AudioPreview } from './previews/AudioPreview'
 import { CodePreview } from './previews/CodePreview'
 import { GenericPreview } from './previews/GenericPreview'
 import { ImagePreview } from './previews/ImagePreview'
 import { PdfPreview } from './previews/PdfPreview'
 import { VideoPreview } from './previews/VideoPreview'
+import { registerPreview } from './registry'
 
 registerPreview('image/*', { preview: ImagePreview })
 registerPreview('application/pdf', { preview: PdfPreview })

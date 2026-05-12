@@ -25,7 +25,7 @@ export function PdfCanvasViewer({ url }: { url: string }) {
                 source={{ uri: url, cache: true }}
                 style={pdfStyle}
                 trustAllCerts={false}
-                onError={(err) => {
+                onError={err => {
                     captureException(err instanceof Error ? err : new Error(String(err)))
                     setErrored(true)
                 }}

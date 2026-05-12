@@ -1,7 +1,7 @@
-import Constants from 'expo-constants'
-import { Linking, Pressable, Text, View } from 'react-native'
 import { getCoreConfigOptional } from '@tinycld/core/lib/core-config'
 import { getResolvedAddress } from '@tinycld/core/lib/server-address'
+import Constants from 'expo-constants'
+import { Linking, Pressable, Text, View } from 'react-native'
 
 const DEFAULT_PRIVACY_URL = 'https://tinycld.org/privacy'
 const DEFAULT_SOURCE_URL = 'https://github.com/tinycld/tinycld'

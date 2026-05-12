@@ -1,8 +1,7 @@
-import { useEffect } from 'react'
-import { Platform } from 'react-native'
-
 import { checkVersion } from '@tinycld/core/lib/check-version'
 import { useVersionStore } from '@tinycld/core/lib/stores/version-store'
+import { useEffect } from 'react'
+import { Platform } from 'react-native'
 
 const POLL_INTERVAL_MS = 60 * 60 * 1000
 

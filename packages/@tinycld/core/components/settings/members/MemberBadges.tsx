@@ -1,6 +1,6 @@
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { Clock } from 'lucide-react-native'
 import { Text, View } from 'react-native'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { type OrgRole, ROLE_LABELS, ROLE_SWATCH } from './types'
 
 export function RoleBadge({ role, size = 'md' }: { role: OrgRole; size?: 'sm' | 'md' }) {

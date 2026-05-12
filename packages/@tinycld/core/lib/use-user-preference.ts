@@ -1,10 +1,10 @@
 import { and, eq } from '@tanstack/db'
 import { useLiveQuery } from '@tanstack/react-db'
-import { newRecordId } from 'pbtsdb/core'
-import { useCallback } from 'react'
 import { useAuth } from '@tinycld/core/lib/auth'
 import { mutation, useMutation } from '@tinycld/core/lib/mutations'
 import { useStore } from '@tinycld/core/lib/pocketbase'
+import { newRecordId } from 'pbtsdb/core'
+import { useCallback } from 'react'
 
 export function useUserPreference<T>(
     app: string,
@@ -39,12 +39,11 @@ export function useUserPreference<T>(
     // back, manifesting as the UI flipping to the new value and snapping back.
     const upsert = useMutation({
         mutationFn: mutation(function* (newValue: T) {
-            const current = userPreferencesCollection
-                .toArray.find(
-                    (r) => r.app === app && r.key === key && r.user === user.id
-                )
+            const current = userPreferencesCollection.toArray.find(
+                r => r.app === app && r.key === key && r.user === user.id
+            )
             if (current) {
-                yield userPreferencesCollection.update(current.id, (draft) => {
+                yield userPreferencesCollection.update(current.id, draft => {
                     draft.value = newValue
                 })
             } else {

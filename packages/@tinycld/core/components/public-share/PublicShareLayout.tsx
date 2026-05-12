@@ -6,7 +6,7 @@ import { Download, FileIcon } from 'lucide-react-native'
 import type { ReactNode } from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import { DefaultPublicPreviewFrame } from './DefaultPublicPreviewFrame'
-import { type PublicShareMetadata, PublicShareError } from './types'
+import { PublicShareError, type PublicShareMetadata } from './types'
 
 export interface PublicShareLayoutProps {
     /**
@@ -34,7 +34,11 @@ export interface PublicShareLayoutProps {
  * web and native). Packages plug in their own metadata fetcher and, if they
  * want, a custom preview body.
  */
-export function PublicShareLayout({ queryKey, fetchMetadata, renderPreview }: PublicShareLayoutProps) {
+export function PublicShareLayout({
+    queryKey,
+    fetchMetadata,
+    renderPreview,
+}: PublicShareLayoutProps) {
     const { data, isLoading, error } = useQuery<PublicShareMetadata>({
         queryKey,
         queryFn: fetchMetadata,
@@ -63,7 +67,12 @@ export function PublicShareLayout({ queryKey, fetchMetadata, renderPreview }: Pu
             <Modal isOpen onClose={() => {}}>
                 <ModalBackdrop />
                 <ModalContent className="w-[95vw] h-[90vh] max-w-[1400px] p-0 rounded-xl overflow-hidden">
-                    <PreviewHeader name={data.name} orgName={data.org_name} fileUrl={data.file_url} mimeType={data.mime_type} />
+                    <PreviewHeader
+                        name={data.name}
+                        orgName={data.org_name}
+                        fileUrl={data.file_url}
+                        mimeType={data.mime_type}
+                    />
                     <View className="flex-1 overflow-hidden">{preview}</View>
                 </ModalContent>
             </Modal>
@@ -125,11 +134,19 @@ function PreviewHeader({
     return (
         <View className="flex-row items-center px-4 py-3 gap-3 border-b border-border">
             <View className="flex-1 gap-1">
-                <Text numberOfLines={1} className="text-foreground" style={{ fontSize: 16, fontWeight: '600' }}>
+                <Text
+                    numberOfLines={1}
+                    className="text-foreground"
+                    style={{ fontSize: 16, fontWeight: '600' }}
+                >
                     {name}
                 </Text>
                 {orgName ? (
-                    <Text numberOfLines={1} className="text-muted-foreground" style={{ fontSize: 12 }}>
+                    <Text
+                        numberOfLines={1}
+                        className="text-muted-foreground"
+                        style={{ fontSize: 12 }}
+                    >
                         Shared from {orgName}
                     </Text>
                 ) : null}

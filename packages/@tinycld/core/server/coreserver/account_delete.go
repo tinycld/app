@@ -103,7 +103,7 @@ func handleAccountDelete(app core.App, re *core.RequestEvent) error {
 		}
 
 		authRecord.SetEmail(sentinelEmail)
-		authRecord.Set("name", "")
+		authRecord.Set("name", "Deleted user")
 		authRecord.Set("avatar", "")
 		authRecord.SetVerified(false)
 		authRecord.SetPassword(randomPwd)

@@ -1,8 +1,8 @@
-import { Link, usePathname } from 'expo-router'
-import { ActivityIndicator } from 'react-native'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
 import { useTakeoutImportStore } from '@tinycld/core/lib/stores/takeout-import-store'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { Link, usePathname } from 'expo-router'
+import { ActivityIndicator } from 'react-native'
 
 export function ImportIndicator() {
     const phase = useTakeoutImportStore(s => s.phase)

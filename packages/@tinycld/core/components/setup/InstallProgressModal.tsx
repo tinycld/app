@@ -1,8 +1,8 @@
+import { PB_SERVER_ADDR } from '@tinycld/core/lib/config'
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { Check, CircleAlert, Loader2 } from 'lucide-react-native'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { PB_SERVER_ADDR } from '@tinycld/core/lib/config'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 
 interface ProgressStep {
     step: string

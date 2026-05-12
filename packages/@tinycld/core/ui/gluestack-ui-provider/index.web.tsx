@@ -44,7 +44,6 @@ export function GluestackUIProvider({
         <>
             <script
                 suppressHydrationWarning
-                // biome-ignore lint/security/noDangerouslySetInnerHtml: GlueStack generated theme script
                 dangerouslySetInnerHTML={{
                     __html: `(${script.toString()})('${mode}','${colorTheme ?? ''}')`,
                 }}

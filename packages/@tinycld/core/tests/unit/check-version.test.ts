@@ -1,6 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
 import { useVersionStore } from '@tinycld/core/lib/stores/version-store'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 async function importCheckVersion() {
     return await import('@tinycld/core/lib/check-version')

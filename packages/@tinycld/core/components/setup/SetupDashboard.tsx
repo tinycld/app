@@ -1,14 +1,14 @@
 import { packageRegistry } from '@tinycld/app-generated/package-registry'
-import { ChevronDown, ChevronRight, ExternalLink } from 'lucide-react-native'
-import type PocketBase from 'pocketbase'
-import { useCallback, useEffect, useState } from 'react'
-import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import { deriveUsername } from '@tinycld/core/lib/derive-username'
 import { captureException } from '@tinycld/core/lib/errors'
 import { pb as appPb } from '@tinycld/core/lib/pocketbase'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { Divider } from '@tinycld/core/ui/divider'
 import { FormErrorSummary, TextInput, useForm, z, zodResolver } from '@tinycld/core/ui/form'
+import { ChevronDown, ChevronRight, ExternalLink } from 'lucide-react-native'
+import type PocketBase from 'pocketbase'
+import { useCallback, useEffect, useState } from 'react'
+import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import { PackageManager } from './PackageManager'
 
 const mailInstalled = packageRegistry.some(p => p.slug === 'mail')

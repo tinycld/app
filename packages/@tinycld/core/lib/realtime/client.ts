@@ -125,7 +125,7 @@ export class RealtimeClient {
             // The MSG_ASSIGN_ID handler kicks off the sync request.
         }
 
-        ws.onmessage = (evt) => {
+        ws.onmessage = evt => {
             this.onFrame(new Uint8Array(evt.data as ArrayBuffer))
         }
 

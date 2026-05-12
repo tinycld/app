@@ -1,6 +1,3 @@
-import { useRouter } from 'expo-router'
-import { LogOut, Settings, User } from 'lucide-react-native'
-import { Pressable, Text, View } from 'react-native'
 import { MenuActionItem } from '@tinycld/core/components/DropdownMenu'
 import { OrgLogo } from '@tinycld/core/components/OrgLogo'
 import { useAuth } from '@tinycld/core/lib/auth'
@@ -9,6 +6,9 @@ import { getOrgHrefString, navigateToOrg } from '@tinycld/core/lib/org-url'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useOrgSlug } from '@tinycld/core/lib/use-org-slug'
 import { Menu, Separator } from '@tinycld/core/ui/menu'
+import { useRouter } from 'expo-router'
+import { LogOut, Settings, User } from 'lucide-react-native'
+import { Pressable, Text, View } from 'react-native'
 import { useUserOrgs } from './useUserOrgs'
 
 export function UserMenu() {

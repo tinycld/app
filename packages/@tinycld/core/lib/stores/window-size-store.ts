@@ -1,5 +1,5 @@
-import { Dimensions } from 'react-native'
 import { create } from '@tinycld/core/lib/store'
+import { Dimensions } from 'react-native'
 
 export interface WindowSizeState {
     width: number
@@ -23,7 +23,7 @@ function readInitialSize(): { width: number; height: number } {
 
 const initial = readInitialSize()
 
-export const useWindowSizeStore = create<WindowSizeState>()((set) => ({
+export const useWindowSizeStore = create<WindowSizeState>()(set => ({
     width: initial.width,
     height: initial.height,
     setSize: (width, height) => set({ width, height }),

@@ -1,7 +1,7 @@
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { GripVertical } from 'lucide-react-native'
 import { useEffect, useRef } from 'react'
 import { Platform, Pressable, View } from 'react-native'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 
 interface DragHandleProps {
     drag: () => void

@@ -1,3 +1,8 @@
+import { ChangeServerLink } from '@tinycld/core/components/ChangeServerLink'
+import { ReviewModeHints } from '@tinycld/core/components/connect/ReviewModeHints'
+import { useAuth } from '@tinycld/core/lib/auth'
+import { navigateToOrg } from '@tinycld/core/lib/org-url'
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useState } from 'react'
 import {
     ActivityIndicator,
@@ -8,11 +13,6 @@ import {
     TextInput,
     View,
 } from 'react-native'
-import { ChangeServerLink } from '@tinycld/core/components/ChangeServerLink'
-import { ReviewModeHints } from '@tinycld/core/components/connect/ReviewModeHints'
-import { useAuth } from '@tinycld/core/lib/auth'
-import { navigateToOrg } from '@tinycld/core/lib/org-url'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 
 export function LoginModal() {
     const mutedColor = useThemeColor('muted-foreground')

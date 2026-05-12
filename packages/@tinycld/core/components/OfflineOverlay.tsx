@@ -1,11 +1,11 @@
-import { router } from 'expo-router'
-import { ServerOff, WifiOff } from 'lucide-react-native'
-import { useEffect } from 'react'
-import { Platform, Pressable, Text, View } from 'react-native'
 import { disconnectServer } from '@tinycld/core/lib/pocketbase'
 import { getResolvedAddress, probe } from '@tinycld/core/lib/server-address'
 import { useConnectivityStore } from '@tinycld/core/lib/stores/connectivity-store'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { router } from 'expo-router'
+import { ServerOff, WifiOff } from 'lucide-react-native'
+import { useEffect } from 'react'
+import { Platform, Pressable, Text, View } from 'react-native'
 
 const RECHECK_INTERVAL_MS = 5_000
 const PROBE_TIMEOUT_MS = 3_000
@@ -53,7 +53,7 @@ export function OfflineOverlay() {
     //   the most common cause. Show the address and a way to change it.
     const deviceOffline = !isOnline
     const address = getResolvedAddress()
-    const addressLabel = address ? hostLabel(address) ?? address : null
+    const addressLabel = address ? (hostLabel(address) ?? address) : null
 
     const isWeb = Platform.OS === 'web'
     const fillStyle = isWeb

@@ -72,7 +72,10 @@ export function computeNextSnapshot(
 // while the user is typing in a TextInput. On native the registry
 // provider is a no-op, which is fine: there's no hardware keyboard to
 // listen for and the toolbar buttons are the in-app alternative.
-export function useYUndoManager(doc: Y.Doc | null, options: UseYUndoManagerOptions): UndoManagerState {
+export function useYUndoManager(
+    doc: Y.Doc | null,
+    options: UseYUndoManagerOptions
+): UndoManagerState {
     const { scope, captureTimeoutMs = 500 } = options
 
     // Holds the live manager so the snapshot getter, subscribe
@@ -89,6 +92,7 @@ export function useYUndoManager(doc: Y.Doc | null, options: UseYUndoManagerOptio
     // needs to re-read the snapshot against the new manager).
     const subscribersRef = useRef<Set<() => void>>(new Set())
 
+    // biome-ignore lint/correctness/useExhaustiveDependencies: scope is intentionally captured by closure on first mount; remounting on every render would tear down and recreate the UndoManager (and its undo stack) constantly.
     useEffect(() => {
         if (doc == null) return
         if (typeof window === 'undefined') return
@@ -131,7 +135,6 @@ export function useYUndoManager(doc: Y.Doc | null, options: UseYUndoManagerOptio
             // manager (snapshot collapses back to {false,false}).
             for (const cb of subscribersRef.current) cb()
         }
-        // biome-ignore lint/correctness/useExhaustiveDependencies: scope is intentionally captured by closure on first mount; remounting on every render would tear down and recreate the UndoManager (and its undo stack) constantly.
     }, [doc, captureTimeoutMs])
 
     const subscribe = useCallback((cb: () => void) => {

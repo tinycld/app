@@ -1,8 +1,15 @@
+import { OrgLogo } from '@tinycld/core/components/OrgLogo'
+import { useAuth } from '@tinycld/core/lib/auth'
+import { useOrgHref } from '@tinycld/core/lib/org-routes'
+import { navigateToOrg } from '@tinycld/core/lib/org-url'
+import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
+import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
+import { useOrgSlug } from '@tinycld/core/lib/use-org-slug'
+import { useSortedPackages } from '@tinycld/core/lib/use-sorted-packages'
 import { useRouter } from 'expo-router'
 import { Bell, LogOut, Settings, User, X } from 'lucide-react-native'
 import { useCallback, useEffect, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { OrgLogo } from '@tinycld/core/components/OrgLogo'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
     runOnJS,
@@ -11,13 +18,6 @@ import Animated, {
     withSpring,
     withTiming,
 } from 'react-native-reanimated'
-import { useAuth } from '@tinycld/core/lib/auth'
-import { useOrgHref } from '@tinycld/core/lib/org-routes'
-import { navigateToOrg } from '@tinycld/core/lib/org-url'
-import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
-import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
-import { useOrgSlug } from '@tinycld/core/lib/use-org-slug'
-import { useSortedPackages } from '@tinycld/core/lib/use-sorted-packages'
 import { MAX_VISIBLE_TABS } from './MobileTabBar'
 import { getIcon } from './package-icon-map'
 import { useUserOrgs } from './useUserOrgs'
@@ -155,10 +155,7 @@ export function MoreDrawer() {
                             }}
                         >
                             <Bell size={20} color={textColor} />
-                            <Text
-                                className="text-base font-medium"
-                                style={{ color: textColor }}
-                            >
+                            <Text className="text-base font-medium" style={{ color: textColor }}>
                                 Notifications
                             </Text>
                         </Pressable>
@@ -170,10 +167,7 @@ export function MoreDrawer() {
                             }
                         >
                             <Settings size={20} color={textColor} />
-                            <Text
-                                className="text-base font-medium"
-                                style={{ color: textColor }}
-                            >
+                            <Text className="text-base font-medium" style={{ color: textColor }}>
                                 Settings
                             </Text>
                         </Pressable>
@@ -228,10 +222,7 @@ export function MoreDrawer() {
                             onPress={() => handleNav(logout)}
                         >
                             <LogOut size={20} color={textColor} />
-                            <Text
-                                className="text-base font-medium"
-                                style={{ color: textColor }}
-                            >
+                            <Text className="text-base font-medium" style={{ color: textColor }}>
                                 Sign out
                             </Text>
                         </Pressable>

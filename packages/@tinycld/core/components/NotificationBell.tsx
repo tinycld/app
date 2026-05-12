@@ -1,9 +1,9 @@
 import { and, eq } from '@tanstack/db'
-import { Bell } from 'lucide-react-native'
-import { Pressable, Text, View } from 'react-native'
 import { useStore } from '@tinycld/core/lib/pocketbase'
 import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
+import { Bell } from 'lucide-react-native'
+import { Pressable, Text, View } from 'react-native'
 
 export function NotificationBell({ color }: { color: string }) {
     const [notificationsCollection] = useStore('notifications')

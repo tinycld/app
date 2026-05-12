@@ -48,7 +48,8 @@ export function documentAssetToPickedFile(asset: DocumentAssetLike): PickedFile 
 
 export function imageAssetToPickedFile(asset: ImageAssetLike): PickedFile {
     const fallbackExt = asset.mimeType?.split('/')[1] ?? (asset.type === 'video' ? 'mp4' : 'jpg')
-    const name = asset.fileName ?? deriveNameFromUri(asset.uri) ?? `IMG_${Date.now()}.${fallbackExt}`
+    const name =
+        asset.fileName ?? deriveNameFromUri(asset.uri) ?? `IMG_${Date.now()}.${fallbackExt}`
     const type = asset.mimeType ?? (asset.type === 'video' ? 'video/mp4' : 'image/jpeg')
     const size = asset.fileSize ?? 0
     return wrapAsFile({ uri: asset.uri, name, type, size })
