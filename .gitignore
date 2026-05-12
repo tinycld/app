@@ -27,6 +27,7 @@ bun.lockb
 
 # Local Claude Code / superpowers state
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
 .superpowers/
 
 # Local PocketBase data
