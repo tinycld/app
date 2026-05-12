@@ -15,6 +15,21 @@ export interface AuditLogs {
     updated: string
 }
 
+export interface CalcComments {
+    id: string
+    drive_item: string
+    sheet_id: string
+    row: number
+    col: number
+    body: string
+    resolved_at: string
+    author: string
+    author_name: string
+    created: string
+    updated: string
+    parent_comment: string
+}
+
 export interface CalendarCalendars {
     id: string
     org: string
@@ -453,6 +468,15 @@ export type Schema = {
             actor?: Users
         }
     }
+    calc_comments: {
+        type: CalcComments
+        relations: {
+            drive_item: DriveItems
+            author: UserOrg
+            parent_comment?: CalcComments
+            // calc_comments_via_parent_comment?: CalcComments[]
+        }
+    }
     calendar_calendars: {
         type: CalendarCalendars
         relations: {
@@ -501,6 +525,7 @@ export type Schema = {
     drive_items: {
         type: DriveItems
         relations: {
+            // calc_comments_via_drive_item?: CalcComments[]
             // drive_item_state_via_item?: DriveItemState[]
             // drive_item_versions_via_item?: DriveItemVersions[]
             org: Orgs
@@ -674,6 +699,7 @@ export type Schema = {
     user_org: {
         type: UserOrg
         relations: {
+            // calc_comments_via_author?: CalcComments[]
             // calendar_events_via_created_by?: CalendarEvents[]
             // calendar_members_via_user_org?: CalendarMembers[]
             // contacts_via_owner?: Contacts[]
