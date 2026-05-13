@@ -1,43 +1,59 @@
 #!/usr/bin/env bash
-# Wrapper for `expo run:ios` that targets a simulator UDID configured in
-# ../.env. Defaults to the iPhone simulator; pass --ipad to target the iPad
-# simulator instead. Any other flags are forwarded to expo (e.g. --no-bundler).
+# Wrapper for `expo run:ios` that targets a simulator UDID. By default reads
+# the UDID from ../.env (IPHONE_SIMULATOR_UDID or IPAD_SIMULATOR_UDID); pass
+# --ipad to switch to the iPad env var, or --udid <UDID> to skip the env file
+# entirely and target an explicit simulator. Any other flags are forwarded to
+# expo (e.g. --no-bundler).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ENV_FILE="$ROOT/../.env"
 
 DEVICE="iphone"
+UDID_OVERRIDE=""
 EXTRA_ARGS=()
-for arg in "$@"; do
-    case "$arg" in
-        --ipad) DEVICE="ipad" ;;
-        --iphone) DEVICE="iphone" ;;
-        *) EXTRA_ARGS+=("$arg") ;;
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --ipad) DEVICE="ipad"; shift ;;
+        --iphone) DEVICE="iphone"; shift ;;
+        --udid)
+            if [ $# -lt 2 ]; then
+                echo "ios-simulator: --udid requires a value" >&2
+                exit 1
+            fi
+            UDID_OVERRIDE="$2"
+            shift 2
+            ;;
+        --udid=*) UDID_OVERRIDE="${1#--udid=}"; shift ;;
+        *) EXTRA_ARGS+=("$1"); shift ;;
     esac
 done
 
-if [ ! -f "$ENV_FILE" ]; then
-    echo "ios-simulator: $ENV_FILE not found" >&2
-    exit 1
-fi
-
-set -a
-# shellcheck disable=SC1090
-source "$ENV_FILE"
-set +a
-
-if [ "$DEVICE" = "ipad" ]; then
-    UDID="${IPAD_SIMULATOR_UDID:-}"
-    UDID_VAR="IPAD_SIMULATOR_UDID"
+if [ -n "$UDID_OVERRIDE" ]; then
+    UDID="$UDID_OVERRIDE"
 else
-    UDID="${IPHONE_SIMULATOR_UDID:-}"
-    UDID_VAR="IPHONE_SIMULATOR_UDID"
-fi
+    if [ ! -f "$ENV_FILE" ]; then
+        echo "ios-simulator: $ENV_FILE not found (pass --udid <UDID> to bypass)" >&2
+        exit 1
+    fi
 
-if [ -z "$UDID" ]; then
-    echo "ios-simulator: $UDID_VAR not set in $ENV_FILE" >&2
-    exit 1
+    set -a
+    # shellcheck disable=SC1090
+    source "$ENV_FILE"
+    set +a
+
+    if [ "$DEVICE" = "ipad" ]; then
+        UDID="${IPAD_SIMULATOR_UDID:-}"
+        UDID_VAR="IPAD_SIMULATOR_UDID"
+    else
+        UDID="${IPHONE_SIMULATOR_UDID:-}"
+        UDID_VAR="IPHONE_SIMULATOR_UDID"
+    fi
+
+    if [ -z "$UDID" ]; then
+        echo "ios-simulator: $UDID_VAR not set in $ENV_FILE (pass --udid <UDID> to override)" >&2
+        exit 1
+    fi
 fi
 
 cd "$ROOT"
