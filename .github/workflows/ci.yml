@@ -12,20 +12,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: oven-sh/setup-bun@v2
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.1
       - uses: actions/setup-node@v5
         with:
           node-version-file: .node-version
+          cache: pnpm
       - uses: actions/setup-go@v6
         with:
           go-version-file: server/go.mod
           cache-dependency-path: server/go.sum
-      - run: bun install
+      - run: pnpm install --frozen-lockfile
       - name: Generate PB schema types
         run: |
           cd server && go build -o tinycld .
           ./tinycld --dev serve &
           sleep 3
           kill %1 2>/dev/null || true
-      - run: bun run checks
-      - run: bun run test:unit
+      - run: pnpm run checks
+      - run: pnpm run test:unit

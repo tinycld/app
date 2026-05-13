@@ -136,7 +136,7 @@ export function unlinkPackage(packageName: string): void {
 }
 
 function execGenerate(): void {
-    execSync('bun run packages:generate', { cwd: ROOT, stdio: 'inherit' })
+    execSync('pnpm run packages:generate', { cwd: ROOT, stdio: 'inherit' })
 }
 
 if (isMainModule()) {

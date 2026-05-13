@@ -296,7 +296,7 @@ function resolveSiblingName(moduleName) {
 
 // Sibling packages — including @tinycld/core — must have no node_modules of
 // their own; they resolve every import through this repo's install. We do
-// NOT add core's node_modules as a backstop: when a stray `bun install` in
+// NOT add core's node_modules as a backstop: when a stray `pnpm install` in
 // core leaves a node_modules/ behind, that fallback would feed duplicate
 // copies of every shared package (react, react-native-web, uniwind, …) into
 // Metro's graph and produce broken self-referential modules at runtime.

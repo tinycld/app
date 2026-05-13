@@ -1,11 +1,11 @@
-#!/usr/bin/env bunx tsx
+#!/usr/bin/env -S pnpm exec tsx
 /**
  * Database Seed Script
  *
  * Populates the PocketBase database with a target user, org, and package data.
  *
  * Usage:
- *   bunx tsx scripts/seed-db.ts [options]
+ *   pnpm exec tsx scripts/seed-db.ts [options]
  *
  * Options:
  *   --mode <test|demo>     Preset (default: test)
