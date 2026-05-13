@@ -1,12 +1,14 @@
 # Extract Packages to Sibling Repos Implementation Plan
 
+> **⚠️ Historical / superseded.** Frozen project plan from April 2026. The narrative below references Bun as the project package manager — the project has since migrated to pnpm. Command samples that read `bun run` / `bunx` should be read as `pnpm run` / `pnpm exec`; lockfile references should be read as `pnpm-lock.yaml`. Kept for historical context.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Move `@tinycld/contacts`, `@tinycld/mail`, `@tinycld/calendar`, `@tinycld/drive` out of core into sibling git repos, linked in at dev time via `bun link`. Core becomes a lean shell that works with zero packages.
+**Goal:** Move `@tinycld/contacts`, `@tinycld/mail`, `@tinycld/calendar`, `@tinycld/drive` out of core into sibling git repos, linked in at dev time via `pnpm link`. Core becomes a lean shell that works with zero packages.
 
 **Architecture:** Two generator bug fixes make symlinks resilient when a package's on-disk location changes. A new `scripts/link-package.ts` wraps the seven-step link/unlink dance. Each package is then extracted to `../<slug>/` via `git subtree split` (preserving history), linked back, and removed from core's tree.
 
-**Tech Stack:** TypeScript, bun 1.3.12 (`bun link` / `bun unlink`), tsx, vitest, git subtree.
+**Tech Stack:** TypeScript, bun 1.3.12 (`pnpm link` / `pnpm unlink`), tsx, vitest, git subtree.
 
 **Spec:** `docs/superpowers/specs/2026-04-18-extract-packages-to-sibling-repos-design.md`
 
@@ -112,7 +114,7 @@ describe('replaceSymlink', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `bunx vitest run tests/unit/generate-packages-symlinks.test.ts`
+Run: `pnpm exec vitest run tests/unit/generate-packages-symlinks.test.ts`
 
 Expected: FAIL with "Cannot find module" or "`replaceSymlink` is not exported" — the function doesn't exist yet.
 
@@ -179,19 +181,19 @@ Delete the now-unused `symlinkOrFileExists` function (was at lines 186-193).
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `bunx vitest run tests/unit/generate-packages-symlinks.test.ts`
+Run: `pnpm exec vitest run tests/unit/generate-packages-symlinks.test.ts`
 
 Expected: PASS, four tests green.
 
 - [ ] **Step 5: Verify the full generator still runs**
 
-Run: `bun run packages:generate`
+Run: `pnpm run packages:generate`
 
 Expected: exits 0 with no output (success). Confirms no regression in the real run against current in-tree packages.
 
 - [ ] **Step 6: Run typecheck + lint**
 
-Run: `bun run checks`
+Run: `pnpm run checks`
 
 Expected: PASS.
 
@@ -256,7 +258,7 @@ describe('createSymlinks tracking', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `bunx vitest run tests/unit/generate-packages-symlinks.test.ts -t "reports every"`
+Run: `pnpm exec vitest run tests/unit/generate-packages-symlinks.test.ts -t "reports every"`
 
 Expected: FAIL — `createSymlinksAt` doesn't exist yet.
 
@@ -317,13 +319,13 @@ Note: `replaceSymlink` (from Task 1) already early-returns when the symlink is c
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `bunx vitest run tests/unit/generate-packages-symlinks.test.ts`
+Run: `pnpm exec vitest run tests/unit/generate-packages-symlinks.test.ts`
 
 Expected: PASS, five tests green.
 
 - [ ] **Step 5: Verify full generator still runs**
 
-Run: `bun run packages:generate && bun run checks`
+Run: `pnpm run packages:generate && pnpm run checks`
 
 Expected: PASS.
 
@@ -426,7 +428,7 @@ describe('package-list', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `bunx vitest run tests/unit/package-list.test.ts`
+Run: `pnpm exec vitest run tests/unit/package-list.test.ts`
 
 Expected: FAIL — `scripts/package-list` does not exist.
 
@@ -478,13 +480,13 @@ export function removePackage(filePath: string, pkg: string): void {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `bunx vitest run tests/unit/package-list.test.ts`
+Run: `pnpm exec vitest run tests/unit/package-list.test.ts`
 
 Expected: PASS, seven tests green.
 
 - [ ] **Step 5: Run full typecheck**
 
-Run: `bun run checks`
+Run: `pnpm run checks`
 
 Expected: PASS.
 
@@ -589,7 +591,7 @@ describe('link-package helpers', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `bunx vitest run tests/unit/link-package.test.ts`
+Run: `pnpm exec vitest run tests/unit/link-package.test.ts`
 
 Expected: FAIL — module does not exist.
 
@@ -656,11 +658,11 @@ export function linkPackage(slug: string, overridePath?: string): void {
     const siblingDir = resolveSiblingDir(ROOT, slug, overridePath)
     validateSiblingPackage(siblingDir, slug)
 
-    run('bun link', siblingDir)
+    run('pnpm link', siblingDir)
     removeExistingInstall(slug)
-    run(`bun link @tinycld/${slug}`, ROOT)
+    run(`pnpm link @tinycld/${slug}`, ROOT)
     addPackage(PACKAGES_FILE, `@tinycld/${slug}`)
-    run('bun run packages:generate', ROOT)
+    run('pnpm run packages:generate', ROOT)
 }
 
 export function unlinkPackage(slug: string, overridePath?: string): void {
@@ -670,13 +672,13 @@ export function unlinkPackage(slug: string, overridePath?: string): void {
     const siblingDir = resolveSiblingDir(ROOT, slug, overridePath)
     if (fs.existsSync(siblingDir)) {
         try {
-            run('bun unlink', siblingDir)
+            run('pnpm unlink', siblingDir)
         } catch {
-            // sibling may not have been `bun link`-ed; ignore
+            // sibling may not have been `pnpm link`-ed; ignore
         }
     }
 
-    run('bun run packages:generate', ROOT)
+    run('pnpm run packages:generate', ROOT)
 }
 
 const [mode, slug, overridePath] = process.argv.slice(2)
@@ -695,7 +697,7 @@ if (mode === 'link') {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `bunx vitest run tests/unit/link-package.test.ts`
+Run: `pnpm exec vitest run tests/unit/link-package.test.ts`
 
 Expected: PASS, six tests green.
 
@@ -704,13 +706,13 @@ Expected: PASS, six tests green.
 Edit `package.json` to add two scripts alongside the existing `packages:generate`:
 
 ```json
-"packages:link": "bunx tsx scripts/link-package.ts link",
-"packages:unlink": "bunx tsx scripts/link-package.ts unlink",
+"packages:link": "pnpm exec tsx scripts/link-package.ts link",
+"packages:unlink": "pnpm exec tsx scripts/link-package.ts unlink",
 ```
 
 - [ ] **Step 6: Run full check suite**
 
-Run: `bun run checks`
+Run: `pnpm run checks`
 
 Expected: PASS.
 
@@ -725,7 +727,7 @@ git commit -m "feat(scripts): add packages:link and packages:unlink commands"
 
 ## Task 5: End-to-End Smoke Test of the Link Flow
 
-**Files:** none created — this is a manual verification task that exercises real `bun link` against a copied-out package, mirroring the 2026-04-18 PoC. Catches anything the unit tests miss (global link registry interaction, generator resolution through the link, live edit propagation).
+**Files:** none created — this is a manual verification task that exercises real `pnpm link` against a copied-out package, mirroring the 2026-04-18 PoC. Catches anything the unit tests miss (global link registry interaction, generator resolution through the link, live edit propagation).
 
 - [ ] **Step 1: Copy `contacts` to a sibling location as a throwaway**
 
@@ -744,7 +746,7 @@ rm -f node_modules/@tinycld/contacts
 - [ ] **Step 3: Run the new link command**
 
 ```bash
-bun run packages:link contacts ../contacts-smoke
+pnpm run packages:link contacts ../contacts-smoke
 ```
 
 Expected: exits 0. `node_modules/@tinycld/contacts` is a symlink to `../contacts-smoke`. `tinycld.packages.ts` still lists `@tinycld/contacts`.
@@ -760,7 +762,7 @@ Expected output: a path containing `contacts-smoke/pb-migrations/…`.
 - [ ] **Step 5: Verify typecheck passes**
 
 ```bash
-bun run typecheck
+pnpm run typecheck
 ```
 
 Expected: PASS.
@@ -777,12 +779,12 @@ Expected: the appended comment is visible through the symlink.
 - [ ] **Step 7: Unlink and restore**
 
 ```bash
-bun run packages:unlink contacts ../contacts-smoke
+pnpm run packages:unlink contacts ../contacts-smoke
 mv packages/.contacts-hidden packages/contacts
 rm -rf ../contacts-smoke
-bun install
-bun run packages:generate
-bun run checks
+pnpm install
+pnpm run packages:generate
+pnpm run checks
 ```
 
 Expected: last three commands all exit 0. `git status` clean except for any test-only changes.
@@ -820,7 +822,7 @@ git pull /Users/nas/code/tinycld/core extract/contacts
 
 Expected: `../contacts/` is a git repo containing `manifest.ts`, `package.json`, etc., with history preserved.
 
-- [ ] **Step 3: Verify the sibling is well-formed (no `bun install`!)**
+- [ ] **Step 3: Verify the sibling is well-formed (no `pnpm install`!)**
 
 ```bash
 cd ../contacts
@@ -830,7 +832,7 @@ cd -
 
 Expected: `ok`.
 
-**Do NOT run `bun install` in the sibling.** bun auto-installs peer deps, which creates a duplicate of `react`, `react-native`, `pbtsdb`, `@tanstack/db`, etc. inside the sibling's `node_modules/`. Once linked into core, TypeScript sees two copies of every type and emits hundreds of "Type X is not assignable to type X" errors. The sibling inherits peer deps through core's `node_modules/` via the `bun link` symlink — that is the only copy that should exist.
+**Do NOT run `pnpm install` in the sibling.** bun auto-installs peer deps, which creates a duplicate of `react`, `react-native`, `pbtsdb`, `@tanstack/db`, etc. inside the sibling's `node_modules/`. Once linked into core, TypeScript sees two copies of every type and emits hundreds of "Type X is not assignable to type X" errors. The sibling inherits peer deps through core's `node_modules/` via the `pnpm link` symlink — that is the only copy that should exist.
 
 If `node_modules/` already exists in the sibling (e.g. from earlier experimentation), delete it: `rm -rf ../<slug>/node_modules`.
 
@@ -839,7 +841,7 @@ If `node_modules/` already exists in the sibling (e.g. from earlier experimentat
 ```bash
 mv packages/contacts packages/.contacts-during-extract
 rm -f node_modules/@tinycld/contacts
-bun run packages:link contacts
+pnpm run packages:link contacts
 ```
 
 Expected: exits 0. `node_modules/@tinycld/contacts` → `../contacts`.
@@ -847,8 +849,8 @@ Expected: exits 0. `node_modules/@tinycld/contacts` → `../contacts`.
 - [ ] **Step 5: Run the full check suite**
 
 ```bash
-bun run checks
-bun run test:unit
+pnpm run checks
+pnpm run test:unit
 ```
 
 Expected: all PASS.
@@ -856,7 +858,7 @@ Expected: all PASS.
 - [ ] **Step 6: Run contacts e2e tests to catch runtime regressions**
 
 ```bash
-bun run test:e2e tests/e2e/contacts
+pnpm run test:e2e tests/e2e/contacts
 ```
 
 (Use the actual contacts e2e path if different. Skip this step if no contacts-specific e2e exists.)
@@ -870,12 +872,12 @@ rm -rf packages/.contacts-during-extract
 # Also remove the workspace entry that bun remembers for this slot — regenerate
 # node_modules cleanly:
 rm -rf node_modules
-bun install
-bun run packages:link contacts    # re-establish the link after bun install
-bun run checks
+pnpm install
+pnpm run packages:link contacts    # re-establish the link after pnpm install
+pnpm run checks
 ```
 
-Expected: `bun run checks` exits 0. The `packages/` directory now lacks `contacts/`.
+Expected: `pnpm run checks` exits 0. The `packages/` directory now lacks `contacts/`.
 
 - [ ] **Step 8: Delete the throwaway branch**
 
@@ -901,9 +903,9 @@ Repeat the full flow from Task 6 substituting `mail` for `contacts` everywhere. 
 - [ ] Step 1: `git subtree split --prefix packages/mail -b extract/mail`
 - [ ] Step 2: Create `../mail/` from the branch
 - [ ] Step 3: Verify standalone build
-- [ ] Step 4: Hide in-tree copy, run `bun run packages:link mail`
-- [ ] Step 5: `bun run checks && bun run test:unit`
-- [ ] Step 6: `bun run test:e2e tests/e2e/mail` (if present)
+- [ ] Step 4: Hide in-tree copy, run `pnpm run packages:link mail`
+- [ ] Step 5: `pnpm run checks && pnpm run test:unit`
+- [ ] Step 6: `pnpm run test:e2e tests/e2e/mail` (if present)
 - [ ] Step 7: Delete hidden copy, reinstall, re-link, re-check
 - [ ] Step 8: `git branch -D extract/mail`
 - [ ] Step 9: Commit: `refactor(packages): extract @tinycld/mail to sibling repo`
@@ -920,8 +922,8 @@ Repeat the flow from Task 6 substituting `calendar`.
 - [ ] Step 2: Create `../calendar/`
 - [ ] Step 3: Standalone build
 - [ ] Step 4: Hide, link, run
-- [ ] Step 5: `bun run checks && bun run test:unit`
-- [ ] Step 6: `bun run test:e2e tests/e2e/calendar` (if present)
+- [ ] Step 5: `pnpm run checks && pnpm run test:unit`
+- [ ] Step 6: `pnpm run test:e2e tests/e2e/calendar` (if present)
 - [ ] Step 7: Delete, reinstall, re-link, re-check
 - [ ] Step 8: `git branch -D extract/calendar`
 - [ ] Step 9: Commit: `refactor(packages): extract @tinycld/calendar to sibling repo`
@@ -936,8 +938,8 @@ Repeat the flow from Task 6 substituting `drive`.
 - [ ] Step 2: Create `../drive/`
 - [ ] Step 3: Standalone build
 - [ ] Step 4: Hide, link, run
-- [ ] Step 5: `bun run checks && bun run test:unit`
-- [ ] Step 6: `bun run test:e2e tests/e2e/drive` (if present)
+- [ ] Step 5: `pnpm run checks && pnpm run test:unit`
+- [ ] Step 6: `pnpm run test:e2e tests/e2e/drive` (if present)
 - [ ] Step 7: Delete, reinstall, re-link, re-check
 - [ ] Step 8: `git branch -D extract/drive`
 - [ ] Step 9: Commit: `refactor(packages): extract @tinycld/drive to sibling repo`
@@ -974,20 +976,20 @@ Expected: "gone".
 
 ```bash
 rm -rf node_modules bun.lock
-bun install
+pnpm install
 ```
 
-Expected: exits 0. No `@tinycld/*` entries in `node_modules` (they're all linked manually via `bun link` during development).
+Expected: exits 0. No `@tinycld/*` entries in `node_modules` (they're all linked manually via `pnpm link` during development).
 
 - [ ] **Step 4: Re-link whichever packages the dev working copy uses**
 
 For each extracted package the current working copy needs:
 
 ```bash
-bun run packages:link contacts
-bun run packages:link mail
-bun run packages:link calendar
-bun run packages:link drive
+pnpm run packages:link contacts
+pnpm run packages:link mail
+pnpm run packages:link calendar
+pnpm run packages:link drive
 ```
 
 - [ ] **Step 5: Default `tinycld.packages.ts` to empty**
@@ -1007,8 +1009,8 @@ EOF
 - [ ] **Step 6: Verify a fresh state builds**
 
 ```bash
-bun run packages:generate
-bun run checks
+pnpm run packages:generate
+pnpm run checks
 ```
 
 Expected: PASS. The generator handles an empty list (see line 246 of `generate-packages.ts`).
@@ -1024,7 +1026,7 @@ git commit -m "refactor(packages): drop workspaces glob; default package list to
 
 ```bash
 cp /tmp/packages.dev.ts tinycld.packages.ts
-bun run packages:generate
+pnpm run packages:generate
 ```
 
 Note: this leaves a dirty working tree showing `tinycld.packages.ts` modified. That's expected — it records the *current dev session's* linked packages, which is personal state.
@@ -1032,8 +1034,8 @@ Note: this leaves a dirty working tree showing `tinycld.packages.ts` modified. T
 - [ ] **Step 9: Update `docs/packages.md`**
 
 Rewrite the "Quick start" and "Creating a package" sections to describe the sibling + link workflow instead of the in-tree workspace workflow. Show:
-- `bun run packages:link <slug>` as the primary install command
-- `bun run packages:unlink <slug>` as the removal command
+- `pnpm run packages:link <slug>` as the primary install command
+- `pnpm run packages:unlink <slug>` as the removal command
 - The example dev flow from the spec's "Someone building a brand-new package" scenario
 
 Commit separately:
@@ -1053,25 +1055,25 @@ git commit -m "docs: document sibling-package dev workflow"
 # In a throwaway directory
 git clone <core repo> /tmp/core-fresh
 cd /tmp/core-fresh
-bun install
-bun run packages:generate
-bun run dev &
+pnpm install
+pnpm run packages:generate
+pnpm run dev &
 sleep 15
 curl -sSf http://localhost:7100/ > /dev/null
 kill %1
 ```
 
-Expected: `curl` gets a 200. `bun run dev` starts without complaining about missing packages.
+Expected: `curl` gets a 200. `pnpm run dev` starts without complaining about missing packages.
 
 - [ ] **Step 2: Link one sibling and verify it lights up**
 
 ```bash
 cd /tmp/core-fresh
 git clone <sibling contacts remote-or-path> ../contacts
-bun run packages:link contacts
-bun run packages:generate
+pnpm run packages:link contacts
+pnpm run packages:generate
 # Visit the contacts route or run its e2e subset
-bun run test:e2e tests/e2e/contacts
+pnpm run test:e2e tests/e2e/contacts
 ```
 
 Expected: PASS.
@@ -1094,6 +1096,6 @@ Update the spec's "Open questions" section with any findings, or mark it resolve
 - Core's `packages/` directory is gone.
 - Core's `workspaces` entry is gone.
 - `tinycld.packages.ts` defaults to `[]`.
-- `bun run packages:link <slug>` / `bun run packages:unlink <slug>` work end-to-end.
-- `bun run checks` and the unit test suite pass on a fresh clone with an empty package list.
+- `pnpm run packages:link <slug>` / `pnpm run packages:unlink <slug>` work end-to-end.
+- `pnpm run checks` and the unit test suite pass on a fresh clone with an empty package list.
 - `docs/packages.md` reflects the new workflow.

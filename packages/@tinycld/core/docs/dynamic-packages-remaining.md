@@ -1,6 +1,6 @@
 # Dynamic Package Registry — Remaining Work
 
-> **⚠️ This plan predates the package extraction (2026-04-18).** Packages now live in sibling git repositories (linked via `bun run packages:link`) instead of a `packages/*` workspace directory. The Phase 2/3 install pipeline described below assumes the old layout and needs rework: `bun pack` unpacking into `packages/<slug>/` should become `git clone ../<slug>` + `packages:link`, and the generation/build steps stay largely the same. See `docs/packages.md` for the current architecture. This doc is kept as historical planning context.
+> **⚠️ This plan predates the package extraction (2026-04-18).** Packages now live in sibling git repositories (linked via `pnpm run packages:link`) instead of a `packages/*` workspace directory. The Phase 2/3 install pipeline described below assumes the old layout and needs rework: `pnpm pack` unpacking into `packages/<slug>/` should become `git clone ../<slug>` + `packages:link`, and the generation/build steps stay largely the same. See `docs/packages.md` for the current architecture. This doc is kept as historical planning context.
 
 ## Phase 1 Remaining Items
 
@@ -28,10 +28,10 @@ Automated installation for packages that don't include Go server code.
 
 1. **`server/pkg_installer.go`** — Core installation pipeline:
    - Validate permissions and bun package name
-   - `bun pack` to temp directory, unpack, read manifest, validate structure
-   - Copy to `packages/<slug>/`, run `bun install`
-   - Execute `bunx tsx scripts/generate-packages.ts`
-   - Run `bun run build:web` to rebuild Expo routes
+   - `pnpm pack` to temp directory, unpack, read manifest, validate structure
+   - Copy to `packages/<slug>/`, run `pnpm install`
+   - Execute `pnpm exec tsx scripts/generate-packages.ts`
+   - Run `pnpm run build:web` to rebuild Expo routes
    - Rollback on failure: delete temp dir, restore previous files, re-run generation
 
 2. **`server/pkg_endpoints.go`** — HTTP endpoints:

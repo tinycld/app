@@ -317,7 +317,7 @@ function spawnPbBinary(pbPort: number, publicUrl: string, dataDir: string | null
 function spawnExpo(expoPort: number, onReady: () => void): ChildProcess {
     const onOut = withPrefix('expo', '\x1b[35m') // magenta
     const onErr = withPrefix('expo', '\x1b[31m')
-    const child = spawn('bunx', ['expo', 'start', '--clear', '--port', String(expoPort)], {
+    const child = spawn('pnpm', ['exec', 'expo', 'start', '--clear', '--port', String(expoPort)], {
         cwd: ROOT,
         stdio: ['inherit', 'pipe', 'pipe'],
     })
@@ -488,7 +488,7 @@ async function main() {
 
     // Run packages:generate before launching, mirroring the old `predev`
     // hook. Failing this should fail-fast so the user sees the error.
-    const gen = spawn('bunx', ['tsx', 'scripts/generate-packages.ts'], {
+    const gen = spawn('pnpm', ['exec', 'tsx', 'scripts/generate-packages.ts'], {
         cwd: ROOT,
         stdio: 'inherit',
     })

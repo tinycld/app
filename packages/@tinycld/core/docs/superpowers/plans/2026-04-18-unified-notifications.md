@@ -1,5 +1,7 @@
 # Unified Notifications Implementation Plan
 
+> **⚠️ Historical / superseded.** Frozen project plan from April 2026. The narrative below references Bun as the project package manager — the project has since migrated to pnpm. Command samples that read `bun run` / `bunx` should be read as `pnpm run` / `pnpm exec`; lockfile references should be read as `pnpm-lock.yaml`. Kept for historical context.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace scattered `showToast` + `useNotify` usage with a single event-first `notify.emit()` API routed through typed channels (toast, bell, OS).
@@ -68,14 +70,14 @@ Untouched:
 - All imports use the `~/` alias.
 - Commit style: `type(scope): summary` (lowercase, no period).
 - Tests use Vitest, directly assert against Zustand stores via `.getState()`, no renderer for store-level tests.
-- Run `bun run checks` (lint + typecheck) and `bun run test:unit` before each commit.
+- Run `pnpm run checks` (lint + typecheck) and `pnpm run test:unit` before each commit.
 - Each task ends with a commit. Subagents MUST run the checks locally before committing.
 
 ---
 
 ## Commit 1: Infrastructure
 
-New module shipped alongside `showToast` / `useNotify`. No call sites migrated yet. At the end of this commit, `bun run checks` and `bun run test:unit` both pass, but the new API has no production callers.
+New module shipped alongside `showToast` / `useNotify`. No call sites migrated yet. At the end of this commit, `pnpm run checks` and `pnpm run test:unit` both pass, but the new API has no production callers.
 
 ### Task 1: Create channel types
 
@@ -208,7 +210,7 @@ describe('notify/context', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `bun run test:unit lib/notify/__tests__/context.test.ts`
+Run: `pnpm run test:unit lib/notify/__tests__/context.test.ts`
 Expected: FAIL — module doesn't exist yet.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -238,7 +240,7 @@ export function getNotifyContext(): NotifyContext | null {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `bun run test:unit lib/notify/__tests__/context.test.ts`
+Run: `pnpm run test:unit lib/notify/__tests__/context.test.ts`
 Expected: PASS, 3 tests.
 
 - [ ] **Step 5: Commit**
@@ -306,7 +308,7 @@ describe('ToastChannel', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `bun run test:unit lib/notify/__tests__/toast.test.ts`
+Run: `pnpm run test:unit lib/notify/__tests__/toast.test.ts`
 Expected: FAIL.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -331,7 +333,7 @@ export const toastChannel: NotifyChannel = {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `bun run test:unit lib/notify/__tests__/toast.test.ts`
+Run: `pnpm run test:unit lib/notify/__tests__/toast.test.ts`
 Expected: PASS, 3 tests.
 
 - [ ] **Step 5: Commit**
@@ -436,7 +438,7 @@ describe('BellChannel', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `bun run test:unit lib/notify/__tests__/bell.test.ts`
+Run: `pnpm run test:unit lib/notify/__tests__/bell.test.ts`
 Expected: FAIL — channel file doesn't exist.
 
 - [ ] **Step 4: Write minimal implementation**
@@ -486,11 +488,11 @@ Note on `__DEV__`: it's a global in React Native. If the test environment doesn'
 declare const __DEV__: boolean
 ```
 
-Add the `declare` at the top if `bun run typecheck` complains.
+Add the `declare` at the top if `pnpm run typecheck` complains.
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `bun run test:unit lib/notify/__tests__/bell.test.ts`
+Run: `pnpm run test:unit lib/notify/__tests__/bell.test.ts`
 Expected: PASS, 3 tests.
 
 - [ ] **Step 6: Commit**
@@ -546,7 +548,7 @@ describe('OsChannel', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `bun run test:unit lib/notify/__tests__/os.test.ts`
+Run: `pnpm run test:unit lib/notify/__tests__/os.test.ts`
 Expected: FAIL.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -572,7 +574,7 @@ The permission gating already lives inside `lib/notifications.ts::notify()` — 
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `bun run test:unit lib/notify/__tests__/os.test.ts`
+Run: `pnpm run test:unit lib/notify/__tests__/os.test.ts`
 Expected: PASS, 2 tests.
 
 - [ ] **Step 5: Commit**
@@ -675,7 +677,7 @@ describe('notify.emit', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `bun run test:unit lib/notify/__tests__/dispatcher.test.ts`
+Run: `pnpm run test:unit lib/notify/__tests__/dispatcher.test.ts`
 Expected: FAIL.
 
 - [ ] **Step 3: Write minimal implementation of dispatcher**
@@ -759,12 +761,12 @@ export type { NotifyEventName, NotificationEvents } from './events'
 
 - [ ] **Step 5: Run tests to verify all pass**
 
-Run: `bun run test:unit lib/notify/`
+Run: `pnpm run test:unit lib/notify/`
 Expected: PASS across dispatcher, toast, bell, os, context suites.
 
 - [ ] **Step 6: Run full checks**
 
-Run: `bun run checks`
+Run: `pnpm run checks`
 Expected: typecheck + lint pass.
 
 - [ ] **Step 7: Commit**
@@ -841,7 +843,7 @@ function OrgLayoutInner() {
 
 - [ ] **Step 3: Run full checks**
 
-Run: `bun run checks && bun run test:unit`
+Run: `pnpm run checks && pnpm run test:unit`
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -904,7 +906,7 @@ describe('notify end-to-end (toast-only events)', () => {
 
 - [ ] **Step 2: Run test**
 
-Run: `bun run test:unit lib/notify/__tests__/smoke.test.ts`
+Run: `pnpm run test:unit lib/notify/__tests__/smoke.test.ts`
 Expected: PASS, 2 tests.
 
 - [ ] **Step 3: Commit**
@@ -954,7 +956,7 @@ notify.emit({
 
 - [ ] **Step 3: Run tests**
 
-Run: `bun run test:unit` (covers mail package tests)
+Run: `pnpm run test:unit` (covers mail package tests)
 Expected: PASS. If an existing test asserts on `showToast` being called, update it to assert on the toast store state or the `notify.emit` import.
 
 - [ ] **Step 4: Commit**
@@ -998,7 +1000,7 @@ The `variant` is now controlled by the registry (`warning` for `mail.send_blocke
 
 - [ ] **Step 3: Run checks**
 
-Run: `bun run checks && bun run test:unit`
+Run: `pnpm run checks && pnpm run test:unit`
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -1071,7 +1073,7 @@ If a `count` isn't readily available in the error branch, pass `count: 0` to the
 
 - [ ] **Step 4: Run checks**
 
-Run: `bun run checks && bun run test:unit`
+Run: `pnpm run checks && pnpm run test:unit`
 Expected: PASS. The bell renders from the `notifications` PB collection — since BellChannel inserts into the same collection, the `NotificationBell` unread count still updates.
 
 - [ ] **Step 5: Commit**
@@ -1133,7 +1135,7 @@ notify.emit({
 
 - [ ] **Step 3: Run checks**
 
-Run: `bun run checks && bun run test:unit`
+Run: `pnpm run checks && pnpm run test:unit`
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -1253,7 +1255,7 @@ describe('handleMutationErrorsWithForm', () => {
 
 - [ ] **Step 4: Run checks**
 
-Run: `bun run checks && bun run test:unit`
+Run: `pnpm run checks && pnpm run test:unit`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1283,7 +1285,7 @@ Expected: no matches. If any remain, migrate them following the patterns in task
 
 - [ ] **Step 2: Run final checks for commit 2**
 
-Run: `bun run checks && bun run test:unit`
+Run: `pnpm run checks && pnpm run test:unit`
 Expected: PASS.
 
 No commit needed — this is verification only.
@@ -1308,12 +1310,12 @@ rm lib/toast.ts lib/use-notify.ts
 
 - [ ] **Step 2: Run typecheck**
 
-Run: `bun run typecheck`
+Run: `pnpm run typecheck`
 Expected: PASS. If it fails, a call site was missed — go back to the grep step in Task 16 and migrate it.
 
 - [ ] **Step 3: Run full checks**
 
-Run: `bun run checks && bun run test:unit`
+Run: `pnpm run checks && pnpm run test:unit`
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -1347,12 +1349,12 @@ Expected: no matches outside of the spec/plan docs.
 
 - [ ] **Step 3: Run the full suite one more time**
 
-Run: `bun run checks && bun run test:unit`
+Run: `pnpm run checks && pnpm run test:unit`
 Expected: PASS.
 
 - [ ] **Step 4: Manual smoke in dev server (optional but recommended)**
 
-Run: `bun run dev`
+Run: `pnpm run dev`
 
 In the browser:
 1. Trigger a mail send failure (disconnect network, click send) → error toast appears.

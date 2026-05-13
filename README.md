@@ -10,7 +10,7 @@ back, every feature shipped as a separately-installable package. See
 
 This repo is the runnable app shell. It bundles `@tinycld/core` (the shared TypeScript + Go
 library) directly at `packages/@tinycld/core/` along with branding, Expo native projects,
-deployment configs, and the package generator. It's the entrypoint for `bun run dev` and
+deployment configs, and the package generator. It's the entrypoint for `pnpm run dev` and
 `docker pull ghcr.io/tinycld/tinycld`.
 
 ```
@@ -32,12 +32,12 @@ this repo's bundled core.
 ```sh
 git clone https://github.com/tinycld/tinycld.git ~/code/tinycld/tinycld
 cd ~/code/tinycld/tinycld
-bun install
-bun run packages:install git@github.com:tinycld/mail.git    # add features as needed
-bun run dev
+pnpm install
+pnpm run packages:install git@github.com:tinycld/mail.git    # add features as needed
+pnpm run dev
 ```
 
-`bun run dev` runs three processes in parallel: an HTTP proxy on the user-facing port
+`pnpm run dev` runs three processes in parallel: an HTTP proxy on the user-facing port
 7100, the Go PocketBase server on 7101, and the Expo bundler on 7102. The proxy routes
 `/api` and `/_` to PB and everything else to Expo, so the app talks to PB same-origin.
 
@@ -50,7 +50,7 @@ SSL is needed for developing on iOS simulator.  Trust the certs by dropping onto
 ```sh
 brew install mkcert     # macOS — see mkcert docs for other platforms
 mkcert -install         # one-time, installs the local CA in your trust store
-bun run ssl:generate
+pnpm run ssl:generate
 ```
 
 ## What's where
@@ -81,20 +81,20 @@ bun run ssl:generate
 ## Adding / removing feature packagesq
 
 ```sh
-bun run packages:install <git-url>     # clone + link + regenerate
-bun run packages:link <package-name>   # link an already-cloned sibling
-bun run packages:unlink <package-name> # remove a link
+pnpm run packages:install <git-url>     # clone + link + regenerate
+pnpm run packages:link <package-name>   # link an already-cloned sibling
+pnpm run packages:unlink <package-name> # remove a link
 ```
 
-After any change, `bun run packages:generate` (also runs as `postinstall` and at the start of `bun run dev`).
+After any change, `pnpm run packages:generate` (also runs as `postinstall` and at the start of `pnpm run dev`).
 
 ## Working in this repo
 
 ```sh
-bun install                       # also runs packages:generate via postinstall hook
-bun run checks                    # biome + tsc
-bun run test:unit                 # vitest
-bun run test:e2e                  # playwright
+pnpm install                      # also runs packages:generate via postinstall hook
+pnpm run checks                   # biome + tsc
+pnpm run test:unit                # vitest
+pnpm run test:e2e                 # playwright
 cd server && go build -o tinycld . && ./tinycld --help
 ```
 

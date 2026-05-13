@@ -6,16 +6,21 @@
 # from the per-repo git HEADs before running `docker build`.
 
 # Node stage: generate package wiring and build the web app
-FROM oven/bun:1.3.12-debian AS web-builder
+FROM node:22-bookworm-slim AS web-builder
+
+# pnpm: pinned version mirrors packageManager in package.json. Installing
+# globally via npm is the simplest path on a node base image; corepack would
+# also work but adds a fetch step and the version lives in package.json.
+RUN npm install -g pnpm@11.1.1
 
 WORKDIR /app
 
 # Install dependencies first (layer caching). --ignore-scripts skips the
-# project's `postinstall` (`bun run packages:generate`); the generator needs
+# project's `postinstall` (`pnpm run packages:generate`); the generator needs
 # scripts/, lib/, and packages/, none of which are staged yet. We run it
 # explicitly below once those are in place.
-COPY package.json bun.lock bunfig.toml ./
-RUN bun install --frozen-lockfile --ignore-scripts
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy app sources needed for package generation + web build.
 COPY scripts/ ./scripts/
@@ -62,7 +67,7 @@ RUN if [ -n "$LINKED_PACKAGES" ]; then \
             mkdir -p "$(dirname "$target")" ; \
             rm -rf "$target" ; \
             mv "$tmp/repo" "$target" ; \
-            rm -rf "$target/.git" "$target/node_modules" "$target/bun.lock" ; \
+            rm -rf "$target/.git" "$target/node_modules" "$target/pnpm-lock.yaml" ; \
             echo "[build] linked $name → $target" ; \
         done ; \
     fi
@@ -71,7 +76,7 @@ RUN if [ -n "$LINKED_PACKAGES" ]; then \
 # lib/generated/, app/a/[orgSlug]/<slug>/ routes, public route re-exports,
 # server/pb_migrations/ symlinks, and updates server/go.mod replace
 # directives).
-RUN bun run scripts/generate-packages.ts
+RUN pnpm exec tsx scripts/generate-packages.ts
 
 # Resolve any migration/hook symlinks into real files. generate-packages.ts
 # symlinks package migrations into server/pb_migrations/, which is fine
@@ -125,7 +130,7 @@ RUN set -eu \
     fi \
     && rm -f .release-id \
     && export EXPO_PUBLIC_RELEASE_ID="$rid" \
-    && bunx expo export --platform web \
+    && pnpm exec expo export --platform web \
     && mkdir -p /app/release-staging \
     && mv /app/dist "/app/release-staging/$rid" \
     && printf '%s' "$rid" > "/app/release-staging/$rid/release-id.txt" \
@@ -182,12 +187,14 @@ ENV SENTRY_DSN=""
 ENV SERVE_ON_DOMAINS=""
 ENV FZ_VERSION="1.25.1"
 
-# Install runtime dependencies + Bun for runtime package installation.
+# Install runtime dependencies + Node and pnpm for runtime package installation.
+# Runtime invokes `pnpm exec tsx scripts/<x>.ts` for tasks like reset-demo and
+# seed-db (called from cron jobs in bin/), so Node and pnpm must both be on PATH.
 RUN apt-get update \
-    && apt-get install -y ca-certificates libffi8 libmupdf-dev curl unzip \
-    && curl -fsSL https://bun.sh/install | bash \
-    && ln -s /root/.bun/bin/bun /usr/local/bin/bun \
-    && ln -s /root/.bun/bin/bunx /usr/local/bin/bunx \
+    && apt-get install -y --no-install-recommends ca-certificates libffi8 libmupdf-dev curl gnupg \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && npm install -g pnpm@11.1.1 \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -212,7 +219,7 @@ RUN mkdir -p /app/public /app/releases
 COPY --from=web-builder /app/server/pb_migrations ./pb_migrations
 
 # Files needed for runtime package-install pipeline.
-COPY --from=web-builder /app/package.json /app/bun.lock ./
+COPY --from=web-builder /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
 COPY --from=web-builder /app/node_modules ./node_modules
 COPY --from=web-builder /app/scripts ./scripts
 COPY --from=web-builder /app/tinycld.packages.ts ./

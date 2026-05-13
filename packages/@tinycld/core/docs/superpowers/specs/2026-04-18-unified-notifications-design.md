@@ -1,5 +1,7 @@
 # Unified Notifications Design
 
+> **⚠️ Historical / superseded.** Frozen design doc from April 2026. The narrative below references Bun as the project package manager — the project has since migrated to pnpm. Kept for historical context.
+
 **Status:** Draft
 **Date:** 2026-04-18
 **Author:** Nathan Stitt (with Claude)
@@ -334,7 +336,7 @@ Three commits, each independently shippable and reviewable:
 - Add `NotifyContextSync` to `app/a/[orgSlug]/_layout.tsx`
 - Full unit + integration tests
 - No call-site changes — `showToast` and `useNotify` still work
-- Passes `bun run checks` + `bun run test:unit`
+- Passes `pnpm run checks` + `pnpm run test:unit`
 
 ### Commit 2: Migrate call sites
 

@@ -16,7 +16,7 @@ The app currently uses HeroUI as its UI component library. We're switching to Re
 
 ### 0.1 Install dependencies
 ```
-bun install react-native-paper @react-native-vector-icons/material-design-icons
+pnpm install react-native-paper @react-native-vector-icons/material-design-icons
 ```
 Note: Expo has built-in vector icon support, but Paper requires the package for internal icon rendering.
 
@@ -280,8 +280,8 @@ Key files: `DocumentEditor.tsx`, `DocumentToolbar.tsx`, `screens/index.tsx`, `sc
 5. Remove tamagui type declaration (`declare module 'tamagui'`)
 6. Delete `docs/tamagui-best-practices.md`, create `docs/paper-style-guide.md`
 7. Update `CONTRIBUTING.md` — replace all Tamagui guidance with Paper guidance
-8. Run `bun run checks` to verify no lingering tamagui imports
-9. Run `bun run test:unit` to verify tests pass
+8. Run `pnpm run checks` to verify no lingering tamagui imports
+9. Run `pnpm run test:unit` to verify tests pass
 10. Grep for any remaining `from 'tamagui'` or `from '@tamagui` imports
 
 ---
@@ -335,16 +335,16 @@ All are Dialog.Overlay animations → eliminated. Paper Dialog handles its own f
 ## Verification
 
 After each phase:
-1. `bun run checks` (lint + typecheck)
-2. `bun run test:unit`
-3. Visual inspection on web (`bun run dev`) — check light and dark mode
-4. Spot-check on iOS (`bun run ios`) if available
+1. `pnpm run checks` (lint + typecheck)
+2. `pnpm run test:unit`
+3. Visual inspection on web (`pnpm run dev`) — check light and dark mode
+4. Spot-check on iOS (`pnpm run ios`) if available
 5. Grep for remaining tamagui imports in migrated files
 
 After Phase 7 (complete):
 1. `grep -r "from 'tamagui'" --include='*.tsx' --include='*.ts'` → 0 results
 2. `grep -r "from '@tamagui" --include='*.tsx' --include='*.ts'` → 0 results
-3. Full `bun run test:e2e` suite
+3. Full `pnpm run test:e2e` suite
 4. Bundle size comparison (web build before vs after)
 
 ---
@@ -666,7 +666,7 @@ plugins: [
 
 ### Installation
 ```
-bun install react-native-paper react-native-safe-area-context
+pnpm install react-native-paper react-native-safe-area-context
 ```
 Expo users get vector icons built-in. Add `react-native-paper/babel` plugin for tree-shaking.
 

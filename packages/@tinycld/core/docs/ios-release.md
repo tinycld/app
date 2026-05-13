@@ -98,10 +98,10 @@ Copy this verbatim into App Store Connect → App Review Information → Notes w
 ## Submission steps
 
 1. Ensure `docs/ios-release.md` (this file) is up to date.
-2. `bun run packages:generate` (picks up any new package wiring).
-3. `bun run checks` — must pass.
-4. `bunx expo prebuild --platform ios --clean` — regenerates `ios/` from `app.json`.
-5. `bunx eas build --platform ios --profile production`.
+2. `pnpm run packages:generate` (picks up any new package wiring).
+3. `pnpm run checks` — must pass.
+4. `pnpm exec expo prebuild --platform ios --clean` — regenerates `ios/` from `app.json`.
+5. `pnpm exec eas build --platform ios --profile production`.
 6. Wait for TestFlight processing; install on a physical iPhone + iPad and run through the end-to-end checklist (see section below).
 7. In App Store Connect, fill metadata from this document.
 8. Attach screenshots (5 per device class).

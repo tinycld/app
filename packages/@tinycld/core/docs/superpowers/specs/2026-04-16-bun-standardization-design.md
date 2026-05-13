@@ -1,5 +1,7 @@
 # Standardize on Bun as Package Manager
 
+> **⚠️ Historical / superseded.** This design documents the project's earlier move to Bun. The project has since migrated to pnpm. Kept for historical context.
+
 ## Problem
 
 The project has a hybrid package manager setup: a Bun lockfile (`bun.lockb`) but npm-style scripts (`npm run`, `npx`) and an `.npmrc` with `legacy-peer-deps=true`. This causes:

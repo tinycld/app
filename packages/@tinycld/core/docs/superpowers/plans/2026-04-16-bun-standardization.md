@@ -1,5 +1,7 @@
 # Bun Standardization Implementation Plan
 
+> **⚠️ Historical / superseded.** This plan documents the project's earlier move to Bun. The project has since migrated to pnpm — every command, lockfile, and tool reference below is out of date. Kept for historical context; do not execute. Current PM guidance lives in `CONTRIBUTING.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Eliminate the hybrid npm/bun setup by standardizing fully on Bun — consistent lockfile, scripts, and dependency resolution.

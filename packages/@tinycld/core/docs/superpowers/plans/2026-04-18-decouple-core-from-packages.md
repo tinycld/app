@@ -1,5 +1,7 @@
 # Decouple Core From Mail and Drive Internals — Implementation Plan
 
+> **⚠️ Historical / superseded.** Frozen project plan from April 2026. The narrative below references Bun as the project package manager — the project has since migrated to pnpm. Command samples that read `bun run` / `bunx` should be read as `pnpm run` / `pnpm exec`; lockfile references should be read as `pnpm-lock.yaml`. Kept for historical context.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Remove the two hard-typed imports that make core depend on `@tinycld/mail` and `@tinycld/drive` at build time, so a fresh clone with `tinycld.packages.ts = []` typechecks cleanly.
@@ -108,17 +110,17 @@ For each hit that accesses a field through `.nav.` or `.routes.` (no `?.`), eith
 - Change to optional chaining: `.nav?.label`, `.routes?.directory`
 - Or confirm the surrounding code has already narrowed the type (e.g. a `if (manifest.nav)` guard)
 
-Run `bun run typecheck` after the pass — TS will flag any remaining unsafe accesses.
+Run `pnpm run typecheck` after the pass — TS will flag any remaining unsafe accesses.
 
 - [ ] **Step 4: Run typecheck**
 
-Run: `bun run typecheck`
+Run: `pnpm run typecheck`
 
 Expected: PASS.
 
 - [ ] **Step 5: Run the full generator**
 
-Run: `bun run packages:generate`
+Run: `pnpm run packages:generate`
 
 Expected: exits 0.
 
@@ -244,7 +246,7 @@ describe('generatePublicRoutesAt', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `bunx vitest run tests/unit/generate-public-routes.test.ts`
+Run: `pnpm exec vitest run tests/unit/generate-public-routes.test.ts`
 
 Expected: FAIL — `generatePublicRoutesAt` is not exported.
 
@@ -294,7 +296,7 @@ function generatePublicRoutes(
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `bunx vitest run tests/unit/generate-public-routes.test.ts`
+Run: `pnpm exec vitest run tests/unit/generate-public-routes.test.ts`
 
 Expected: PASS, 5 tests green.
 
@@ -333,13 +335,13 @@ Add this conflict-detection pass *after* the loop but before any other consumers
 
 - [ ] **Step 6: Run the full generator**
 
-Run: `bun run packages:generate`
+Run: `pnpm run packages:generate`
 
 Expected: exits 0. Existing packages don't declare `publicRoutes`, so this is a no-op for them.
 
 - [ ] **Step 7: Run checks**
 
-Run: `bun run checks`
+Run: `pnpm run checks`
 
 Expected: PASS.
 
@@ -387,7 +389,7 @@ Since the file now lives inside drive itself, the `@tinycld/drive/components/Pub
 import { PublicSharePage } from '../../components/PublicSharePage'
 ```
 
-Leave `~/lib/auth` and `~/lib/pocketbase` as-is — those resolve through core's tsconfig paths. Drive is `bun link`ed into core, so compilation happens inside core's context and the `~` alias resolves correctly.
+Leave `~/lib/auth` and `~/lib/pocketbase` as-is — those resolve through core's tsconfig paths. Drive is `pnpm link`ed into core, so compilation happens inside core's context and the `~` alias resolves correctly.
 
 - [ ] **Step 2: Update drive's `manifest.ts`**
 
@@ -434,7 +436,7 @@ Read `.gitignore`. Find the "generated wiring" section (near `lib/generated/`). 
 - [ ] **Step 7: Regenerate and verify**
 
 ```bash
-bun run packages:generate
+pnpm run packages:generate
 ls app/share/\[token\].tsx
 cat app/share/\[token\].tsx
 ```
@@ -444,8 +446,8 @@ Expected: file exists, contents are `export { default } from '@tinycld/drive/pub
 - [ ] **Step 8: Run full checks + unit tests**
 
 ```bash
-bun run checks
-bun run test:unit
+pnpm run checks
+pnpm run test:unit
 ```
 
 Expected: all pass.
@@ -453,7 +455,7 @@ Expected: all pass.
 - [ ] **Step 9: Manual smoke test of the routing**
 
 ```bash
-bun run dev &
+pnpm run dev &
 sleep 10
 curl -sS -o /dev/null -w '%{http_code}\n' http://localhost:7100/share/test-token-does-not-exist
 kill %1
@@ -461,7 +463,7 @@ kill %1
 
 Expected: 200 (the page renders its "loading" state even for a bogus token because the server fetch is what returns 404; the route itself is reachable).
 
-If the port differs, use whichever your `bun run dev` actually listens on. If the curl returns 404 from expo-router itself, expo-router didn't pick up the generated file — investigate: check `app/share/[token].tsx` really exists and that expo's cache isn't stale (`bun run dev:clean`).
+If the port differs, use whichever your `pnpm run dev` actually listens on. If the curl returns 404 from expo-router itself, expo-router didn't pick up the generated file — investigate: check `app/share/[token].tsx` really exists and that expo's cache isn't stale (`pnpm run dev:clean`).
 
 - [ ] **Step 10: Commit in core**
 
@@ -580,7 +582,7 @@ cd -
 
 ```bash
 cd ~/code/tinycld/core
-bun run packages:link google-takeout-import
+pnpm run packages:link google-takeout-import
 ```
 
 Expected: exits 0. `tinycld.packages.ts` now includes `@tinycld/google-takeout-import`. Symlink at `node_modules/@tinycld/google-takeout-import` points at `../../../google-takeout-import`.
@@ -588,7 +590,7 @@ Expected: exits 0. `tinycld.packages.ts` now includes `@tinycld/google-takeout-i
 - [ ] **Step 8: Verify stub-level typecheck**
 
 ```bash
-bun run checks
+pnpm run checks
 ```
 
 Expected: PASS. The stub component renders "Google Takeout Import" in Personal Settings (via the settings panel mechanism). We'll replace it with the real component in Task 5.
@@ -752,7 +754,7 @@ In `~/code/tinycld/core/app/a/[orgSlug]/settings/personal.tsx`:
     - `import type { ImportProgress, ImportService } from '~/lib/takeout-import/types'`
     - The lucide-react-native icons used only by `SERVICE_META` (`Calendar`, `HardDrive`, `Mail`, `Users` — verify each isn't used elsewhere in the file before deleting)
 
-Run `bun run lint:fix` to let Biome sort remaining imports.
+Run `pnpm run lint:fix` to let Biome sort remaining imports.
 
 - [ ] **Step 8: Delete `lib/takeout-import/` from core**
 
@@ -773,9 +775,9 @@ cd -
 
 ```bash
 cd ~/code/tinycld/core
-bun run packages:generate
-bun run checks
-bun run test:unit
+pnpm run packages:generate
+pnpm run checks
+pnpm run test:unit
 ```
 
 Expected: all pass. If typecheck fails with missing-import errors from `lib/takeout-import` in any file we didn't anticipate, fix that file's import to use `@tinycld/google-takeout-import/lib/takeout-import/…` (that's the canonical path through exports).
@@ -814,8 +816,8 @@ EOF
 - [ ] **Step 2: Re-generate and typecheck**
 
 ```bash
-bun run packages:generate
-bun run typecheck
+pnpm run packages:generate
+pnpm run typecheck
 ```
 
 Expected: exit 0 for both. No `Cannot find module '@tinycld/...'` errors.
@@ -826,7 +828,7 @@ If anything fails, list the error files. The remaining hard coupling (if any) te
 
 ```bash
 cp /tmp/packages.dev.ts tinycld.packages.ts
-bun run packages:generate
+pnpm run packages:generate
 ```
 
 - [ ] **Step 4: No commit** — Task 6 is verification only. If Step 2 passed cleanly, the decoupling goal is met.
@@ -836,7 +838,7 @@ bun run packages:generate
 ## Done When
 
 - Core's `app/` and `lib/` contain zero `@tinycld/*` imports (verified by `grep -r '@tinycld/' app/ lib/ | grep -v generated` returning empty)
-- `tinycld.packages.ts = []` + `bun run packages:generate` + `bun run typecheck` all exit 0 on a fresh clone
-- `bun run packages:link google-takeout-import` restores the "Import from Google" section in Personal Settings
-- `bun run packages:link drive` restores `/share/<token>` as a reachable route
-- `bun run checks` and unit tests (75+ green, up from 71 with new `generatePublicRoutesAt` tests) pass with all packages linked
+- `tinycld.packages.ts = []` + `pnpm run packages:generate` + `pnpm run typecheck` all exit 0 on a fresh clone
+- `pnpm run packages:link google-takeout-import` restores the "Import from Google" section in Personal Settings
+- `pnpm run packages:link drive` restores `/share/<token>` as a reachable route
+- `pnpm run checks` and unit tests (75+ green, up from 71 with new `generatePublicRoutesAt` tests) pass with all packages linked

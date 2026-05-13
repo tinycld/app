@@ -1,5 +1,7 @@
 # Decouple Core From Mail and Drive Internals
 
+> **⚠️ Historical / superseded.** Frozen design doc from April 2026. The narrative below references Bun as the project package manager — the project has since migrated to pnpm. Kept for historical context.
+
 ## Goal
 
 Make a fresh `@tinycld/core` clone with `tinycld.packages.ts = []` typecheck and run cleanly. Today two files in core pull in package internals, preventing the "lean shell" promise of the extraction work:
@@ -101,10 +103,10 @@ The existing `cleanPrevious` pass already removes any file tracked in `.package-
 - Update drive's `manifest.ts` to add `publicRoutes: { directory: 'public-screens' }`.
 - Update drive's `package.json` `exports` map: `"./public-screens/*": "./public-screens/*.tsx"`.
 - Delete `app/share/[token].tsx` from core.
-- After `bun run packages:generate`, core gets an auto-generated `app/share/[token].tsx` containing only `export { default } from '@tinycld/drive/public-screens/share/[token]'`.
+- After `pnpm run packages:generate`, core gets an auto-generated `app/share/[token].tsx` containing only `export { default } from '@tinycld/drive/public-screens/share/[token]'`.
 - Add `/app/share/` to core's `.gitignore` section for generated wiring — it joins `lib/generated/` and the org-scoped package route re-exports.
 
-**Cross-package import from a sibling back into core:** `PublicSharePage` in drive uses `useAuth` and `PB_SERVER_ADDR` from core. Those imports in the moved file continue to work because drive is `bun link`ed under core's `node_modules/` — resolution of `~/lib/auth` happens at core's tsconfig level when drive is compiled through core's build. Keep the imports as-is; don't try to invent a cross-package alias.
+**Cross-package import from a sibling back into core:** `PublicSharePage` in drive uses `useAuth` and `PB_SERVER_ADDR` from core. Those imports in the moved file continue to work because drive is `pnpm link`ed under core's `node_modules/` — resolution of `~/lib/auth` happens at core's tsconfig level when drive is compiled through core's build. Keep the imports as-is; don't try to invent a cross-package alias.
 
 ### Part 3 — Create `@tinycld/google-takeout-import` package
 
@@ -241,7 +243,7 @@ Verify: `grep -r '@tinycld/' app/ lib/` in core returns zero results (modulo gen
 - **Unit:** `usePackages()` filtering test — given a registry with contacts+calendar linked, `installedSlugs.has('mail')` is false. (Test in isolation with a mocked registry.)
 - **Public route generation:** add a case to the generator test suite where a fixture package declares `publicRoutes.directory` and the generator emits an `app/share/[token].tsx` re-export.
 - **Integration smoke:** with takeout package + mail linked, the Personal Settings "Import from Google" section appears; without takeout linked, it doesn't. Verified manually per the Task 5 pattern used in the extraction work.
-- **Typecheck from empty state:** with `packages = []`, `bun run typecheck` exits 0. This is the load-bearing assertion.
+- **Typecheck from empty state:** with `packages = []`, `pnpm run typecheck` exits 0. This is the load-bearing assertion.
 
 ## Alternatives considered
 

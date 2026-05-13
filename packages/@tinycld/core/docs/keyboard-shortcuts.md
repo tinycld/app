@@ -143,7 +143,7 @@ const manifest = {
 
 ## Testing
 
-Unit tests for the matcher live at `tests/unit/shortcuts.test.ts` and cover single combos, `$mod` combos, sequences, the 1 s timeout, scope gating, the input-field gate, and `when()` guards. Run with `bun run test:unit`.
+Unit tests for the matcher live at `tests/unit/shortcuts.test.ts` and cover single combos, `$mod` combos, sequences, the 1 s timeout, scope gating, the input-field gate, and `when()` guards. Run with `pnpm run test:unit`.
 
 End-to-end coverage on a real browser lives at `tests/e2e/keyboard-shortcuts.spec.ts` and exercises `?`, `t o`/`t m` jumps, and `j`/`k`/`Enter` on the mail list.
 
