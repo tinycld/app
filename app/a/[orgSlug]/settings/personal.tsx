@@ -23,7 +23,7 @@ import { usePushSubscription } from '@tinycld/core/lib/use-push-subscription'
 import { type ThemePreference, useThemePreference } from '@tinycld/core/lib/use-theme-preference'
 import { useUserPreference } from '@tinycld/core/lib/use-user-preference'
 import { FormErrorSummary, TextInput, useForm, z, zodResolver } from '@tinycld/core/ui/form'
-import { ThemedSwitch } from '@tinycld/core/ui/ThemedSwitch'
+import { Switch } from '@tinycld/core/ui/switch'
 import { ArrowLeft, Check, RotateCcw } from 'lucide-react-native'
 import { useCallback, useMemo } from 'react'
 import {
@@ -297,7 +297,7 @@ function PushToggle({
                     {isPending ? (
                         <ActivityIndicator size="small" />
                     ) : (
-                        <ThemedSwitch value={isSubscribed} onValueChange={onToggle} />
+                        <Switch value={isSubscribed} onValueChange={onToggle} />
                     )}
                 </View>
             </Pressable>
@@ -393,7 +393,7 @@ function NotifTypeRow({
     return (
         <View className="flex-row items-center justify-between py-1.5">
             <Text className="text-foreground text-[15px]">{label}</Text>
-            <ThemedSwitch value={enabled} onValueChange={onToggle} />
+            <Switch value={enabled} onValueChange={onToggle} />
         </View>
     )
 }

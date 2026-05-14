@@ -9,6 +9,14 @@ export default defineConfig({
                 replacement: path.resolve(__dirname, 'node_modules/react/index.js'),
             },
             {
+                find: /^react\/jsx-runtime$/,
+                replacement: path.resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
+            },
+            {
+                find: /^react\/jsx-dev-runtime$/,
+                replacement: path.resolve(__dirname, 'node_modules/react/jsx-dev-runtime.js'),
+            },
+            {
                 find: /^@tinycld\/core\/Providers$/,
                 replacement: path.resolve(
                     __dirname,
@@ -55,10 +63,15 @@ export default defineConfig({
         environment: 'node',
         include: [
             'tests/**/*.test.ts',
+            'tests/**/*.test.tsx',
             'packages/*/tests/**/*.test.ts',
+            'packages/*/tests/**/*.test.tsx',
             'packages/@*/*/tests/**/*.test.ts',
+            'packages/@*/*/tests/**/*.test.tsx',
             'packages/@tinycld/core/**/__tests__/**/*.test.ts',
+            'packages/@tinycld/core/**/__tests__/**/*.test.tsx',
             'packages/@tinycld/core/**/*.test.ts',
+            'packages/@tinycld/core/**/*.test.tsx',
         ],
         exclude: [
             'packages/@tinycld/google-takeout-import/tests/worker-bridge.test.ts',
