@@ -162,16 +162,21 @@ function Trigger({ children, disableClick }: TriggerProps) {
     // biome-ignore lint/suspicious/noExplicitAny: web-only ref for DOM element
     const webDivRef = useRef<any>(null)
 
+    const measureWeb = useCallback(() => {
+        if (!webDivRef.current) return
+        const rect = webDivRef.current.getBoundingClientRect()
+        setTriggerLayout({
+            x: rect.left,
+            y: rect.top,
+            width: rect.width,
+            height: rect.height,
+        })
+    }, [setTriggerLayout])
+
     const handleClick = useCallback(() => {
         if (disableClick) return
         if (Platform.OS === 'web' && webDivRef.current) {
-            const rect = webDivRef.current.getBoundingClientRect()
-            setTriggerLayout({
-                x: rect.left,
-                y: rect.top,
-                width: rect.width,
-                height: rect.height,
-            })
+            measureWeb()
             onOpenChange(!isOpenRef.current)
         } else if (triggerRef.current) {
             triggerRef.current.measureInWindow((x, y, width, height) => {
@@ -181,10 +186,22 @@ function Trigger({ children, disableClick }: TriggerProps) {
         } else {
             onOpenChange(!isOpenRef.current)
         }
-    }, [disableClick, onOpenChange, setTriggerLayout, triggerRef])
+    }, [disableClick, measureWeb, onOpenChange, setTriggerLayout, triggerRef])
+
+    // Without this, a controlled <Menu> opened via an external hover
+    // handler (e.g. the calc menubar's hover-swap between File/Edit/View)
+    // has no `triggerLayout` recorded — the Content positions to (0,0)
+    // because click was the only path that called `setTriggerLayout`.
+    // Re-measuring on hover keeps the recorded rect fresh whenever the
+    // pointer crosses the trigger.
+    const handleMouseEnter = useCallback(() => {
+        if (disableClick) return
+        measureWeb()
+    }, [disableClick, measureWeb])
 
     if (Platform.OS === 'web') {
         return (
+            // biome-ignore lint/a11y/noStaticElementInteractions: wrapper div augments the interactive child (Pressable) with click/hover measurement; the child carries the button role and keyboard semantics.
             <div
                 ref={node => {
                     webDivRef.current = node
@@ -192,6 +209,7 @@ function Trigger({ children, disableClick }: TriggerProps) {
                         node as unknown as View
                 }}
                 onClickCapture={handleClick}
+                onMouseEnter={handleMouseEnter}
             >
                 {children}
             </div>
@@ -651,10 +669,13 @@ const SubContent = forwardRef<View, SubContentProps>(function SubContent(
         if (!contentLayout || !triggerLayout) return { opacity: 0 }
 
         const pos: Record<string, number | string> = {}
-        // Submenu sits flush against the parent — overlapping the parent's
-        // 1px border by 1px so the two rounded panels read as one
-        // continuous surface (matches macOS/Sheets/Excel submenu styling).
-        const overlap = 1
+        // Sheets/Excel style: the submenu overlaps the parent horizontally
+        // by a few pixels so the two rounded panels read as one continuous
+        // surface, and rises vertically by the menu's top padding so the
+        // submenu's *first item* aligns with the SubTrigger row (not the
+        // submenu's top edge — that would put the first item one row low).
+        const overlap = 4
+        const verticalLift = 4 // matches MENU_CONTENT_CLASS `py-1` top padding
         const measuredWidth = contentSize?.width ?? 200
         const measuredHeight = contentSize?.height ?? 0
 
@@ -670,7 +691,7 @@ const SubContent = forwardRef<View, SubContentProps>(function SubContent(
         }
         if (leftWindow < 8) leftWindow = 8
 
-        let topWindow = triggerLayout.y
+        let topWindow = triggerLayout.y - verticalLift
         if (topWindow + measuredHeight > windowDim.height - 8) {
             topWindow = Math.max(8, windowDim.height - measuredHeight - 8)
         }
