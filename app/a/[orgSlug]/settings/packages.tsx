@@ -9,7 +9,7 @@ import { useCurrentRole } from '@tinycld/core/lib/use-current-role'
 import { useOrgInfo } from '@tinycld/core/lib/use-org-info'
 import { useOrgLiveQuery } from '@tinycld/core/lib/use-org-live-query'
 import { Divider } from '@tinycld/core/ui/divider'
-import { ThemedSwitch } from '@tinycld/core/ui/ThemedSwitch'
+import { Switch } from '@tinycld/core/ui/switch'
 import { ScrollView, Text, View } from 'react-native'
 
 export default function OrgPackageSettings() {
@@ -145,7 +145,7 @@ function PackageToggleRow({
                     )}
                 </View>
             </View>
-            <ThemedSwitch
+            <Switch
                 value={isEnabled}
                 onValueChange={enabled => upsertToggle.mutate({ enabled })}
                 disabled={upsertToggle.isPending}
