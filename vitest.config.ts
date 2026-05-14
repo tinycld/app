@@ -14,10 +14,7 @@ export default defineConfig({
             },
             {
                 find: /^react\/jsx-dev-runtime$/,
-                replacement: path.resolve(
-                    __dirname,
-                    'node_modules/react/jsx-dev-runtime.js'
-                ),
+                replacement: path.resolve(__dirname, 'node_modules/react/jsx-dev-runtime.js'),
             },
             {
                 find: /^@tinycld\/core\/Providers$/,
