@@ -1,6 +1,7 @@
 import { execSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 // ROOT is the source of truth — every other path derives from it or from an
 // explicit override env var. Default: parent of the scripts/ directory.
@@ -214,7 +215,7 @@ function resolveExportPath(packageDir: string, subpath: string): string {
     return path.join(packageDir, subpath)
 }
 
-function resolvePackageDir(packageName: string): string {
+export function resolvePackageDir(packageName: string): string {
     // Primary: packages/<name>, which is a symlink to the sibling repo.
     // Scoped packages live at packages/@scope/name (mirroring node_modules
     // layout). Unscoped packages live flat at packages/<name>.
@@ -232,7 +233,7 @@ function resolvePackageDir(packageName: string): string {
     throw new Error(`Cannot resolve package directory for ${packageName}`)
 }
 
-function loadManifest(packageDir: string): PackageManifest {
+export function loadManifest(packageDir: string): PackageManifest {
     for (const ext of ['ts', 'js']) {
         const manifestPath = path.join(packageDir, `manifest.${ext}`)
         if (!fs.existsSync(manifestPath)) continue
@@ -1071,4 +1072,16 @@ async function main() {
     fs.writeFileSync(LINKS_MANIFEST, JSON.stringify(linksManifest, null, 2))
 }
 
-main()
+function isMainModule(): boolean {
+    if ((import.meta as { main?: boolean }).main) return true
+    if (!process.argv[1]) return false
+    try {
+        return fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))
+    } catch {
+        return false
+    }
+}
+
+if (isMainModule()) {
+    main()
+}

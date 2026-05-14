@@ -2,6 +2,8 @@ import { execSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { getPackages } from '../tinycld.packages'
+import { loadManifest, resolvePackageDir } from './generate-packages'
 
 const __filename = fileURLToPath(import.meta.url)
 const ROOT = path.resolve(path.dirname(__filename), '..')
@@ -78,12 +80,14 @@ export function readSiblingPackage(dir: string): SiblingPackage {
     return { dir, name: pkg.name }
 }
 
-function removeLink(packageName: string): void {
+function removeLink(packageName: string): boolean {
     const target = packageLinkPath(packageName)
+    let removed = false
     try {
         const st = fs.lstatSync(target)
         if (st.isSymbolicLink()) {
             fs.unlinkSync(target)
+            removed = true
         } else {
             throw new Error(
                 `Refusing to remove ${target} — it's a real directory, not a symlink. Move it out of the way first.`
@@ -104,6 +108,29 @@ function removeLink(packageName: string): void {
             // not present
         }
     }
+
+    return removed
+}
+
+/**
+ * Given a manifest slug (e.g. "calc"), find every linked package whose
+ * manifest.slug matches. Returns the full package names (e.g.
+ * "@tinycld/calc"). Reads each linked package's manifest.ts so the match
+ * is authoritative — the symlink basename is not relied on.
+ */
+function findLinksBySlug(slug: string): string[] {
+    const matches: string[] = []
+    for (const packageName of getPackages()) {
+        if (packageName === '@tinycld/core') continue
+        try {
+            const manifest = loadManifest(resolvePackageDir(packageName))
+            if (manifest.slug === slug) matches.push(packageName)
+        } catch {
+            // Skip packages whose manifest can't be read — they wouldn't
+            // be wired in by the generator either.
+        }
+    }
+    return matches
 }
 
 /**
@@ -129,8 +156,33 @@ export function linkPackage(locator: string): void {
     console.log(`Linked ${pkg.name} → ${relLink} (${linkTarget}).`)
 }
 
-export function unlinkPackage(packageName: string): void {
-    removeLink(packageName)
+/**
+ * Unlink a package by either its full package name (`@tinycld/calc`,
+ * `bare-name`) or its manifest slug (`calc`). Throws if no matching link
+ * exists, or if a slug matches multiple linked packages.
+ */
+export function unlinkPackage(arg: string): void {
+    const looksLikePackageName = arg.includes('/') || arg.startsWith('@')
+    const targets = looksLikePackageName ? [arg] : findLinksBySlug(arg)
+
+    if (targets.length === 0) {
+        throw new Error(
+            `No linked package with slug "${arg}" found.\n` +
+                `Pass either a slug (e.g. "calc") or a full package name (e.g. "@tinycld/calc").`
+        )
+    }
+    if (targets.length > 1) {
+        throw new Error(
+            `Slug "${arg}" matches multiple linked packages: ${targets.join(', ')}.\n` +
+                `Pass the full package name to disambiguate.`
+        )
+    }
+
+    const [packageName] = targets
+    const removed = removeLink(packageName)
+    if (!removed) {
+        throw new Error(`No linked package named "${packageName}" found in ${PACKAGES_DIR}.`)
+    }
     execGenerate()
     console.log(`Unlinked ${packageName}.`)
 }
@@ -149,8 +201,9 @@ if (isMainModule()) {
                 '             Accepts a bare slug ("contacts" → ../contacts),\n' +
                 '             a relative path ("../contacts"), or an absolute path.\n' +
                 '             The package name is read from <sibling-dir>/package.json.\n' +
-                '       unlink <package-name>: the package name to remove\n' +
-                '             (e.g. "@tinycld/contacts" or "bare-name").'
+                '       unlink <slug-or-package-name>: the package to remove.\n' +
+                '             Accepts either a manifest slug ("calc") or the\n' +
+                '             full package name ("@tinycld/calc" / "bare-name").'
         )
         process.exit(2)
     }
