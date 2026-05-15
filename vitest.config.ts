@@ -45,6 +45,30 @@ export default defineConfig({
                 find: /^expo-clipboard$/,
                 replacement: path.resolve(__dirname, 'tests/expo-clipboard-stub.ts'),
             },
+            // expo-router's CJS entry does `require("./global")` at
+            // module top, which Node's CJS resolver can't find when
+            // the calling module is reached through a sibling-package
+            // symlink (Vite SSR with the default preserveSymlinks=false
+            // resolves the chain to the sibling's real filesystem
+            // path, where node_modules don't reach expo-router).
+            // Tests that load a real screen/hook/side-effect module
+            // from a sibling go through this stub. tests/unit-setup.ts
+            // also vi.mock('expo-router', ...) for the small set of
+            // tests that import expo-router directly; both layers
+            // overlap harmlessly.
+            {
+                find: /^expo-router$/,
+                replacement: path.resolve(__dirname, 'tests/expo-router-stub.ts'),
+            },
+            // lucide-react-native pulls in react-native-svg, whose
+            // source is TS and isn't transformed in node_modules under
+            // Vitest. The stub is a CJS Proxy so any named icon import
+            // (ExternalLink, AlertTriangle, …) yields a harmless
+            // component stub.
+            {
+                find: /^lucide-react-native$/,
+                replacement: path.resolve(__dirname, 'tests/lucide-react-native-stub.cjs'),
+            },
             // yjs and y-protocols are stateful CRDT libs whose internal
             // type checks rely on instanceof. Without an alias, code
             // imported through the package symlinks (siblings) resolves
