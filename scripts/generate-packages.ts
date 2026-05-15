@@ -63,7 +63,6 @@ interface PackageManifest {
     hooks?: { directory: string }
     collections?: { register: string; types: string }
     sidebar?: { component: string }
-    hideSidebar?: boolean
     provider?: { component: string }
     settings?: { slug: string; component: string; label: string }[]
     seed?: { script: string }
