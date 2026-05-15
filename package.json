@@ -34,8 +34,8 @@
         "eas:build:ios:local": "pnpm exec eas build --platform ios --local --output ./tmp/build.ipa",
         "eas:submit:ios": "pnpm exec eas submit --platform ios",
         "eas:submit:ios:local": "pnpm exec eas submit --platform ios --path ./tmp/build.ipa",
-        "eas:release:ios": "run-s eas:build:ios eas:submit:ios",
-        "eas:release:ios:local": "run-s eas:build:ios:local eas:submit:ios:local",
+        "eas:release:ios": "pnpm run eas:build:ios && pnpm run eas:submit:ios",
+        "eas:release:ios:local": "pnpm run eas:build:ios:local && pnpm run eas:submit:ios:local",
         "db:reset": "pnpm exec tsx scripts/reset-dev-db.ts",
         "db:seed": "pnpm exec tsx scripts/seed-db.ts",
         "db:seed:demo": "pnpm exec tsx scripts/seed-db.ts --mode demo",
@@ -159,7 +159,6 @@
         "expo-atlas": "^0.4.3",
         "imapflow": "^1.3.1",
         "local-ssl-proxy": "^2.0.5",
-        "npm-run-all2": "^8.0.4",
         "tailwindcss": "^4.2.2",
         "tsx": "^4.21.0",
         "vitest": "^3.0.0"
