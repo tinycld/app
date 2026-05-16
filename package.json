@@ -101,6 +101,7 @@
         "@tiptap/pm": "^3.22.3",
         "@tiptap/react": "^3.22.3",
         "@tiptap/starter-kit": "^3.22.3",
+        "@tiptap/suggestion": "^3.23.4",
         "@tiptap/y-tiptap": "^3.0.3",
         "expo": "~55.0.23",
         "expo-clipboard": "~55.0.13",
