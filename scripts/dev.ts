@@ -536,9 +536,9 @@ async function main() {
         ssl: useSsl,
     })
 
-    const fallbackTimer = setTimeout(() => {
+    const fallbackTimer: NodeJS.Timeout = setTimeout(() => {
         printOnce('(still bundling — open the URL once Expo is ready)')
-    }, 60_000)
+    }, 60_000) as unknown as NodeJS.Timeout
     fallbackTimer.unref()
 
     let shuttingDown = false
@@ -550,9 +550,11 @@ async function main() {
         pb.kill('SIGTERM')
         expo.kill('SIGTERM')
         // give children a moment, then exit
-        setTimeout(() => {
-            process.exit(0)
-        }, 500).unref()
+        ;(
+            setTimeout(() => {
+                process.exit(0)
+            }, 500) as unknown as NodeJS.Timeout
+        ).unref()
     }
 
     process.on('SIGINT', shutdown)
