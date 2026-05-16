@@ -64,8 +64,8 @@ cd "$ROOT"
 # (skipped) bundler to use that port if --no-bundler is removed.
 #
 # Important: the simulator speaks plain HTTP. dev.ts runs the proxy with
-# TLS by default when assets/localhost*.pem exist — run `pnpm start --
+# TLS by default when assets/localhost*.pem exist — run `npm start --
 # --no-ssl` (or delete the certs) when using the simulator, otherwise
 # the bundle fetch fails with a TLS handshake error.
 export EXPO_PACKAGER_PROXY_URL=http://localhost:7102
-pnpm exec expo run:ios --device "$UDID" --no-bundler "${EXTRA_ARGS[@]}"
+npx expo run:ios --device "$UDID" --no-bundler "${EXTRA_ARGS[@]}"

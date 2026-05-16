@@ -923,7 +923,7 @@ async function main() {
 
     // Ensure node_modules/@tinycld symlinks exist so TypeScript's bundler
     // resolution can find package.json exports for linked sibling packages.
-    // These may be wiped by `pnpm install`, so we recreate them on every generate.
+    // These may be wiped by `npm install`, so we recreate them on every generate.
     const NODE_MODULES_SCOPE = path.join(ROOT, 'node_modules/@tinycld')
     fs.mkdirSync(NODE_MODULES_SCOPE, { recursive: true })
     if (fs.existsSync(path.join(ROOT, 'packages/@tinycld'))) {
@@ -933,7 +933,7 @@ async function main() {
             if (!entry.isSymbolicLink() && !entry.isDirectory()) continue
             const nmLink = path.join(NODE_MODULES_SCOPE, entry.name)
             const target = path.join('..', '..', 'packages', '@tinycld', entry.name)
-            // pnpm may materialize a real directory at this path under
+            // npm may materialize a real directory at this path under
             // certain install modes, so we can't assume a symlink. lstat
             // to tell what's there and replace whatever it
             // is with our symlink.

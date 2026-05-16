@@ -188,7 +188,7 @@ export function unlinkPackage(arg: string): void {
 }
 
 function execGenerate(): void {
-    execSync('pnpm run packages:generate', { cwd: ROOT, stdio: 'inherit' })
+    execSync('npm run packages:generate', { cwd: ROOT, stdio: 'inherit' })
 }
 
 if (isMainModule()) {

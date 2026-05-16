@@ -12,23 +12,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.1.1
       - uses: actions/setup-node@v5
         with:
           node-version-file: .node-version
-          cache: pnpm
+          cache: npm
       - uses: actions/setup-go@v6
         with:
           go-version-file: server/go.mod
           cache-dependency-path: server/go.sum
-      - run: pnpm install --frozen-lockfile
+      - run: npm ci
       - name: Generate PB schema types
         run: |
           cd server && go build -o tinycld .
           ./tinycld --dev serve &
           sleep 3
           kill %1 2>/dev/null || true
-      - run: pnpm run checks
-      - run: pnpm run test:unit
+      - run: npm run checks
+      - run: npm run test:unit

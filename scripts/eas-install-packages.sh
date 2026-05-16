@@ -4,7 +4,7 @@
 # production iOS/Android bundle includes their routes, settings panels, etc.
 #
 # Local dev does not need this — devs link siblings manually with
-# `pnpm run packages:link`.
+# `npm run packages:link`.
 
 set -euo pipefail
 
@@ -19,7 +19,7 @@ PACKAGES=(
 
 for pkg in "${PACKAGES[@]}"; do
     echo "==> Installing @tinycld/${pkg}"
-    pnpm run packages:install "${REPO_BASE}/${pkg}.git"
+    npm run packages:install "${REPO_BASE}/${pkg}.git"
 done
 
 # Verify each package landed as a symlink under packages/@tinycld/. Without

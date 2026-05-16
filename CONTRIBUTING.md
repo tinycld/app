@@ -25,8 +25,8 @@ Feature packages (`@tinycld/contacts`, `@tinycld/mail`, `@tinycld/calendar`, `@t
 (`scripts/generate-packages.ts`) wires linked feature packages into the routes, registry, Go
 server, and PocketBase migrations.
 
-Validate changes with `pnpm run checks` (biome + tsc) and `pnpm run test:unit` (vitest). The Go
-side runs `pnpm run test:go`, which uses the `no_ui` build tag so PocketBase's
+Validate changes with `npm run checks` (biome + tsc) and `npm run test:unit` (vitest). The Go
+side runs `npm run test:go`, which uses the `no_ui` build tag so PocketBase's
 admin UI routes are skipped during tests (PB v0.37+ panics on duplicate route
 registration when an `OnServe` handler binds a fixed pattern across multiple
 test scenarios that share an app). The shipped server binary is still built
@@ -43,8 +43,8 @@ without `no_ui` so the admin UI is available in production.
 - Comments: Only add comments that explain "why", not "what". Avoid trivial comments like `// Delete users` before `deleteFrom('user')` or `// Create profile` before `insertInto('profile')`. If the code is self-explanatory, no comment is needed.
 - Testing: Write unit tests for new features. Only mock using helpers in tests/unit.helpers.tsx as needed, do not mock out any of our own components or actions.
 - Run quality checks after any changes:
-   - `pnpm run checks` (Biome lint + format check + typecheck)
-   - `pnpm run test:unit`
+   - `npm run checks` (Biome lint + format check + typecheck)
+   - `npm run test:unit`
 - Embrace Type Inference: Do not over-specify types, allow TypeScript to infer types whenever possible.
   - DO NOT USE `any` to pass type checks, even with biome ignore comments.
 - Biome enforces 4-space indentation, single quotes, ES5 trailing commas, and no superfluous semicolons.
@@ -137,17 +137,17 @@ without `no_ui` so the admin UI is available in production.
 - The logger shows timestamps and colors in development mode
 
 ## Scripts Reference
-- `pnpm run dev` starts Expo dev server (`expo start --port 7100`).
-- `pnpm run dev:local` starts both the PocketBase backend and Expo dev server together.
-- `pnpm run typecheck` runs `tsc --noEmit --skipLibCheck`.
-- `pnpm run checks` runs lint and typechecks
-- `pnpm run lint` (or `pnpm run lint:fix`) runs Biome linting/formatting. Biome lives only in the app shell; `tinycld/biome.json` is the single config for the app **and** every linked package. Sibling repos do not ship their own `biome.json` or `lint`/`checks` scripts — `pnpm run lint` walks through the symlinks under `packages/` and lints sibling source under each sibling's actual filesystem path.
-- `pnpm run test:e2e` and `pnpm run test:server` cover the Playwright suite and supporting services.
+- `npm run dev` starts Expo dev server (`expo start --port 7100`).
+- `npm run dev:local` starts both the PocketBase backend and Expo dev server together.
+- `npm run typecheck` runs `tsc --noEmit --skipLibCheck`.
+- `npm run checks` runs lint and typechecks
+- `npm run lint` (or `npm run lint:fix`) runs Biome linting/formatting. Biome lives only in the app shell; `tinycld/biome.json` is the single config for the app **and** every linked package. Sibling repos do not ship their own `biome.json` or `lint`/`checks` scripts — `npm run lint` walks through the symlinks under `packages/` and lints sibling source under each sibling's actual filesystem path.
+- `npm run test:e2e` and `npm run test:server` cover the Playwright suite and supporting services.
    - never start or kill servers when running Playwright. It will manage it's own service and test data. If you see network errors or other issues, stop and ask for advice
-- `pnpm run test:e2e <test file>` will run a single test.  This will also start the dev server for testing.
-- `pnpm run build:web` runs `expo export --platform web` for production web builds.
-- `pnpm run ios` runs `expo run:ios` to build and launch on iOS.
-- `pnpm run android` runs `expo run:android` to build and launch on Android.
+- `npm run test:e2e <test file>` will run a single test.  This will also start the dev server for testing.
+- `npm run build:web` runs `expo export --platform web` for production web builds.
+- `npm run ios` runs `expo run:ios` to build and launch on iOS.
+- `npm run android` runs `expo run:android` to build and launch on Android.
 
 ## PocketBase Notes
 - Local data lives in `server/pb_data/`; reset via `tests/pb-test-server` scripts when fixtures fall out of sync.
@@ -179,9 +179,9 @@ without `no_ui` so the admin UI is available in production.
 - Use `useOrgInfo()` or `useOrgSlug()` to get the current org — `useOrgSlug()` reads from context on web
 
 ## Package System
-- Feature packages live in **sibling git repos** at `~/code/tinycld/{contacts,mail,calendar,drive,google-takeout-import}/` and are linked in via `pnpm run packages:link`. They appear as symlinks under `tinycld/packages/@tinycld/<name>`. `@tinycld/core` is not a sibling — it is bundled inside this repo at `packages/@tinycld/core/`.
-- `tinycld.packages.ts::getPackages()` scans `tinycld/packages/` for directories with a `manifest.ts` — the symlink set is the source of truth. A fresh clone has no feature packages; devs add entries via `pnpm run packages:install <git-url>` (clone + link in one step) or `pnpm run packages:link <slug>` (link an already-cloned sibling).
-- `pnpm run packages:generate` (runs automatically before `dev` and `build:web`) wires linked feature packages into the app:
+- Feature packages live in **sibling git repos** at `~/code/tinycld/{contacts,mail,calendar,drive,google-takeout-import}/` and are linked in via `npm run packages:link`. They appear as symlinks under `tinycld/packages/@tinycld/<name>`. `@tinycld/core` is not a sibling — it is bundled inside this repo at `packages/@tinycld/core/`.
+- `tinycld.packages.ts::getPackages()` scans `tinycld/packages/` for directories with a `manifest.ts` — the symlink set is the source of truth. A fresh clone has no feature packages; devs add entries via `npm run packages:install <git-url>` (clone + link in one step) or `npm run packages:link <slug>` (link an already-cloned sibling).
+- `npm run packages:generate` (runs automatically before `dev` and `build:web`) wires linked feature packages into the app:
   - Re-exports package screens into `app/a/[orgSlug]/{slug}/` (org-scoped routes)
   - Re-exports public top-level routes declared via manifest `publicRoutes` into `app/<path>` (e.g. drive's `/share/[token]`)
   - Generates typed collection wiring in `lib/generated/package-collections.ts`
@@ -192,9 +192,9 @@ without `no_ui` so the admin UI is available in production.
 - The type system is fully integrated — package `types.ts` exports a `{PascalSlug}Schema` type that gets merged into `MergedSchema` so `useStore('packageCollection')` is strongly typed end-to-end.
 - Package screens run in the app's bundle context and can import from the host app using `~/` and from core using `@tinycld/core/...`.
 - `lib/generated/`, `app/a/[orgSlug]/*/`, and `/app/share/` are gitignored; `app/a/[orgSlug]/_layout.tsx` and `app/a/[orgSlug]/settings/*` are app files (force-add to git).
-- **Do NOT run `pnpm install` (or any other package manager's install) inside a feature sibling repo** — any install in a sibling materializes peer deps locally, duplicating `react`, `react-native`, `pbtsdb`, etc. and causing hundreds of "Type X is not assignable to type X" errors. Siblings inherit peer deps through this repo's `node_modules/` via the link symlink.
+- **Do NOT run `npm install` (or any other package manager's install) inside a feature sibling repo** — any install in a sibling materializes peer deps locally, duplicating `react`, `react-native`, `pbtsdb`, etc. and causing hundreds of "Type X is not assignable to type X" errors. Siblings inherit peer deps through this repo's `node_modules/` via the link symlink.
 - Metro bundler reads sibling packages via `watchFolders` + `nodeModulesPaths` in `metro.config.cjs`, computed dynamically by scanning `tinycld/packages/`.
-- **Tailwind/Uniwind class scanning across linked packages is wired up by the generator.** Tailwind v4's scanner respects `.gitignore`, and the symlinks (and `node_modules` installs) for linked packages live inside gitignored paths. Without help, any utility class used **only** inside a linked package (e.g. `mr-3`, `bg-green-500`) silently produces no CSS rule — the className lands on the DOM element but has no styles. The generator writes one absolute `@source "<package-real-path>";` line per linked package into `lib/generated/uniwind-sources.css`, which `global.css` imports. The file regenerates on every `packages:link` / `packages:unlink`, so newly-linked packages (siblings, `node_modules`-installed third-party, or arbitrary checkouts) work automatically. Diagnose missing styles by checking `document.styleSheets` in DevTools for a `.your-class { ... }` rule; if missing, run `pnpm run packages:generate` and inspect `lib/generated/uniwind-sources.css`.
+- **Tailwind/Uniwind class scanning across linked packages is wired up by the generator.** Tailwind v4's scanner respects `.gitignore`, and the symlinks (and `node_modules` installs) for linked packages live inside gitignored paths. Without help, any utility class used **only** inside a linked package (e.g. `mr-3`, `bg-green-500`) silently produces no CSS rule — the className lands on the DOM element but has no styles. The generator writes one absolute `@source "<package-real-path>";` line per linked package into `lib/generated/uniwind-sources.css`, which `global.css` imports. The file regenerates on every `packages:link` / `packages:unlink`, so newly-linked packages (siblings, `node_modules`-installed third-party, or arbitrary checkouts) work automatically. Diagnose missing styles by checking `document.styleSheets` in DevTools for a `.your-class { ... }` rule; if missing, run `npm run packages:generate` and inspect `lib/generated/uniwind-sources.css`.
 - Sibling-package tests (vitest) are discovered via `packages/@*/*/tests/**/*.test.ts` in `vitest.config.ts`; Playwright discovers them via a matching glob in `playwright.config.ts`.
 - Runtime hooks: `usePackages()` and `usePackage(slug)` from `@tinycld/core/lib/packages/use-packages`.
 - Full documentation: `docs/packages.md` (in this repo, or in core's docs subtree).

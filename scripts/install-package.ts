@@ -142,7 +142,7 @@ if (isMainModule()) {
 
     if (!url) {
         console.error(
-            'Usage: pnpm run packages:install <git-url> [--path <dir>] [--ref <branch|tag|sha>] [--full]'
+            'Usage: npm run packages:install <git-url> [--path <dir>] [--ref <branch|tag|sha>] [--full]'
         )
         process.exit(2)
     }

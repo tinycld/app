@@ -46,7 +46,7 @@ describe('generate-packages env overrides', () => {
     })
 
     it('writes generated TS files under TINYCLD_GENERATED_DIR', () => {
-        execFileSync('pnpm', ['exec', 'tsx', GEN_SCRIPT], {
+        execFileSync('npx', ['tsx', GEN_SCRIPT], {
             env: {
                 ...process.env,
                 TINYCLD_APP_ROOT: tmp,
@@ -62,7 +62,7 @@ describe('generate-packages env overrides', () => {
     })
 
     it('honors TINYCLD_CORE_IMPORT_ALIAS in generated file contents', () => {
-        execFileSync('pnpm', ['exec', 'tsx', GEN_SCRIPT], {
+        execFileSync('npx', ['tsx', GEN_SCRIPT], {
             env: {
                 ...process.env,
                 TINYCLD_APP_ROOT: tmp,
@@ -95,7 +95,7 @@ describe('generate-packages env overrides', () => {
             "export default { name: 'Widget', slug: 'widget', version: '0.1.0', description: 'x' }\n"
         )
 
-        execFileSync('pnpm', ['exec', 'tsx', GEN_SCRIPT], {
+        execFileSync('npx', ['tsx', GEN_SCRIPT], {
             env: {
                 ...process.env,
                 TINYCLD_APP_ROOT: tmp,
@@ -117,7 +117,7 @@ describe('generate-packages env overrides', () => {
     })
 
     it('writes go.mod + package_extensions.go under TINYCLD_SERVER_DIR', () => {
-        execFileSync('pnpm', ['exec', 'tsx', GEN_SCRIPT], {
+        execFileSync('npx', ['tsx', GEN_SCRIPT], {
             env: {
                 ...process.env,
                 TINYCLD_APP_ROOT: tmp,

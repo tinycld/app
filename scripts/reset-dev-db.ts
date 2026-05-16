@@ -1,4 +1,4 @@
-#!/usr/bin/env -S pnpm exec tsx
+#!/usr/bin/env -S npx tsx
 /**
  * Reset Database Script
  *
@@ -6,7 +6,7 @@
  * then seeds the database with a test user and org.
  *
  * Usage:
- *   pnpm exec tsx scripts/reset-dev-db.ts [options]
+ *   npx tsx scripts/reset-dev-db.ts [options]
  *
  * Options:
  *   --url <url>        PocketBase URL (default: http://127.0.0.1:7100)

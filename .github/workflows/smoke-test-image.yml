@@ -110,29 +110,24 @@ jobs:
           # Mask in subsequent log output even though it's a one-time bootstrap.
           echo "::add-mask::${token}"
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 11.1.1
-
       - name: Set up Node
         uses: actions/setup-node@v5
         with:
           node-version-file: .node-version
-          cache: pnpm
+          cache: npm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        run: npm ci --ignore-scripts
 
       - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Run install smoke spec
         env:
           PW_BASE_URL: http://localhost:7090
           PW_SETUP_TOKEN: ${{ steps.token.outputs.token }}
           CI: 'true'
-        run: pnpm exec playwright test --config tests/install/playwright.config.ts
+        run: npx playwright test --config tests/install/playwright.config.ts
 
       - name: Capture container logs on failure
         if: failure()

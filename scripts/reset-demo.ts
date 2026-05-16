@@ -1,4 +1,4 @@
-#!/usr/bin/env -S pnpm exec tsx
+#!/usr/bin/env -S npx tsx
 /**
  * Demo Reset Script
  *
@@ -11,7 +11,7 @@
  * recreates the org and user_org membership.
  *
  * Usage:
- *   pnpm exec tsx scripts/reset-demo.ts [options]
+ *   npx tsx scripts/reset-demo.ts [options]
  *
  * Options:
  *   --url <url>            PocketBase URL (default: http://127.0.0.1:7100)

@@ -78,7 +78,7 @@ export default defineConfig({
         })),
     ],
     webServer: {
-        command: 'pnpm run expo:test',
+        command: 'npm run expo:test',
         url: `http://localhost:${TEST_EXPO_PORT}`,
         // Always start a fresh dev.ts. expo:test chains
         // `reset-dev-db.ts && dev.ts`, so the data dir is wiped and reseeded

@@ -206,6 +206,20 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
         return { type: 'sourceFile', filePath: resolved }
     }
 
+    // fractional-indexing publishes only an ESM build at src/index.js with
+    // "type": "module" and "exports": "./src/index.js". Metro's default
+    // resolver runs the exports map through its sourceExts probing and ends
+    // up looking for src/index.js.ts, src/index.js.tsx, … — never src/index.js
+    // itself — and bails with "main module field could not be resolved." Same
+    // shape as the zustand carve-out above: bypass exports resolution by
+    // pinning to the file directly.
+    if (moduleName === 'fractional-indexing') {
+        return {
+            type: 'sourceFile',
+            filePath: path.join(__dirname, 'node_modules', 'fractional-indexing', 'src', 'index.js'),
+        }
+    }
+
     // Worker bundle URL fetches. When the browser hits
     // `/<sibling-real-base>/<rest>/worker.bundle?...`, Metro's Server calls
     // resolveRequest with `originModulePath = <projectRoot>/.` and
@@ -296,7 +310,7 @@ function resolveSiblingName(moduleName) {
 
 // Sibling packages — including @tinycld/core — must have no node_modules of
 // their own; they resolve every import through this repo's install. We do
-// NOT add core's node_modules as a backstop: when a stray `pnpm install` in
+// NOT add core's node_modules as a backstop: when a stray `npm install` in
 // core leaves a node_modules/ behind, that fallback would feed duplicate
 // copies of every shared package (react, react-native-web, uniwind, …) into
 // Metro's graph and produce broken self-referential modules at runtime.
