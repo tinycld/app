@@ -48,6 +48,13 @@ const CORE_MIGRATIONS_SOURCE = process.env.TINYCLD_CORE_MIGRATIONS_DIR
     ? path.resolve(process.env.TINYCLD_CORE_MIGRATIONS_DIR)
     : path.join(ROOT, 'packages/@tinycld/core/server/pb_migrations')
 
+// CORE_HELP_SOURCE points at core's own help/ directory. Core has no
+// manifest.ts so its topics aren't picked up by the per-package loop; the
+// help generator includes it explicitly the same way migrations are above.
+const CORE_HELP_SOURCE = process.env.TINYCLD_CORE_HELP_DIR
+    ? path.resolve(process.env.TINYCLD_CORE_HELP_DIR)
+    : path.join(ROOT, 'packages/@tinycld/core/help')
+
 const LINKS_MANIFEST = path.join(ROOT, '.package-links.json')
 const INSTALLED_PACKAGES_PATH = path.join(ROOT, 'installed-packages.json')
 
@@ -68,6 +75,7 @@ interface PackageManifest {
     seed?: { script: string }
     tests?: { directory: string }
     server?: { package: string; module: string }
+    help?: { directory: string }
     dependencies?: string[]
 }
 
@@ -682,6 +690,186 @@ function generateSettingsFile(
     ].join('\n')
 }
 
+interface HelpContributor {
+    packageName: string
+    pkgSlug: string
+    helpDir: string
+}
+
+interface ParsedHelpTopic {
+    id: string
+    title: string
+    summary: string
+    tags: string[]
+    order: number
+    body: string
+}
+
+// Minimal YAML frontmatter parser. Supports the subset we use in help topics:
+// scalar strings (quoted or bare), numbers, and inline string arrays
+// (`tags: [a, "b c", 'd']`). Anything more complex throws — the caller
+// should keep frontmatter tiny.
+function parseFrontmatter(
+    raw: string,
+    filePath: string
+): { meta: Record<string, unknown>; body: string } {
+    if (!raw.startsWith('---')) {
+        throw new Error(`Help topic ${filePath} is missing a frontmatter block (--- … ---)`)
+    }
+    const end = raw.indexOf('\n---', 3)
+    if (end === -1) {
+        throw new Error(`Help topic ${filePath} has an unterminated frontmatter block`)
+    }
+    const block = raw.slice(3, end).replace(/^\r?\n/, '')
+    const afterClose = raw.slice(end + 4)
+    const body = afterClose.replace(/^\r?\n/, '')
+
+    const meta: Record<string, unknown> = {}
+    for (const rawLine of block.split('\n')) {
+        const line = rawLine.replace(/\s+$/, '')
+        if (!line.trim() || line.trim().startsWith('#')) continue
+        const colon = line.indexOf(':')
+        if (colon === -1) {
+            throw new Error(`Help topic ${filePath}: malformed frontmatter line "${rawLine}"`)
+        }
+        const key = line.slice(0, colon).trim()
+        const value = line.slice(colon + 1).trim()
+        meta[key] = parseFrontmatterValue(value, filePath, key)
+    }
+    return { meta, body }
+}
+
+function parseFrontmatterValue(raw: string, filePath: string, key: string): unknown {
+    if (raw === '') return ''
+    if (raw.startsWith('[') && raw.endsWith(']')) {
+        const inner = raw.slice(1, -1).trim()
+        if (!inner) return [] as string[]
+        const items: string[] = []
+        // Split on commas not inside quotes
+        let buf = ''
+        let quote: '"' | "'" | null = null
+        for (const ch of inner) {
+            if (quote) {
+                if (ch === quote) {
+                    quote = null
+                    continue
+                }
+                buf += ch
+            } else if (ch === '"' || ch === "'") {
+                quote = ch
+            } else if (ch === ',') {
+                items.push(buf.trim())
+                buf = ''
+            } else {
+                buf += ch
+            }
+        }
+        if (buf.trim()) items.push(buf.trim())
+        return items
+    }
+    if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) {
+        return raw.slice(1, -1)
+    }
+    if (/^-?\d+(\.\d+)?$/.test(raw)) return Number(raw)
+    if (raw === 'true') return true
+    if (raw === 'false') return false
+    // Bare scalar — return as-is. Reject anything that looks structured to
+    // avoid silently mis-parsing a future expansion of the schema.
+    if (raw.includes(':') && !raw.startsWith('#')) {
+        throw new Error(
+            `Help topic ${filePath}: value for "${key}" looks structured ("${raw}"); quote it or simplify`
+        )
+    }
+    return raw
+}
+
+function readHelpContributor(c: HelpContributor) {
+    if (!fs.existsSync(c.helpDir)) return null
+    const entries = fs
+        .readdirSync(c.helpDir, { withFileTypes: true })
+        .filter(e => e.isFile() && e.name.endsWith('.md'))
+    if (entries.length === 0) return null
+
+    const topics: ParsedHelpTopic[] = entries.map(entry => {
+        const mdPath = path.join(c.helpDir, entry.name)
+        const raw = fs.readFileSync(mdPath, 'utf-8')
+        const { meta, body } = parseFrontmatter(raw, mdPath)
+        const id = entry.name.replace(/\.md$/, '')
+
+        const title = meta.title
+        const summary = meta.summary
+        if (typeof title !== 'string' || !title) {
+            throw new Error(`Help topic ${mdPath}: frontmatter "title" is required`)
+        }
+        if (typeof summary !== 'string' || !summary) {
+            throw new Error(`Help topic ${mdPath}: frontmatter "summary" is required`)
+        }
+        const tags = Array.isArray(meta.tags) ? (meta.tags as unknown[]).map(String) : []
+        const order = typeof meta.order === 'number' ? meta.order : Number.POSITIVE_INFINITY
+
+        return { id, title, summary, tags, order, body }
+    })
+
+    topics.sort((a, b) => (a.order !== b.order ? a.order - b.order : a.id.localeCompare(b.id)))
+    return { ...c, topics }
+}
+
+function generateHelpFile(contributors: HelpContributor[]): string {
+    const header = [
+        '// Auto-generated by scripts/generate-packages.ts — do not edit',
+        '',
+        'export interface HelpTopicEntry {',
+        '    id: string',
+        '    pkgSlug: string',
+        '    topicId: string',
+        '    title: string',
+        '    summary: string',
+        '    tags: string[]',
+        '    body: string',
+        '}',
+        '',
+        'export interface HelpGroup {',
+        '    packageName: string',
+        '    pkgSlug: string',
+        '    topics: HelpTopicEntry[]',
+        '}',
+        '',
+    ]
+
+    const groups: string[] = []
+    for (const c of contributors) {
+        const loaded = readHelpContributor(c)
+        if (!loaded || loaded.topics.length === 0) continue
+
+        const topicLines = loaded.topics.map(t => {
+            const entry = {
+                id: `${c.pkgSlug}:${t.id}`,
+                pkgSlug: c.pkgSlug,
+                topicId: t.id,
+                title: t.title,
+                summary: t.summary,
+                tags: t.tags,
+                body: t.body,
+            }
+            return `            ${JSON.stringify(entry)},`
+        })
+
+        groups.push(
+            [
+                '    {',
+                `        packageName: ${JSON.stringify(c.packageName)},`,
+                `        pkgSlug: ${JSON.stringify(c.pkgSlug)},`,
+                '        topics: [',
+                ...topicLines,
+                '        ],',
+                '    },',
+            ].join('\n')
+        )
+    }
+
+    return [...header, 'export const packageHelp: HelpGroup[] = [', ...groups, ']', ''].join('\n')
+}
+
 // Tailwind v4's scanner respects .gitignore, which causes any utility class
 // used only inside a linked package to silently produce no CSS rule (the
 // className lands on the DOM, but no .my-class { ... } rule exists). Emit one
@@ -1026,6 +1214,30 @@ async function main() {
     const settingsFile = path.join(GENERATED_DIR, 'package-settings.ts')
     fs.writeFileSync(settingsFile, generateSettingsFile(packagesInfo))
     allGenerated.push(settingsFile)
+
+    // Generate help file. Core is included explicitly because it has no
+    // manifest and doesn't flow through the per-package loop.
+    const helpContributors: HelpContributor[] = []
+    if (fs.existsSync(CORE_HELP_SOURCE)) {
+        helpContributors.push({
+            packageName: '@tinycld/core',
+            pkgSlug: 'core',
+            helpDir: CORE_HELP_SOURCE,
+        })
+    }
+    for (const { manifest, packageDir } of packagesInfo) {
+        if (!manifest.help?.directory) continue
+        const helpDir = path.join(packageDir, manifest.help.directory)
+        if (!fs.existsSync(helpDir)) continue
+        helpContributors.push({
+            packageName: manifest.name,
+            pkgSlug: manifest.slug,
+            helpDir,
+        })
+    }
+    const helpFile = path.join(GENERATED_DIR, 'package-help.ts')
+    fs.writeFileSync(helpFile, generateHelpFile(helpContributors))
+    allGenerated.push(helpFile)
 
     // Generate seeds file
     const seedsFile = path.join(GENERATED_DIR, 'package-seeds.ts')

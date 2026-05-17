@@ -199,6 +199,13 @@ without `no_ui` so the admin UI is available in production.
 - Runtime hooks: `usePackages()` and `usePackage(slug)` from `@tinycld/core/lib/packages/use-packages`.
 - Full documentation: `docs/packages.md` (in this repo, or in core's docs subtree).
 
+## In-app help
+- Packages contribute help via a `help/` directory of `<id>.md` files. Each file is a markdown document with a YAML frontmatter block (`title`, `summary` required; `tags: [..]` and `order: N` optional). The filename (without `.md`) is the topic ID. Declare it in `manifest.ts` with `help: { directory: 'help' }`. The generator writes `lib/generated/package-help.ts`; topics surface in the global hub at `/a/[orgSlug]/help`, the per-package help screen, and the right-slide drawer.
+- `@tinycld/core` contributes baseline topics from `packages/@tinycld/core/help/`. The generator includes core explicitly the same way it symlinks core's migrations.
+- **Whenever you implement or significantly change a user-facing feature, add or update a help topic for it.** The feature is not "done" until a user can find out how to use it from inside the app.
+- Open the drawer to a specific topic from anywhere with `openHelp('<pkg>:<id>')` from `@tinycld/core/lib/help/open-help`. Render `<HelpIcon topic="<pkg>:<id>" />` from `@tinycld/core/components/help/HelpIcon` next to UI controls. Cross-link between topics inside markdown bodies with `[label](help://<pkg>:<id>)` — the renderer intercepts that scheme and reopens the drawer instead of navigating away.
+- Permalinks: `/a/[orgSlug]/help/[pkg]/[topic]` is a real route — shareable in conversation. The hub has full-text search (substring, weighted: title > tags > summary > body).
+
 ## Forms and other components
 - All form UI components live in `ui/form/` and are exported from `~/ui/form`
 - The barrel export re-exports `useForm`, `Control`, `Controller`, `zodResolver`, and `z` so screens only need one import:

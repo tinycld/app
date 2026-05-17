@@ -1,5 +1,6 @@
 import { DemoFollowUpModal } from '@tinycld/core/components/DemoFollowUpModal'
 import { DemoIntroModal } from '@tinycld/core/components/DemoIntroModal'
+import { HelpDrawer } from '@tinycld/core/components/help/HelpDrawer'
 import { NotifyContextSync } from '@tinycld/core/components/NotifyContextSync'
 import { AuthGate } from '@tinycld/core/components/workspace/AuthGate'
 import { ImportNotifier } from '@tinycld/core/components/workspace/ImportNotifier'
@@ -42,6 +43,7 @@ function OrgLayoutInner() {
             <WorkspaceLayout isReady={isReady} />
             <DemoIntroModal />
             <DemoFollowUpModal />
+            <HelpDrawer />
         </>
     )
 }
@@ -52,7 +54,7 @@ function ActivePkgSync() {
     useEffect(() => {
         const match = pathname.match(/^\/a\/[^/]+\/([^/?]+)/)
         const slug = match?.[1] ?? null
-        const nextSlug = slug === 'settings' ? null : slug
+        const nextSlug = slug === 'settings' || slug === 'help' ? null : slug
 
         const state = useWorkspaceStore.getState()
         if (state.isDrawerOpen) state.setDrawerOpen(false)
