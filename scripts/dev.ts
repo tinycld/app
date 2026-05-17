@@ -280,6 +280,28 @@ function withPrefix(prefix: string, color: string) {
     }
 }
 
+async function startPackageBuildsForDev() {
+    // Pulls the package set the same way generate-packages does and starts
+    // each declared build script in watch mode. Returns the spawned child
+    // handles so the shutdown path can stop them cleanly.
+    const { getPackages } = await import('../tinycld.packages')
+    const { resolvePackageDir, loadManifest, runPackageBuilds } = await import(
+        './generate-packages'
+    )
+    const packagesInfo: {
+        packageName: string
+        manifest: ReturnType<typeof loadManifest>
+        packageDir: string
+    }[] = []
+    for (const packageName of getPackages()) {
+        if (packageName === '@tinycld/core') continue
+        const packageDir = resolvePackageDir(packageName)
+        const manifest = loadManifest(packageDir)
+        packagesInfo.push({ packageName, manifest, packageDir })
+    }
+    return runPackageBuilds(packagesInfo, { mode: 'dev', watch: true })
+}
+
 function buildPbSync() {
     const buildResult = spawn('go', ['build', '-o', 'tinycld', '.'], {
         cwd: path.join(ROOT, 'server'),
@@ -488,9 +510,13 @@ async function main() {
 
     // Run packages:generate before launching, mirroring the old `predev`
     // hook. Failing this should fail-fast so the user sees the error.
+    // TINYCLD_SKIP_BUILDS keeps the generator from spawning one-shot package
+    // builds — dev owns the lifecycle and starts them in watch mode below so
+    // they survive across reloads.
     const gen = spawn('npx', ['tsx', 'scripts/generate-packages.ts'], {
         cwd: ROOT,
         stdio: 'inherit',
+        env: { ...process.env, TINYCLD_SKIP_BUILDS: '1' },
     })
     await new Promise<void>((resolve, reject) => {
         gen.on('exit', code =>
@@ -498,6 +524,19 @@ async function main() {
         )
         gen.on('error', reject)
     })
+
+    // Start each linked package's build script in watch mode so artifacts
+    // stay in sync with sibling source edits while the dev server is up.
+    // Builds run in parallel with Expo bundling — they don't gate it.
+    // A crashing build logs but does not bring down the dev session; the
+    // developer can restart after fixing the script.
+    const packageBuilds = await startPackageBuildsForDev()
+    for (const b of packageBuilds) {
+        b.exited.catch((err: unknown) => {
+            const msg = err instanceof Error ? err.message : String(err)
+            process.stderr.write(`[build:${b.packageName}] crashed: ${msg}\n`)
+        })
+    }
 
     await buildPbSync()
 
@@ -549,6 +588,9 @@ async function main() {
         server.close()
         pb.kill('SIGTERM')
         expo.kill('SIGTERM')
+        for (const b of packageBuilds) {
+            b.child.kill('SIGTERM')
+        }
         // give children a moment, then exit
         ;(
             setTimeout(() => {

@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process'
+import { type ChildProcess, execSync, spawn } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -76,6 +76,7 @@ interface PackageManifest {
     tests?: { directory: string }
     server?: { package: string; module: string }
     help?: { directory: string }
+    build?: { script: string }
     dependencies?: string[]
 }
 
@@ -1077,6 +1078,150 @@ function runGoWorkSync() {
     }
 }
 
+// Resolve a manifest `build.script` value to a concrete on-disk path.
+// resolveExportPath is unsuitable here — it strips file extensions for
+// directory-style entries — so we look for the actual file. A package
+// can declare `build: { script: 'build' }` and ship either `build.ts`,
+// `build.js`, or `build.mjs` in its package root (or behind an exports
+// alias).
+function resolveBuildScriptPath(packageDir: string, script: string): string {
+    // Prefer an exports-map entry. Try literal extensions first; fall back
+    // to resolveExportPath's strip-and-rewrite for bare-subpath entries.
+    const pkgJsonPath = path.join(packageDir, 'package.json')
+    const exportsMap: Record<string, string> = fs.existsSync(pkgJsonPath)
+        ? (JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8')).exports ?? {})
+        : {}
+    const exactKey = `./${script}`
+    const exportTarget = exportsMap[exactKey]
+    if (typeof exportTarget === 'string') {
+        const abs = path.join(packageDir, exportTarget.replace(/^\.\//, ''))
+        if (fs.existsSync(abs)) return abs
+    }
+    // No exports entry — try the script as a direct path with common
+    // build-script extensions, then bare (the manifest may already include
+    // the extension).
+    for (const ext of ['.ts', '.mjs', '.js']) {
+        const candidate = path.join(packageDir, `${script}${ext}`)
+        if (fs.existsSync(candidate)) return candidate
+    }
+    const bare = path.join(packageDir, script)
+    if (fs.existsSync(bare)) return bare
+    throw new Error(
+        `Package build script not found: tried ./${script}.{ts,mjs,js} and ./${script} under ${packageDir}`
+    )
+}
+
+export interface BuildRunOptions {
+    mode: 'build' | 'dev'
+    watch: boolean
+}
+
+export interface RunningBuild {
+    packageName: string
+    child: ChildProcess
+    exited: Promise<void>
+}
+
+// Locate the app shell's tsx binary. Sibling packages have no node_modules
+// of their own (by design — see CLAUDE.md). Spawning bare `npx tsx` would
+// resolve from $PATH or trigger an interactive download, which we want to
+// avoid. The app shell always has tsx installed locally.
+function tsxBinary(): string {
+    const local = path.join(ROOT, 'node_modules/.bin/tsx')
+    if (fs.existsSync(local)) return local
+    // Fallback for unusual install layouts (pnpm/yarn worktrees, etc.).
+    return 'tsx'
+}
+
+export function runPackageBuilds(
+    packagesInfo: { packageName: string; manifest: PackageManifest; packageDir: string }[],
+    opts: BuildRunOptions
+): RunningBuild[] {
+    const withBuilds = packagesInfo.filter(a => a.manifest.build?.script)
+    if (withBuilds.length === 0) return []
+
+    const running: RunningBuild[] = []
+
+    for (const { packageName, manifest, packageDir } of withBuilds) {
+        const scriptPath = resolveBuildScriptPath(packageDir, manifest.build?.script ?? '')
+        const args = [scriptPath]
+        if (opts.watch) args.push('--watch')
+
+        const label = `build:${manifest.slug}`
+        process.stdout.write(`[${label}] starting (${opts.mode}${opts.watch ? ', watch' : ''})\n`)
+
+        const child = spawn(tsxBinary(), args, {
+            cwd: packageDir,
+            stdio: ['ignore', 'pipe', 'pipe'],
+            env: {
+                ...process.env,
+                TINYCLD_PACKAGE_DIR: packageDir,
+                TINYCLD_PACKAGE_NAME: packageName,
+                TINYCLD_PACKAGE_SLUG: manifest.slug,
+                TINYCLD_APP_ROOT: ROOT,
+                TINYCLD_BUILD_MODE: opts.mode,
+                TINYCLD_BUILD_WATCH: opts.watch ? '1' : '0',
+            },
+        })
+
+        const prefix = `[${label}]`
+        child.stdout?.on('data', (chunk: Buffer) => {
+            for (const line of chunk.toString('utf8').split('\n')) {
+                if (line.length > 0) process.stdout.write(`${prefix} ${line}\n`)
+            }
+        })
+        child.stderr?.on('data', (chunk: Buffer) => {
+            for (const line of chunk.toString('utf8').split('\n')) {
+                if (line.length > 0) process.stderr.write(`${prefix} ${line}\n`)
+            }
+        })
+
+        const exited = new Promise<void>((resolve, reject) => {
+            child.on('exit', (code, signal) => {
+                if (signal) {
+                    // killed by us during shutdown — not an error
+                    resolve()
+                    return
+                }
+                if (code === 0) {
+                    resolve()
+                    return
+                }
+                reject(new Error(`${label} exited with code ${code}`))
+            })
+            child.on('error', reject)
+        })
+
+        running.push({ packageName, child, exited })
+    }
+
+    return running
+}
+
+// One-shot build: spawn every declared build script, wait for completion,
+// throw if any fails. Used during `packages:generate` (no watch).
+async function runPackageBuildsOnce(
+    packagesInfo: { packageName: string; manifest: PackageManifest; packageDir: string }[]
+): Promise<void> {
+    const running = runPackageBuilds(packagesInfo, { mode: 'build', watch: false })
+    if (running.length === 0) return
+    const failures: string[] = []
+    await Promise.all(
+        running.map(r =>
+            r.exited.catch((err: unknown) => {
+                failures.push(
+                    `${r.packageName}: ${err instanceof Error ? err.message : String(err)}`
+                )
+            })
+        )
+    )
+    if (failures.length > 0) {
+        throw new Error(
+            `${failures.length} package build(s) failed:\n  - ${failures.join('\n  - ')}`
+        )
+    }
+}
+
 async function main() {
     // Scan packages/ for bundled packages
     const { getPackages } = await import('../tinycld.packages')
@@ -1281,6 +1426,16 @@ async function main() {
         generatedFiles: allGenerated,
     }
     fs.writeFileSync(LINKS_MANIFEST, JSON.stringify(linksManifest, null, 2))
+
+    // Run each linked package's declared build script. dev.ts handles the
+    // long-lived watch case directly via runPackageBuilds() — here we only
+    // do the one-shot path used by `npm run packages:generate` /
+    // `prebuild:web`. Skipped explicitly when the caller is dev.ts (which
+    // sets TINYCLD_SKIP_BUILDS=1 so it can own the lifecycle of watch-mode
+    // build processes).
+    if (process.env.TINYCLD_SKIP_BUILDS !== '1') {
+        await runPackageBuildsOnce(packagesInfo)
+    }
 }
 
 function isMainModule(): boolean {
