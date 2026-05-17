@@ -1,12 +1,14 @@
 import { DemoFollowUpModal } from '@tinycld/core/components/DemoFollowUpModal'
 import { DemoIntroModal } from '@tinycld/core/components/DemoIntroModal'
 import { HelpDrawer } from '@tinycld/core/components/help/HelpDrawer'
+import { HelpSearchPalette } from '@tinycld/core/components/help/HelpSearchPalette'
 import { NotifyContextSync } from '@tinycld/core/components/NotifyContextSync'
 import { AuthGate } from '@tinycld/core/components/workspace/AuthGate'
 import { ImportNotifier } from '@tinycld/core/components/workspace/ImportNotifier'
 import { SkeletonLayout } from '@tinycld/core/components/workspace/SkeletonLayout'
 import { WorkspaceLayout } from '@tinycld/core/components/workspace/WorkspaceLayout'
 import { useAuth } from '@tinycld/core/lib/auth'
+import { useHelpSearchShortcut } from '@tinycld/core/lib/help/use-help-search-shortcut'
 import { useWorkspaceStore } from '@tinycld/core/lib/stores/workspace-store'
 import { OrgSlugProvider } from '@tinycld/core/lib/use-org-slug'
 import { useGlobalSearchParams, usePathname } from 'expo-router'
@@ -25,6 +27,10 @@ export default function OrgLayout() {
 function OrgLayoutInner() {
     const auth = useAuth({ throwIfAnon: false })
     const isReady = !auth.isInitializing && auth.isLoggedIn
+    // Bind ⌘/ globally so the help palette is reachable from any
+    // org-scoped screen — not just package detail screens. The hook
+    // is a no-op on native.
+    useHelpSearchShortcut()
 
     if (!isReady) {
         return (
@@ -44,6 +50,7 @@ function OrgLayoutInner() {
             <DemoIntroModal />
             <DemoFollowUpModal />
             <HelpDrawer />
+            <HelpSearchPalette />
         </>
     )
 }
