@@ -115,12 +115,17 @@ promote_release() {
 
 promote_release
 
-# Build serve arguments
+# Build serve arguments. When SERVE_ON_DOMAINS is set, PocketBase autocert
+# binds :80/:443 directly. Otherwise we serve plain HTTP on :80 so a reverse
+# proxy in front of the container can route without remapping ports.
+# Override with HTTP_ADDR if you need a different bind (e.g. dev sidecar).
 if [ -n "$SERVE_ON_DOMAINS" ]; then
     echo "Running on $SERVE_ON_DOMAINS"
     ARGS="$SERVE_ON_DOMAINS --http --https"
 else
-    ARGS="--http=0.0.0.0:7090"
+    HTTP_ADDR="${HTTP_ADDR:-0.0.0.0:80}"
+    echo "No SERVE_ON_DOMAINS set; serving plain HTTP on $HTTP_ADDR (expect upstream proxy)"
+    ARGS="--http=$HTTP_ADDR"
 fi
 
 # Restart loop: exit code 75 signals a package install restart request

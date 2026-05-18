@@ -241,13 +241,15 @@ COPY config/dokku.app.json ./app.json
 COPY config/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
-# 7090: default HTTP (backward compat / dev)
-# 80/443: autocert HTTP/HTTPS (production with domain)
+# 80:  plain HTTP (behind a reverse proxy) OR autocert HTTP-01 challenge
+# 443: autocert HTTPS (only used when SERVE_ON_DOMAINS is set)
 # 993: IMAPS (implicit TLS)
 # 465: SMTPS (implicit TLS)
 EXPOSE 80 443 993 465
 
-# When SERVE_ON_DOMAINS is set (space-separated), serve with autocert on those domains.
-# Otherwise fall back to plain HTTP on port 7090.
+# When SERVE_ON_DOMAINS is set (space-separated), serve with autocert on
+# those domains (binds :80 + :443 directly, terminates TLS in-process).
 #   dokku config:set myapp SERVE_ON_DOMAINS="tinycld.com tinycld.org www.tinycld.org"
+# Otherwise serve plain HTTP on :80 (override with HTTP_ADDR), expecting
+# an upstream reverse proxy to handle TLS termination.
 ENTRYPOINT ["./entrypoint.sh"]
