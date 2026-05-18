@@ -74,6 +74,16 @@ function resolveUseSsl(): boolean {
     return fs.existsSync(CERT_PATH) && fs.existsSync(KEY_PATH)
 }
 
+// --no-expo skips spawning Expo so the dev script runs only PB + proxy.
+// Use this to launch Expo yourself in a separate terminal (`npx expo
+// start --port <expo>`) when you need Expo's interactive shortcuts
+// (`i`, `j`, `r`) or its full log stream — both get muted when Expo is
+// spawned with piped stdio because the Expo CLI flips to a quieter
+// non-TTY mode. PB and proxy stay on their usual ports; the proxy
+// returns 503 for any request targeted at Expo until you start one
+// yourself, so the app keeps working as soon as you do.
+const skipExpo = process.argv.includes('--no-expo')
+
 const useSsl = resolveUseSsl()
 
 interface PortBlock {
@@ -280,28 +290,6 @@ function withPrefix(prefix: string, color: string) {
     }
 }
 
-async function startPackageBuildsForDev() {
-    // Pulls the package set the same way generate-packages does and starts
-    // each declared build script in watch mode. Returns the spawned child
-    // handles so the shutdown path can stop them cleanly.
-    const { getPackages } = await import('../tinycld.packages')
-    const { resolvePackageDir, loadManifest, runPackageBuilds } = await import(
-        './generate-packages'
-    )
-    const packagesInfo: {
-        packageName: string
-        manifest: ReturnType<typeof loadManifest>
-        packageDir: string
-    }[] = []
-    for (const packageName of getPackages()) {
-        if (packageName === '@tinycld/core') continue
-        const packageDir = resolvePackageDir(packageName)
-        const manifest = loadManifest(packageDir)
-        packagesInfo.push({ packageName, manifest, packageDir })
-    }
-    return runPackageBuilds(packagesInfo, { mode: 'dev', watch: true })
-}
-
 function buildPbSync() {
     const buildResult = spawn('go', ['build', '-o', 'tinycld', '.'], {
         cwd: path.join(ROOT, 'server'),
@@ -339,9 +327,15 @@ function spawnPbBinary(pbPort: number, publicUrl: string, dataDir: string | null
 function spawnExpo(expoPort: number, onReady: () => void): ChildProcess {
     const onOut = withPrefix('expo', '\x1b[35m') // magenta
     const onErr = withPrefix('expo', '\x1b[31m')
+    // CI=1 forces Expo's non-interactive log stream (no curses-style TUI)
+    // so its bundle/error messages land on stdout. Without it, Expo CLI
+    // detects the non-TTY child stdio and falls back to a quiet mode that
+    // suppresses everything except its initial banner — even errors stay
+    // hidden, which makes debugging native bundler crashes impossible.
     const child = spawn('npx', ['expo', 'start', '--clear', '--port', String(expoPort)], {
         cwd: ROOT,
         stdio: ['inherit', 'pipe', 'pipe'],
+        env: { ...process.env, CI: '1' },
     })
     // Expo prints "Logs for your project will appear …" once the dev server
     // is fully up. We use that as the signal to print the banner so it lands
@@ -510,13 +504,12 @@ async function main() {
 
     // Run packages:generate before launching, mirroring the old `predev`
     // hook. Failing this should fail-fast so the user sees the error.
-    // TINYCLD_SKIP_BUILDS keeps the generator from spawning one-shot package
-    // builds — dev owns the lifecycle and starts them in watch mode below so
-    // they survive across reloads.
+    // packages:generate also runs each linked package's one-shot build
+    // script (e.g. text's webview-editor bundle), so the artifacts are
+    // already on disk by the time Expo starts bundling.
     const gen = spawn('npx', ['tsx', 'scripts/generate-packages.ts'], {
         cwd: ROOT,
         stdio: 'inherit',
-        env: { ...process.env, TINYCLD_SKIP_BUILDS: '1' },
     })
     await new Promise<void>((resolve, reject) => {
         gen.on('exit', code =>
@@ -524,19 +517,6 @@ async function main() {
         )
         gen.on('error', reject)
     })
-
-    // Start each linked package's build script in watch mode so artifacts
-    // stay in sync with sibling source edits while the dev server is up.
-    // Builds run in parallel with Expo bundling — they don't gate it.
-    // A crashing build logs but does not bring down the dev session; the
-    // developer can restart after fixing the script.
-    const packageBuilds = await startPackageBuildsForDev()
-    for (const b of packageBuilds) {
-        b.exited.catch((err: unknown) => {
-            const msg = err instanceof Error ? err.message : String(err)
-            process.stderr.write(`[build:${b.packageName}] crashed: ${msg}\n`)
-        })
-    }
 
     await buildPbSync()
 
@@ -552,7 +532,12 @@ async function main() {
     const publicUrl = `${useSsl ? 'https' : 'http'}://localhost:${block.proxy}`
     const pbDataDir = resolvePbDataDir()
     const pb = spawnPbBinary(block.pb, publicUrl, pbDataDir)
-    const expo = spawnExpo(block.expo, () => printOnce())
+    // With --no-expo we never spawn the Expo child; the user runs it in
+    // a separate terminal so they get its TTY-bound logs + shortcuts.
+    // The proxy still routes non-PB paths to block.expo, so once their
+    // standalone `npx expo start --port <block.expo>` is up, everything
+    // works exactly as if dev.ts had spawned Expo itself.
+    const expo = skipExpo ? null : spawnExpo(block.expo, () => printOnce())
 
     // Wait for both upstreams to accept TCP connections before binding the
     // user-facing proxy. Otherwise the browser hits the proxy first, the
@@ -563,10 +548,11 @@ async function main() {
     // PB starts in seconds (no bundling). Expo can take 2-3 minutes on a
     // cold --clear start while it bundles the entire dependency graph, so
     // give it a longer rope.
-    await Promise.all([
-        waitForUpstream(block.pb, 'pb', 30_000),
-        waitForUpstream(block.expo, 'expo', 180_000),
-    ])
+    const upstreamWaits: Promise<void>[] = [waitForUpstream(block.pb, 'pb', 30_000)]
+    if (!skipExpo) {
+        upstreamWaits.push(waitForUpstream(block.expo, 'expo', 180_000))
+    }
+    await Promise.all(upstreamWaits)
 
     const server = startProxy({
         proxyPort: block.proxy,
@@ -575,10 +561,17 @@ async function main() {
         ssl: useSsl,
     })
 
-    const fallbackTimer: NodeJS.Timeout = setTimeout(() => {
-        printOnce('(still bundling — open the URL once Expo is ready)')
-    }, 60_000) as unknown as NodeJS.Timeout
-    fallbackTimer.unref()
+    if (skipExpo) {
+        // No Expo child means no 'ready' signal to gate the banner on —
+        // print immediately so the user sees the proxy URL and knows to
+        // start Expo themselves in another terminal.
+        printOnce(`(--no-expo: run \`npx expo start --port ${block.expo}\` in another terminal)`)
+    } else {
+        const fallbackTimer: NodeJS.Timeout = setTimeout(() => {
+            printOnce('(still bundling — open the URL once Expo is ready)')
+        }, 60_000) as unknown as NodeJS.Timeout
+        fallbackTimer.unref()
+    }
 
     let shuttingDown = false
     const shutdown = (signal: NodeJS.Signals) => {
@@ -587,10 +580,7 @@ async function main() {
         process.stdout.write(`\nshutting down (${signal})\n`)
         server.close()
         pb.kill('SIGTERM')
-        expo.kill('SIGTERM')
-        for (const b of packageBuilds) {
-            b.child.kill('SIGTERM')
-        }
+        expo?.kill('SIGTERM')
         // give children a moment, then exit
         ;(
             setTimeout(() => {
@@ -602,12 +592,14 @@ async function main() {
     process.on('SIGINT', shutdown)
     process.on('SIGTERM', shutdown)
 
-    // If either child dies on its own, tear down the others.
+    // If either child dies on its own, tear down the others. With
+    // --no-expo we don't own the Expo process, so its lifetime is the
+    // user's concern — we only watch pb here.
     pb.on('exit', code => {
         process.stdout.write(`pb exited (${code}); shutting down\n`)
         shutdown('SIGTERM')
     })
-    expo.on('exit', code => {
+    expo?.on('exit', code => {
         process.stdout.write(`expo exited (${code}); shutting down\n`)
         shutdown('SIGTERM')
     })

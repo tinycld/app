@@ -1427,15 +1427,11 @@ async function main() {
     }
     fs.writeFileSync(LINKS_MANIFEST, JSON.stringify(linksManifest, null, 2))
 
-    // Run each linked package's declared build script. dev.ts handles the
-    // long-lived watch case directly via runPackageBuilds() — here we only
-    // do the one-shot path used by `npm run packages:generate` /
-    // `prebuild:web`. Skipped explicitly when the caller is dev.ts (which
-    // sets TINYCLD_SKIP_BUILDS=1 so it can own the lifecycle of watch-mode
-    // build processes).
-    if (process.env.TINYCLD_SKIP_BUILDS !== '1') {
-        await runPackageBuildsOnce(packagesInfo)
-    }
+    // Run each linked package's declared build script (e.g. text's
+    // webview-editor bundle). Used by `npm run packages:generate`,
+    // `prebuild:web`, and the dev startup path — all of which need the
+    // artifacts on disk before Expo/Metro/CI bundling begins.
+    await runPackageBuildsOnce(packagesInfo)
 }
 
 function isMainModule(): boolean {
