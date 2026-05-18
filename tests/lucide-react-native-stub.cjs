@@ -44,7 +44,7 @@ const NAMES = [
     'MonitorSmartphone', 'MoreHorizontal', 'MoreVertical', 'Move', 'Music', 'Package',
     'Palette', 'Paperclip', 'Pause', 'Pencil', 'Phone', 'PieChart', 'Pin', 'PinOff',
     'Play', 'Plus', 'PlusCircle', 'Pointer', 'Power', 'Printer', 'Quote', 'RefreshCcw',
-    'RefreshCw', 'Reply', 'ReplyAll', 'RotateCcw', 'Save', 'Search', 'Send', 'Server',
+    'RefreshCw', 'Replace', 'ReplaceAll', 'Reply', 'ReplyAll', 'RotateCcw', 'Save', 'Search', 'Send', 'Server',
     'Settings', 'Settings2', 'Share', 'Share2', 'Shield', 'ShieldCheck', 'Shuffle',
     'Sidebar', 'Slack', 'SlidersHorizontal', 'Smartphone', 'Smile', 'Sparkles',
     'Speaker', 'Square', 'Star', 'Strikethrough', 'Subscript', 'Sun', 'Superscript',
