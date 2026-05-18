@@ -196,7 +196,7 @@ async function startPocketBase(): Promise<ReturnType<typeof spawn>> {
             'serve',
         ],
         {
-            stdio: ['ignore', 'ignore', 'pipe'],
+            stdio: ['ignore', 'pipe', 'pipe'],
             detached: false,
             env: {
                 ...process.env,
@@ -204,6 +204,15 @@ async function startPocketBase(): Promise<ReturnType<typeof spawn>> {
             },
         }
     )
+
+    // Surface PB's stdout — PocketBase writes its bind banner and a lot of
+    // useful startup diagnostics there, and previously we threw it away.
+    // When the readiness probe times out, having these lines in the CI log
+    // is the difference between a one-line "failed to start" and a real
+    // diagnosis.
+    pb.stdout?.on('data', data => {
+        log('[pocketbase]', data.toString().trimEnd())
+    })
 
     pb.stderr?.on('data', data => {
         logError('[pocketbase]', data.toString().trim())
