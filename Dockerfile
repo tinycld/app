@@ -2,8 +2,11 @@
 #   - tinycld/ repo at root
 #   - packages/@tinycld/core/ — full core source tree (real directory)
 #   - packages/@tinycld/<other>/ — one entry per linked feature package
-# The deploy.sh script in the utils/ sibling assembles this layout
-# from the per-repo git HEADs before running `docker build`.
+#
+# A fresh `git clone` of the tinycld app shell already satisfies this layout
+# (packages/@tinycld/core/ is committed; feature packages can be cloned at
+# build time via the LINKED_PACKAGES build arg below). Run `docker build .`
+# from the repo root and it just works.
 
 # Node stage: generate package wiring and build the web app
 FROM node:22-bookworm-slim AS web-builder
@@ -185,8 +188,11 @@ ENV FZ_VERSION="1.25.1"
 # Install runtime dependencies + Node for runtime package installation.
 # Runtime invokes `npx tsx scripts/<x>.ts` for tasks like reset-demo and
 # seed-db (called from cron jobs in bin/), so Node must be on PATH.
+# libcap2-bin (setcap) is only needed at image build time below; we keep it
+# available so operators on autocert who use the in-app package installer
+# can manually re-apply the cap to the freshly-rebuilt binary.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates libffi8 libmupdf-dev curl gnupg \
+    && apt-get install -y --no-install-recommends ca-certificates libffi8 libmupdf-dev libcap2-bin curl gnupg \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && apt-get autoremove -y \
@@ -197,15 +203,26 @@ RUN apt-get update \
 COPY --from=go-builder /usr/local/go /usr/local/go
 ENV PATH="/usr/local/go/bin:${PATH}"
 
+# Non-root runtime user. UID/GID 1000 matches the typical first non-root
+# host user on Linux distros, so host-side `pb_data/` files on a bind-mount
+# are owned by the host user instead of root. Override at build time with
+# --build-arg TINYCLD_UID=... if your host user has a different uid.
+ARG TINYCLD_UID=1000
+ARG TINYCLD_GID=1000
+RUN groupadd --system --gid "$TINYCLD_GID" tinycld \
+    && useradd --system --uid "$TINYCLD_UID" --gid "$TINYCLD_GID" \
+        --home-dir /app --no-create-home --shell /usr/sbin/nologin tinycld
+
 WORKDIR /app
 
 # Compiled server binary.
 COPY --from=go-builder /app/server/tinycld ./tinycld
 
 # Per-release web bundle, staged by the web-builder. The entrypoint promotes
-# this to the persistent volume mounted at /app/releases/ on container start.
+# this on container start to /app/releases/ (typically the container's
+# writable layer for compose deploys; a persistent volume for Dokku).
 # The /app/public/ directory is reserved for the marketing website (populated
-# by utils/Dockerfile.tail).
+# by utils/Dockerfile.tail in tinycld.org's deploy pipeline).
 COPY --from=web-builder /app/release-staging /app/release-staging
 RUN mkdir -p /app/public /app/releases
 
@@ -230,26 +247,55 @@ COPY --from=web-builder /app/packages ./packages
 # bundled-packages.json so pkg_seed can find it at startup.
 COPY --from=web-builder /app/server/bundled-packages.json ./bundled-packages.json
 
-# Data + types + packages mount points.
+# Data + types mount points.
 RUN mkdir -p pb_data types
 
-# Cron-invoked maintenance scripts.
-COPY bin/ ./bin/
+# Runtime-only bin scripts. The full bin/ directory in the repo includes
+# dev helpers (debug-ios-boot, server) we deliberately don't ship.
+COPY bin/prune-releases.sh ./bin/prune-releases.sh
 RUN chmod +x ./bin/*.sh
 
 COPY config/dokku.app.json ./app.json
 COPY config/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
-# 80:  plain HTTP (behind a reverse proxy) OR autocert HTTP-01 challenge
-# 443: autocert HTTPS (only used when SERVE_ON_DOMAINS is set)
-# 993: IMAPS (implicit TLS)
-# 465: SMTPS (implicit TLS)
-EXPOSE 80 443 993 465
+# Hand the entire app tree to the tinycld user. pb_data/ and types/ are
+# bind-mount targets whose mount-time ownership is the host's responsibility;
+# the operator needs to ensure the bind-mount source on the host is writable
+# by uid 1000 (or use --build-arg TINYCLD_UID=$(id -u) when building locally).
+#
+# Must run BEFORE setcap below — chown strips file capabilities (it resets
+# the security.capability xattr along with ownership), so setcap'ing first
+# then chown'ing would silently wipe the cap.
+RUN chown -R tinycld:tinycld /app
 
+# Grant cap_net_bind_service so the non-root user can bind :80/:443 when
+# autocert is on (SERVE_ON_DOMAINS set). The plain-HTTP path defaults to
+# the unprivileged :7090 and needs no special permissions.
+#
+# Caveat: the in-app package installer rebuilds the binary with `go build`
+# and `os.Rename`s it into place. The new binary has no caps. On autocert
+# hosts that use the installer, the operator needs to re-apply the cap
+# manually (the image ships `setcap` for this) or restart the container
+# from the original image. The plain-HTTP path is unaffected.
+RUN setcap 'cap_net_bind_service=+ep' ./tinycld
+
+# 7090: plain HTTP (default, when SERVE_ON_DOMAINS is unset)
+# 80:   autocert HTTP-01 challenge + plain-HTTP redirect (when SERVE_ON_DOMAINS is set)
+# 443:  autocert HTTPS (when SERVE_ON_DOMAINS is set)
+# 993:  IMAPS (implicit TLS)
+# 465:  SMTPS (implicit TLS)
+EXPOSE 7090 80 443 993 465
+
+USER tinycld
+
+# Container runs entirely as uid 1000 (tinycld). The binary's
+# cap_net_bind_service file capability lets it bind :80/:443 when autocert
+# is enabled; the plain-HTTP default of :7090 is unprivileged.
+#
 # When SERVE_ON_DOMAINS is set (space-separated), serve with autocert on
 # those domains (binds :80 + :443 directly, terminates TLS in-process).
 #   dokku config:set myapp SERVE_ON_DOMAINS="tinycld.com tinycld.org www.tinycld.org"
-# Otherwise serve plain HTTP on :80 (override with HTTP_ADDR), expecting
-# an upstream reverse proxy to handle TLS termination.
+# Otherwise serve plain HTTP on :7090 (override with HTTP_ADDR), expecting
+# an upstream reverse proxy or compose port mapping to route to it.
 ENTRYPOINT ["./entrypoint.sh"]

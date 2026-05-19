@@ -40,25 +40,38 @@ const siblingRealBaseToSymlinkPath = new Map()
 function scanPackagesDir(dir, scope) {
     if (!fs.existsSync(dir)) return
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-        // A scope directory (e.g. @tinycld) is a real directory containing links.
-        if (!scope && entry.name.startsWith('@') && entry.isDirectory()) {
+        // A scope directory (e.g. @tinycld) is itself a real directory
+        // containing the actual package entries (symlinks or real dirs).
+        // Recurse into it but don't register it as a sibling.
+        if (!scope && entry.name.startsWith('@') && entry.isDirectory() && !entry.isSymbolicLink()) {
             scanPackagesDir(path.join(dir, entry.name), entry.name)
             continue
         }
-        // Any other entry must be a symlink pointing at a sibling checkout.
-        if (!entry.isSymbolicLink()) continue
+        // Each entry under a scope (or at the top level for unscoped names)
+        // should be the package itself — either a symlink to a sibling
+        // checkout (dev) or a real directory baked in by the docker build
+        // (BuildKit materializes COPY-followed symlinks into real dirs).
+        // Both forms are valid; the difference is just whether realpath
+        // points outside __dirname.
+        const isSymlink = entry.isSymbolicLink()
+        const isRealDir = entry.isDirectory() && !isSymlink
+        if (!isSymlink && !isRealDir) continue
         const linkPath = path.join(dir, entry.name)
         try {
             const real = fs.realpathSync(linkPath)
+            // Skip if the package has no package.json — guards against stray
+            // files (e.g. .DS_Store directories on macOS) that pass the
+            // directory check but aren't packages.
+            if (!fs.existsSync(path.join(real, 'package.json'))) continue
             const name = scope ? `${scope}/${entry.name}` : entry.name
             if (!real.startsWith(__dirname)) siblingFolders.push(real)
-            // siblingByName stores the symlink path inside the project tree
-            // (tinycld/packages/<name>) rather than the realpath. Returning
-            // resolutions through the symlink keeps every module path that
-            // Metro embeds in serializer output (notably lazy-chunk URLs)
-            // inside `path.relative(projectRoot, ...)` reach. The realpath
-            // is still scanned for source — it lives in `siblingFolders`,
-            // which is fed into watchFolders.
+            // siblingByName stores the in-tree path (the symlink for dev, or
+            // the real dir for docker). Returning resolutions through this
+            // keeps every module path Metro embeds in serializer output
+            // (notably lazy-chunk URLs) inside `path.relative(projectRoot,
+            // ...)` reach. The realpath is still scanned for source — it
+            // lives in `siblingFolders`, which is fed into watchFolders
+            // (skipped when realpath is already inside the project tree).
             siblingByName.set(name, linkPath)
             siblingExportsByName.set(name, loadExportsPatterns(real))
             siblingRealBaseToSymlinkPath.set(path.basename(real), linkPath)

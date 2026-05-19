@@ -20,6 +20,8 @@ deployment configs, and the package generator. It's the entrypoint for `npm run 
     calendar/                # @tinycld/calendar
     contacts/                # @tinycld/contacts
     drive/                   # @tinycld/drive
+    text/                    # @tinycld/text
+    calc/                    # @tinycld/calc
     google-takeout-import/   # @tinycld/google-takeout-import
 ```
 
@@ -116,6 +118,9 @@ The image bakes the Go binary, Expo web export, PocketBase server, and the
 [drive](https://github.com/tinycld/drive), and
 [google-takeout-import](https://github.com/tinycld/google-takeout-import)
 packages into one container.
+[text](https://github.com/tinycld/text) and [calc](https://github.com/tinycld/calc)
+are available but not bundled by default — link them locally with
+`npm run packages:install <git-url>` to include them in your own image build.
 Healthchecks and Let's Encrypt-friendly cert handling are baked in. Dokku one-liner deploys
 work via `app.json` + the `Procfile` analog in `Dockerfile`.
 

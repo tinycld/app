@@ -5,17 +5,22 @@ HEALTH_PORT=19876
 
 echo "[entrypoint] starting; pwd=$(pwd) user=$(id -un) uid=$(id -u)"
 
-# Promote the staged release to the persistent volume mounted at
-# /app/releases/. Runs on every container start; idempotent.
+# Promote the staged release to /app/releases/. Runs on every container
+# start; idempotent.
 #
-# Layout produced on the volume:
-#   /app/releases/<id>/             per-release dir: app.html + release-id.txt
-#   /app/releases/_static/          cross-release asset pool:
-#     /app/releases/_static/_expo/static/...    (content-hashed, immutable)
-#     /app/releases/_static/assets/...           (mostly hashed; a few stable
-#                                                 names like app-icon.png get
-#                                                 overwritten per deploy)
-#   /app/releases/current → <id>    SPA fallback reads <current>/app.html
+# /app/releases is typically the container's writable layer (compose-style
+# deploys) and starts empty on every fresh container; Dokku-style deploys
+# may back it with a persistent volume so old releases survive container
+# replacement. Either way the promote logic below is the same: copy the
+# staged tree off the image, swap the `current` symlink atomically.
+#
+# Layout produced under /app/releases/:
+#   <id>/             per-release dir: app.html + release-id.txt
+#   _static/          cross-release asset pool:
+#     _expo/static/...    (content-hashed, immutable)
+#     assets/...           (mostly hashed; a few stable names like
+#                           app-icon.png get overwritten per deploy)
+#   current → <id>    SPA fallback reads <current>/app.html
 #
 # Why a pool: asset filenames are content-hashed, so files from different
 # releases coexist without collision. Stale tabs that dynamic-import a
@@ -30,7 +35,7 @@ promote_release() {
     echo "[entrypoint] promote_release: staging=$staging_dir releases=$releases_dir"
     echo "[entrypoint] staging contents:"
     ls -la "$staging_dir" 2>&1 | sed 's/^/[entrypoint]   /' || true
-    echo "[entrypoint] releases volume contents (before):"
+    echo "[entrypoint] releases dir contents (before):"
     ls -la "$releases_dir" 2>&1 | sed 's/^/[entrypoint]   /' || true
 
     [ -d "$staging_dir" ] || {
@@ -115,22 +120,62 @@ promote_release() {
 
 promote_release
 
-# Build serve arguments. When SERVE_ON_DOMAINS is set, PocketBase autocert
-# binds :80/:443 directly. Otherwise we serve plain HTTP on :80 so a reverse
-# proxy in front of the container can route without remapping ports.
-# Override with HTTP_ADDR if you need a different bind (e.g. dev sidecar).
-if [ -n "$SERVE_ON_DOMAINS" ]; then
-    echo "Running on $SERVE_ON_DOMAINS"
-    ARGS="$SERVE_ON_DOMAINS --http --https"
+# Build serve arguments.
+#
+# Mode 1 — Autocert HTTPS (when SERVE_ON_DOMAINS is set): PocketBase binds
+#   :80 (HTTP-01 challenge + redirect) and :443 (HTTPS) directly. These are
+#   privileged ports; the binary has `cap_net_bind_service` set at build
+#   time so the unprivileged runtime user can still bind them.
+#
+# Mode 2 — Plain HTTP (when SERVE_ON_DOMAINS is unset): bind an unprivileged
+#   port (:7090 by default) and let an upstream reverse proxy or Docker
+#   port-mapping handle TLS termination and ingress routing. Override with
+#   HTTP_ADDR for a custom bind (e.g. dev sidecar on a different port).
+#
+# Strip surrounding whitespace and treat the result as unset if empty —
+# users frequently leave `SERVE_ON_DOMAINS:` set to "" or "   " in compose
+# YAML to "disable" autocert, and a whitespace-only value would otherwise
+# fall into the autocert branch and fail.
+DOMAINS_TRIMMED=$(printf '%s' "${SERVE_ON_DOMAINS:-}" | awk '{$1=$1};1')
+if [ -n "$DOMAINS_TRIMMED" ]; then
+    # Sanity-check each token looks like a domain. Requires at least one
+    # dot (rules out "yes", "true", "lolnope" and other shell-truthy-but-
+    # bogus values), no leading/trailing dot or hyphen, and only domain-
+    # legal characters. Catches misconfigurations before PocketBase
+    # autocert fails them at a less-obvious layer.
+    for dom in $DOMAINS_TRIMMED; do
+        case "$dom" in
+            *[!A-Za-z0-9.-]*|.*|*.|-*|*-)
+                echo "[entrypoint] ERROR: SERVE_ON_DOMAINS contains invalid token: '$dom'" >&2
+                echo "[entrypoint] Expected a space-separated list of domain names (e.g. 'tinycld.example.com www.tinycld.example.com')." >&2
+                echo "[entrypoint] Leave SERVE_ON_DOMAINS empty/unset to serve plain HTTP on :7090." >&2
+                exit 1
+                ;;
+        esac
+        case "$dom" in
+            *.*) ;;
+            *)
+                echo "[entrypoint] ERROR: SERVE_ON_DOMAINS token has no dot, doesn't look like a domain: '$dom'" >&2
+                echo "[entrypoint] Expected a space-separated list of domain names (e.g. 'tinycld.example.com www.tinycld.example.com')." >&2
+                echo "[entrypoint] Leave SERVE_ON_DOMAINS empty/unset to serve plain HTTP on :7090." >&2
+                exit 1
+                ;;
+        esac
+    done
+    echo "[entrypoint] Running with autocert HTTPS on: $DOMAINS_TRIMMED"
+    # shellcheck disable=SC2086 # intentional word-split on the domain list
+    set -- $DOMAINS_TRIMMED --http --https
 else
-    HTTP_ADDR="${HTTP_ADDR:-0.0.0.0:80}"
-    echo "No SERVE_ON_DOMAINS set; serving plain HTTP on $HTTP_ADDR (expect upstream proxy)"
-    ARGS="--http=$HTTP_ADDR"
+    HTTP_ADDR="${HTTP_ADDR:-0.0.0.0:7090}"
+    echo "[entrypoint] No SERVE_ON_DOMAINS set; serving plain HTTP on $HTTP_ADDR (map a host port to this with -p / compose ports)"
+    set -- "--http=$HTTP_ADDR"
 fi
 
-# Restart loop: exit code 75 signals a package install restart request
+# Restart loop: exit code 75 signals a package install restart request.
+# Serve args are in $@ (positional params) so a multi-word
+# SERVE_ON_DOMAINS list survives without re-splitting.
 while true; do
-    ./tinycld serve $ARGS
+    ./tinycld serve "$@"
     EXIT_CODE=$?
 
     if [ $EXIT_CODE -eq 75 ]; then

@@ -1,17 +1,25 @@
 # TinyCld — single-container Docker Compose setup
 #
-# Quick start:
+# Quick start (production, public domain):
 #
 #   1. Point your domain's A record at this server's IP.
-#   2. Edit SERVE_ON_DOMAINS below (or remove it for plain HTTP on port 7090).
+#   2. Set SERVE_ON_DOMAINS below.
 #   3. Run:
 #        docker compose up -d
+#
+# Local demo / behind a reverse proxy:
+#
+#   - Leave SERVE_ON_DOMAINS empty.
+#   - Visit http://localhost:7090.
 #
 # Updates:   docker compose pull && docker compose up -d
 # Logs:      docker compose logs -f
 # Backup:    tar -czf tinycld-backup.tgz ./pb_data
 #
 # Data lives in ./pb_data (host bind mount) — back this up.
+#
+# Image footprint: ~600 MB compressed (~2.5 GB uncompressed). Includes
+# the Go toolchain + Node runtime for the optional in-app package installer.
 
 services:
   tinycld:
@@ -19,10 +27,12 @@ services:
     container_name: tinycld
     restart: unless-stopped
 
-    # Uncomment and set to your domain(s) to enable autocert HTTPS on ports 80/443.
-    # Leave commented to serve plain HTTP on port 7090 (behind a reverse proxy, or for local testing).
+    # Set to your domain(s) to enable autocert HTTPS on ports 80/443.
+    # Leave empty to serve plain HTTP on container port 80 — useful for local
+    # demos (mapped to host :7090 below) or behind an external reverse proxy.
     environment:
-      # SERVE_ON_DOMAINS: "tinycld.example.com www.tinycld.example.com"
+      SERVE_ON_DOMAINS: ""
+      # Example: SERVE_ON_DOMAINS: "tinycld.example.com www.tinycld.example.com"
 
       # Optional: error reporting
       # SENTRY_DSN: ""
@@ -35,19 +45,22 @@ services:
       # VAPID_PUBLIC_KEY: ""
       # VAPID_SUBJECT: "mailto:you@example.com"
 
-      # Prevent shells from exploding on empty values during `docker compose config`.
-      TINYCLD_PLACEHOLDER: ""
-
     ports:
-      # 80 + 443: HTTPS via autocert when SERVE_ON_DOMAINS is set.
+      # 80 + 443: HTTPS via autocert when SERVE_ON_DOMAINS is set. The
+      # container only binds these if autocert is on; otherwise these
+      # host-port mappings are harmless no-ops.
       - "80:80"
       - "443:443"
-      # 7090: plain HTTP fallback (used when SERVE_ON_DOMAINS is empty,
-      # or when running behind an external reverse proxy).
+      # 7090: plain HTTP fallback used when SERVE_ON_DOMAINS is empty
+      # (local demos or behind an external reverse proxy that upstreams to
+      # this port). Remap the host side if 7090 conflicts on your host —
+      # e.g. "18080:7090" to expose on host port 18080.
       - "7090:7090"
-      # 993: IMAPS (implicit TLS). Comment out if you're not running the mail package.
+      # 993: IMAPS (implicit TLS). Comment out if you're not running the mail
+      # package or if dovecot/postfix is already bound to it on the host.
       - "993:993"
-      # 465: SMTPS (implicit TLS). Comment out if you're not running the mail package.
+      # 465: SMTPS (implicit TLS). Comment out if you're not running the mail
+      # package or if postfix is already bound to it on the host.
       - "465:465"
 
     volumes:
