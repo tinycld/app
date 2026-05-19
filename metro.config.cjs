@@ -126,6 +126,15 @@ function probeSourceFile(stem, platform) {
                 const candidate = `${base}.${platform}.${ext}`
                 if (fs.existsSync(candidate)) return candidate
             }
+            // iOS/Android share .native.<ext> overrides — Metro's default
+            // resolver checks these after the platform-specific extension
+            // and before the bare extension.
+            if (platform === 'ios' || platform === 'android') {
+                for (const ext of PROBE_EXTS) {
+                    const candidate = `${base}.native.${ext}`
+                    if (fs.existsSync(candidate)) return candidate
+                }
+            }
         }
         for (const ext of PROBE_EXTS) {
             const candidate = `${base}.${ext}`
