@@ -1,5 +1,5 @@
-import { packageSettings } from '@tinycld/app-generated/package-settings'
 import { useOrgHref } from '@tinycld/core/lib/org-routes'
+import { packageSettings } from '@tinycld/core/lib/packages/derive-components'
 import { useThemeColor } from '@tinycld/core/lib/use-app-theme'
 import { useCurrentRole } from '@tinycld/core/lib/use-current-role'
 import { useNavigateBack } from '@tinycld/core/lib/use-navigate-back'

@@ -42,6 +42,8 @@ server/pb_test_data/
 !/app/a/\[orgSlug\]/help/
 /app/share/\[token\].tsx
 /lib/generated/
+/tinycld.config.ts
+/tinycld.seeds.ts
 /server/package_extensions.go
 /server/go.work
 /server/go.work.sum

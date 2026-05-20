@@ -11,35 +11,34 @@ try {
 const TEST_EXPO_PORT = 7200
 const CORE_ROOT = import.meta.dirname
 
-// Sibling packages are symlinks under packages/. Playwright's glob walker
-// does not follow symlinks, and testMatch entries must live under testDir —
-// so give each linked package its own project with testDir = the sibling's
-// realpath. That lets us list and run tests from every linked package in
-// one go without copying or mirroring them into core.
+// Feature packages are npm workspace members, symlinked into
+// node_modules/@tinycld/<name>. Playwright's glob walker does not follow
+// symlinks and testMatch entries must live under testDir — so give each member
+// its own project with testDir pointing at the member's tests/ THROUGH the
+// node_modules symlink. Routing via node_modules (not the sibling's real path)
+// keeps node's module resolution walking up through
+// tinycld/node_modules/@tinycld/<name>/tests → tinycld/node_modules, so
+// `@playwright/test` and other deps resolve against the app shell's install.
 function siblingProjects() {
     const roots: { name: string; testDir: string }[] = []
-    const packagesRoot = path.join(CORE_ROOT, 'packages')
-    if (!fs.existsSync(packagesRoot)) return roots
+    const scopeDir = path.join(CORE_ROOT, 'node_modules', '@tinycld')
+    if (!fs.existsSync(scopeDir)) return roots
 
-    for (const entry of fs.readdirSync(packagesRoot, { withFileTypes: true })) {
-        if (entry.name.startsWith('@') && entry.isDirectory()) {
-            const scopeDir = path.join(packagesRoot, entry.name)
-            for (const scoped of fs.readdirSync(scopeDir, { withFileTypes: true })) {
-                const found = siblingTestDir(path.join(scopeDir, scoped.name))
-                if (found) roots.push({ name: `${entry.name}/${scoped.name}`, testDir: found })
-            }
-        } else if (entry.isSymbolicLink() || entry.isDirectory()) {
-            const found = siblingTestDir(path.join(packagesRoot, entry.name))
-            if (found) roots.push({ name: entry.name, testDir: found })
-        }
+    for (const entry of fs.readdirSync(scopeDir, { withFileTypes: true })) {
+        // Skip bundled core (no e2e specs of its own here) and anything that
+        // isn't a real package dir reachable through the symlink.
+        if (entry.name === 'core') continue
+        const linkPath = path.join(scopeDir, entry.name)
+        const found = siblingTestDir(linkPath)
+        if (found) roots.push({ name: `@tinycld/${entry.name}`, testDir: found })
     }
     return roots
 }
 
-// Resolve the symlink-based path (NOT realpath) to the sibling's tests/
-// directory. Returning the symlinked path keeps node's module resolution
-// walking up through core/packages/.../tests → core/node_modules, so
-// `@playwright/test` and other peer deps resolve against core's install.
+// Resolve to the member's tests/ directory through the node_modules symlink.
+// Returning the symlinked path (NOT realpath) keeps node's module resolution
+// walking up through tinycld/node_modules, so peer deps resolve against the
+// app shell's install.
 function siblingTestDir(linkPath: string): string | null {
     try {
         const real = fs.realpathSync(linkPath)

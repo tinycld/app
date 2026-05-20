@@ -2,6 +2,15 @@ import { vi } from 'vitest'
 
 process.env.EXPO_PUBLIC_ENV ??= 'test'
 
+// tinycld.config.ts is the runtime source of truth, but loading the real one
+// pulls every linked package's collections/screens (and their un-mockable RN
+// surface) into the test graph. Shim it to an empty config so unit tests stay
+// light; tests that need specific packages can override per-file. Mirrors how
+// the old generated package-* modules were shimmed.
+vi.mock('@tinycld/app-generated/tinycld-config', () => ({
+    tinycldConfig: [],
+}))
+
 vi.mock('@sentry/react-native', () => ({
     init: vi.fn(),
     captureException: vi.fn(),

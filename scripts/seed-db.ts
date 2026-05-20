@@ -30,7 +30,8 @@
  */
 
 import PocketBase from 'pocketbase'
-import { packageSeeds } from '../lib/generated/package-seeds'
+import { deriveSeeds } from '../packages/@tinycld/core/lib/packages/derive-seeds'
+import { tinycldSeeds } from '../tinycld.seeds'
 
 function log(...args: unknown[]) {
     process.stdout.write(`[seed] ${args.join(' ')}\n`)
@@ -565,9 +566,9 @@ export async function seedForUser(pb: PocketBase, config: SeedConfig) {
         org,
         userOrg,
     }
-    const pkgEntries = Object.entries(packageSeeds)
-    log(`Running ${pkgEntries.length} package seed(s)...`)
-    for (const [slug, seedFn] of pkgEntries) {
+    const orderedSeeds = deriveSeeds(tinycldSeeds)
+    log(`Running ${orderedSeeds.length} package seed(s)...`)
+    for (const { slug, seed: seedFn } of orderedSeeds) {
         log(`  → ${slug}`)
         await seedFn(pb, seedContext)
         log(`  ✓ ${slug} done`)
