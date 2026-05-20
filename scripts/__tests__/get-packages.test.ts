@@ -6,14 +6,16 @@ import { describe, expect, it } from 'vitest'
 import { getPackages } from '../../tinycld.packages'
 
 describe('getPackages (workspace members)', () => {
-    it('returns @tinycld feature members that have a manifest, plus core', () => {
+    it('returns bundled core plus the linked feature members', () => {
         const pkgs = getPackages()
         // bundled core is always present
         expect(pkgs).toContain('@tinycld/core')
-        // known feature members resolve (they are linked workspace siblings)
-        expect(pkgs).toContain('@tinycld/contacts')
-        expect(pkgs).toContain('@tinycld/mail')
-        // every returned entry is a non-empty package name
+        // at least one feature member is linked. We do NOT assert specific
+        // package names — the linked set varies by environment (CI links only
+        // @tinycld/drive; a full local checkout has contacts/mail/calc/etc.).
+        const features = pkgs.filter(p => p !== '@tinycld/core')
+        expect(features.length).toBeGreaterThan(0)
+        // every returned entry is a non-empty, scoped package name
         for (const name of pkgs) {
             expect(typeof name).toBe('string')
             expect(name.length).toBeGreaterThan(0)
