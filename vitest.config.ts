@@ -81,6 +81,19 @@ export default defineConfig({
                 find: /^y-protocols\/(.+)$/,
                 replacement: path.resolve(__dirname, 'node_modules/y-protocols/$1'),
             },
+            // hyperformula is published as type:commonjs but its "import"
+            // condition points at an ESM (.mjs) build whose internal
+            // relative imports (e.g. parser/addressRepresentationConverters
+            // → ../AbsoluteCellRange.mjs) Vite SSR resolves against the
+            // wrong base, yielding "Cannot find module
+            // hyperformula/es/parser/AbsoluteCellRange.mjs". The commonjs
+            // build is complete and self-consistent under Node's CJS
+            // resolver, so pin imports straight at the commonjs entry to
+            // bypass the broken ESM relative resolution.
+            {
+                find: /^hyperformula$/,
+                replacement: path.resolve(__dirname, 'node_modules/hyperformula/commonjs/index.js'),
+            },
         ],
     },
     test: {
