@@ -188,18 +188,31 @@ function resolveExportPath(packageDir: string, subpath: string): string {
 }
 
 export function resolvePackageDir(packageName: string): string {
-    // Primary: node_modules/<name>, the npm workspace symlink (feature members
-    // resolve here; core too). Use realpathSync so downstream path operations
-    // produce stable absolute paths and don't rely on the link.
-    const nodeModulesPath = path.join(ROOT, 'node_modules', packageName)
-    if (fs.existsSync(nodeModulesPath)) {
-        return fs.realpathSync(nodeModulesPath)
-    }
-    // Fallback: bundled core lives at packages/@tinycld/core (a real dir, not a
-    // workspace symlink target under node_modules in every layout).
-    const packagesPath = path.join(ROOT, 'packages', packageName)
-    if (fs.existsSync(packagesPath)) {
-        return fs.realpathSync(packagesPath)
+    // Candidate locations, in priority order. We probe several because the
+    // workspace-root node_modules can sit at the app shell (ROOT/node_modules)
+    // OR one level up (ROOT/../node_modules) depending on where the workspace
+    // root package.json lives — locally the shell is a member alongside its
+    // siblings, but in CI the shell is checked out at <ws>/tinycld and the
+    // workspace root is <ws>, so npm hoists member symlinks to
+    // <ws>/node_modules (= ROOT/../node_modules). We also fall back to the
+    // sibling directory directly (the same source of truth getPackages() scans:
+    // a feature `@scope/slug` lives at the sibling dir named after its slug),
+    // and finally to ROOT/packages/<name> for bundled core.
+    const slug = packageName.includes('/') ? packageName.split('/').pop()! : packageName
+    const candidates = [
+        path.join(ROOT, 'node_modules', packageName),
+        path.join(ROOT, '..', 'node_modules', packageName),
+        path.join(ROOT, '..', slug), // sibling dir (feature packages)
+        path.join(ROOT, 'packages', packageName), // bundled core
+    ]
+    for (const candidate of candidates) {
+        if (fs.existsSync(candidate)) {
+            // Confirm it's actually a package (has a package.json) before
+            // accepting — guards against an unrelated sibling dir matching slug.
+            if (fs.existsSync(path.join(candidate, 'package.json'))) {
+                return fs.realpathSync(candidate)
+            }
+        }
     }
     throw new Error(`Cannot resolve package directory for ${packageName}`)
 }
