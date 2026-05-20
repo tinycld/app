@@ -83,8 +83,16 @@ describe('generate-packages env overrides', () => {
     })
 
     it('writes lib/generated/uniwind-sources.css with @source per linked package', () => {
-        // Stand up a fake linked package so the generator emits a real source line.
-        const pkgDir = path.join(tmp, 'packages/@acme/widget')
+        // Workspace model: a linked feature package is a SIBLING of the app
+        // shell, discovered by getPackages() scanning the workspace root
+        // (APP_ROOT/..). Build an isolated workspace: <ws>/app is the shell
+        // (APP_ROOT), <ws>/widget is the sibling. This avoids scanning the
+        // shared OS tmpdir for stray manifests from other tests.
+        const ws = fs.mkdtempSync(path.join(os.tmpdir(), 'gen-pkgs-ws-'))
+        const appRoot = path.join(ws, 'app')
+        setupAppRoot(appRoot)
+
+        const pkgDir = path.join(ws, 'widget')
         fs.mkdirSync(pkgDir, { recursive: true })
         fs.writeFileSync(
             path.join(pkgDir, 'package.json'),
@@ -94,26 +102,34 @@ describe('generate-packages env overrides', () => {
             path.join(pkgDir, 'manifest.ts'),
             "export default { name: 'Widget', slug: 'widget', version: '0.1.0', description: 'x' }\n"
         )
+        // node_modules/@acme/widget symlink so resolvePackageDir (which prefers
+        // node_modules) resolves the sibling.
+        const nmScope = path.join(appRoot, 'node_modules/@acme')
+        fs.mkdirSync(nmScope, { recursive: true })
+        fs.symlinkSync(pkgDir, path.join(nmScope, 'widget'))
 
-        execFileSync('npx', ['tsx', GEN_SCRIPT], {
-            env: {
-                ...process.env,
-                TINYCLD_APP_ROOT: tmp,
-                TINYCLD_GENERATED_DIR: path.join(tmp, 'lib/generated'),
-                TINYCLD_APP_DIR: path.join(tmp, 'app'),
-                TINYCLD_SERVER_DIR: path.join(tmp, 'server'),
-            },
-            stdio: 'pipe',
-        })
+        try {
+            execFileSync('npx', ['tsx', GEN_SCRIPT], {
+                env: {
+                    ...process.env,
+                    TINYCLD_APP_ROOT: appRoot,
+                    TINYCLD_GENERATED_DIR: path.join(appRoot, 'lib/generated'),
+                    TINYCLD_APP_DIR: path.join(appRoot, 'app'),
+                    TINYCLD_SERVER_DIR: path.join(appRoot, 'server'),
+                },
+                stdio: 'pipe',
+            })
 
-        const sources = path.join(tmp, 'lib/generated/uniwind-sources.css')
-        expect(fs.existsSync(sources)).toBe(true)
-        const content = fs.readFileSync(sources, 'utf8')
-        // Resolve the temp dir's real path: macOS /tmp is a symlink to /private/tmp,
-        // and the generator uses realpathSync so emitted paths are real-resolved too.
-        const expectedPkgDir = fs.realpathSync(pkgDir)
-        expect(content).toContain(`@source "${expectedPkgDir}";`)
-        expect(content).toContain('/* @acme/widget */')
+            const sources = path.join(appRoot, 'lib/generated/uniwind-sources.css')
+            expect(fs.existsSync(sources)).toBe(true)
+            const content = fs.readFileSync(sources, 'utf8')
+            // macOS /tmp → /private/tmp symlink; generator realpath-resolves emitted paths.
+            const expectedPkgDir = fs.realpathSync(pkgDir)
+            expect(content).toContain(`@source "${expectedPkgDir}";`)
+            expect(content).toContain('/* @acme/widget */')
+        } finally {
+            fs.rmSync(ws, { recursive: true, force: true })
+        }
     })
 
     it('writes go.mod + package_extensions.go under TINYCLD_SERVER_DIR', () => {

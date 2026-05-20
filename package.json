@@ -7,9 +7,6 @@
     "type": "module",
     "scripts": {
         "packages:generate": "npx tsx scripts/generate-packages.ts",
-        "packages:link": "npx tsx scripts/link-package.ts link",
-        "packages:unlink": "npx tsx scripts/link-package.ts unlink",
-        "packages:install": "npx tsx scripts/install-package.ts",
         "assets:copy-pdfjs": "npx tsx scripts/copy-pdfjs-assets.ts",
         "postinstall": "npm run packages:generate && npm run assets:copy-pdfjs",
         "prebuild:web": "npm run packages:generate",

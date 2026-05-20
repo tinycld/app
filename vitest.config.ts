@@ -40,7 +40,10 @@ export default defineConfig({
             //     + index probing. (Metro handles this natively — see Spike 1.)
             {
                 find: /^@tinycld\/core\/Providers$/,
-                replacement: path.resolve(__dirname, 'packages/@tinycld/core/components/Providers.tsx'),
+                replacement: path.resolve(
+                    __dirname,
+                    'packages/@tinycld/core/components/Providers.tsx'
+                ),
             },
             {
                 find: /^@tinycld\/core$/,
