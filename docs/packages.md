@@ -32,6 +32,14 @@ Features are not built into the app — they are **independent sibling git
 repos** that get *linked* into a single **app shell** at build time. The app
 shell (`tinycld/`) is the only runnable artifact; it ties everything together.
 
+The monorepo root (`~/code/tinycld/`) is an **npm workspace**. Its root
+`package.json` lists the workspace members — the app shell (`tinycld`), bundled
+core (`tinycld/packages/@tinycld/core`), and every feature sibling (`contacts`,
+`mail`, `calendar`, `drive`, `calc`, `text`, `google-takeout-import`). A root
+`.npmrc` sets `legacy-peer-deps=true`. Linking is **`npm install` at the
+workspace root** — npm materializes the `node_modules/@tinycld/*` symlinks that
+make each member resolvable by its package name.
+
 Three kinds of code live in the ecosystem:
 
 | Kind | Where it lives | Git | Has `manifest.ts`? | Discovered how |
@@ -45,24 +53,39 @@ contains `manifest.ts`.** Core has no manifest, which is exactly why it is
 treated as a library, not a feature.
 
 ```
-~/code/tinycld/
+~/code/tinycld/                       # npm workspace root (package.json + .npmrc)
+    node_modules/
+        @tinycld/
+            core     -> ../../tinycld/packages/@tinycld/core  # npm workspace symlink
+            mail     -> ../../mail                            # npm workspace symlink
+            contacts -> ../../contacts
+            ...
     tinycld/                          # app shell (the only runnable thing)
-        packages/                     # gitignored — ALL symlinks
+        packages/
             @tinycld/
                 core/                 # bundled library (real dir, no manifest.ts)
-                mail     -> ../../../mail        # symlink to sibling repo
-                contacts -> ../../../contacts
-                ...
+        node_modules/                 # heavy deps (React/RN/Expo/…) live HERE
         scripts/generate-packages.ts  # the generator
-        tinycld.packages.ts           # getPackages() — scans for manifest.ts
+        tinycld.packages.ts           # getPackages() — reads workspace members
+        tinycld.config.ts             # generated source of truth (gitignored)
         server/                       # Go (PocketBase) — module tinycld.org/app
-    mail/   contacts/   calc/   ...   # sibling feature repos
+    mail/   contacts/   calc/   ...   # sibling feature repos (workspace members)
 ```
 
 There is **no hand-curated package list.** `tinycld.packages.ts::getPackages()`
-scans `tinycld/packages/` for directories containing a `manifest.ts`. **The
-set of symlinks present = the set of linked packages.** A fresh clone has only
-the bundled `@tinycld/core` subtree; developers link what they need.
+enumerates the workspace member siblings that contain a `manifest.ts`, plus the
+bundled `@tinycld/core`. **The set of workspace members present = the set of
+linked packages.** A fresh clone has only the bundled `@tinycld/core` subtree;
+developers clone the siblings they want and re-run `npm install`.
+
+> **npm-hoisting reality.** npm does **not** hoist the heavy framework deps to
+> the workspace-root `node_modules`. Feature siblings declare React / React
+> Native / Expo / pbtsdb / `@tanstack/*` as `peerDependencies` and carry no
+> `dependencies` of their own, so the app shell is the only direct consumer and
+> those libraries land in **`tinycld/node_modules`**. Members resolve them
+> through there. Node's bare resolver can't reach them from a sibling's own
+> cwd, but Metro and Vitest are configured to (see
+> [Bundler & test resolution](#bundler--test-resolution)).
 
 ---
 
@@ -101,7 +124,7 @@ resolve to `./tinycld/contacts/screens/index.tsx`.
 
 ```jsonc
 {
-    "name": "@tinycld/contacts",       // the canonical identity (link uses this)
+    "name": "@tinycld/contacts",       // the canonical identity (npm links by this)
     "private": true,
     "type": "module",
     "exports": {
@@ -131,11 +154,14 @@ Three rules enforced here:
   matches both `index` and `[id]`.
 - **`peerDependencies` only, no `dependencies`** — siblings carry no runtime
   deps of their own (even heavy ones like `hyperformula`/`yjs` in calc are
-  peers). They resolve through the **app shell's** `node_modules`. Running
-  `npm install` inside a sibling materializes duplicate `react` /
-  `react-native` / `pbtsdb` / `yjs`, and TypeScript then sees two copies of
-  every type and emits hundreds of "Type X is not assignable to type X"
-  errors. **Never run a package manager's install inside a sibling.**
+  peers). Because the app shell is the only direct consumer of those peers,
+  npm resolves them in the **app shell's** `node_modules` (`tinycld/node_modules`)
+  rather than hoisting them to the workspace root. Always run `npm install` at
+  the **workspace root** (`~/code/tinycld/`), never inside an individual
+  sibling — a per-sibling install would materialize a duplicate `react` /
+  `react-native` / `pbtsdb` / `yjs`, and TypeScript would then see two copies
+  of every type and emit hundreds of "Type X is not assignable to type X"
+  errors.
 - **No lint/biome/test scripts** — there is one Biome config in the whole
   ecosystem (`tinycld/biome.json`); siblings don't ship one. The only script
   a sibling carries is `typecheck`.
@@ -308,9 +334,16 @@ export function registerCollections(
 }
 ```
 
-The generator stitches every package's `{Pkg}Schema` into one app-wide
-`MergedSchema` (in `lib/generated/package-collections.ts`) and a
-`packageStores()` that spreads each `registerCollections(...)` call.
+The generator emits each package's `{Pkg}Schema` into a single literal
+intersection — `MergedPackageSchema` in `tinycld.config.ts` (e.g.
+`CalcSchema & ContactsSchema & …`) — and `pocketbase.ts` forms
+`type MergedSchema = Schema & MergedPackageSchema`. The intersection is written
+out **literally** rather than derived from `typeof tinycldConfig`: deriving it
+would create a circular type reference (the config's `coreStores` field flows
+through `createCollection<MergedSchema>`). At runtime, `buildPackageStores`
+(in `core/lib/packages/derive-stores.ts`) spreads each entry's
+`registerCollections(...)` call to assemble the package store map. See
+[The generator](#the-generator) for the full config-and-derive picture.
 
 ### `seed.ts`
 
@@ -332,64 +365,69 @@ export default async function seed(pb: PocketBase, ctx: SeedContext): Promise<vo
 ```
 
 Seeds run in dependency order: if a package declares `dependencies: ['drive']`,
-drive's seed runs first (the generator topologically sorts them).
+drive's seed runs first. The generator wires every seed into `tinycld.seeds.ts`;
+the `deriveSeeds` helper (`core/lib/packages/derive-seeds.ts`) topologically
+sorts them at run time.
 
 ---
 
 ## Linking a package
 
-`packages/` is gitignored and contains nothing but symlinks (one per linked
-package, including core). All commands run from the app shell (`tinycld/`).
+Linking is plain **npm workspace resolution** — there are no bespoke
+`packages:link` / `packages:install` / `packages:unlink` scripts anymore (they,
+and `scripts/link-package.ts` / `scripts/install-package.ts`, were deleted). To
+add a feature package:
 
 ```sh
-# Clone a package repo AND link it, in one step:
-npm run packages:install <git-url> [--path <dir>] [--ref <branch|tag|sha>]
+# 1. Clone the package repo as a sibling of the app shell.
+cd ~/code/tinycld
+git clone <git-url> contacts            # → ~/code/tinycld/contacts
 
-# Link an already-cloned sibling. The arg is a sibling DIRECTORY (slug or
-# path), not a package name — the package name is read from package.json.
-npm run packages:link contacts          # → ../contacts
-npm run packages:link ../mail           # explicit relative
-npm run packages:link /abs/path/to/x    # absolute
-
-# Remove a linked package (by package name OR manifest slug):
-npm run packages:unlink @tinycld/contacts
-npm run packages:unlink contacts
+# 2. Run npm install at the WORKSPACE ROOT (not inside the sibling).
+cd ~/code/tinycld
+npm install
 ```
 
-What `packages:link` does (`scripts/link-package.ts`):
+What `npm install` does:
 
-1. Resolves the sibling directory from the CLI arg (bare slug → `../<slug>`,
-   relative/absolute path used as-is).
-2. Reads the sibling's `package.json` for its **canonical name**
-   (`@tinycld/contacts`) — the CLI never invents a scope — and validates a
-   `manifest.ts` is present.
-3. Creates a symlink at `packages/<name>` (scoped names nest under a scope
-   dir; unscoped are flat). The symlink target is a *relative* path back to the
-   sibling.
-4. Runs the generator.
+1. Reads the workspace-root `package.json` `workspaces` list and the sibling's
+   own `package.json` for its **canonical name** (`@tinycld/contacts`).
+2. Creates the `node_modules/@tinycld/<name>` symlink (scoped names nest under
+   the scope dir) pointing at the sibling, so the package name resolves
+   everywhere.
+3. The generator runs on `postinstall` and materializes the on-disk artifacts
+   it still owns (route shims, `tinycld.config.ts`, migration symlinks, Go
+   wiring — see [The generator](#the-generator)).
 
-**Safety.** The linker and generator refuse to overwrite anything that is not
-a symlink ("Refusing to remove … it's a real directory"). Don't `git add`
-anything under `packages/`; the set of linked packages is local-only state.
+To **remove** a feature package, delete its sibling clone (or its entry from
+the workspace list) and re-run `npm install` at the root.
+
+`getPackages()` now enumerates the workspace members that contain a
+`manifest.ts` (plus bundled core). The set of cloned-and-installed members is
+the source of truth — there is no hand-curated list and nothing to `git add`
+under `node_modules/@tinycld/` (npm owns that tree).
 
 ---
 
 ## The generator
 
-`scripts/generate-packages.ts` is the heart of the system. It runs on every
-`link`/`unlink`/`install`, automatically before `dev` and `build:web`
-(via the `prebuild:web` and dev startup paths), and on `postinstall`.
+`scripts/generate-packages.ts` is now **thin**. npm owns package linking, and
+most of what the old generator hand-wrote into `lib/generated/` is now
+**derived at runtime** from a single typed config (see
+[Config & runtime derivations](#config--runtime-derivations) below). The
+generator only emits the artifacts that genuinely have to exist on disk before
+the bundler runs.
 
-It is **idempotent**: it records everything it created in `.package-links.json`
-(`symlinks` + `generatedFiles`) and, on the next run, deletes that exact set
-before regenerating. All output is gitignored.
+It runs on `postinstall`, and automatically before `dev` and `build:web` (via
+the `prebuild:web` and dev startup paths). All output is gitignored.
 
-For each linked package it reads `manifest.ts` and emits:
+For each linked package it reads `manifest.ts` and emits **only**:
 
 ### A. Route re-exports → `app/a/[orgSlug]/<slug>/**`
 
 For each file under `routes.directory`, a one-line re-export shim that plugs a
-sibling screen into Expo Router's filesystem routing:
+sibling screen into Expo Router's filesystem routing — Expo Router needs real
+files on disk, so these can't be derived at runtime:
 
 ```ts
 export { default } from '@tinycld/contacts/screens/index'
@@ -398,23 +436,34 @@ export { default } from '@tinycld/contacts/screens/index'
 `publicRoutes` work the same way but land at the top level `app/<path>`, with
 cross-package conflict detection.
 
-### B. Generated TS registries → `lib/generated/`
+### B. `tinycld.config.ts` (via `scripts/generate-config.ts`)
 
-Imported by the app via the `@tinycld/app-generated/*` alias:
+The **single source of truth** for what's installed — a typed array, one entry
+per linked package, each built by
+`definePackageEntry<PkgSchema>()({ manifest, registerCollections, sidebar, provider, settings })`.
+It also emits `MergedPackageSchema` as a **literal** intersection of every
+package's `{Pkg}Schema` (`CalcSchema & ContactsSchema & …`); `pocketbase.ts`
+forms `type MergedSchema = Schema & MergedPackageSchema` from it. (It must be a
+literal intersection, not `typeof tinycldConfig`-derived, to avoid a circular
+type reference through `coreStores` → `createCollection<MergedSchema>`.) This is
+the bundled (Hermes-safe) config — it carries no Node-only seed code.
 
-| File | Purpose |
-|---|---|
-| `package-collections.ts` | Builds `MergedSchema` + `packageStores()` spreading each `registerCollections`. |
-| `package-registry.ts` | Runtime array of all manifests (`usePackages()` reads this). |
-| `package-sidebars.ts` | Lazy-imported sidebar components. |
-| `package-providers.ts` | Lazy-imported context providers. |
-| `package-settings.ts` | Settings-panel entries. |
-| `package-help.ts` | Parsed help-topic frontmatter + bodies (core included explicitly). |
-| `package-seeds.ts` | Seed functions, topologically ordered by `dependencies`. |
+### C. `tinycld.seeds.ts`
 
-### C. CSS source roots → `lib/generated/uniwind-sources.css`
+Seed wiring lives in a **separate** Node-only file, *not* in
+`tinycld.config.ts`. Seed modules use Node `import.meta.dirname` / `fs`, which
+Hermes (iOS) can't bundle — keeping them out of the bundled config is what lets
+the app build for native. The `deriveSeeds` helper consumes this at run time.
 
-Tailwind v4's scanner respects `.gitignore`, and the symlinks live in
+### D. `lib/generated/package-help.ts`
+
+Parsed help-topic frontmatter + bodies (core included explicitly). Help topics
+are parsed markdown content, so they're still pre-extracted to a generated file
+rather than derived at runtime.
+
+### E. CSS source roots → `lib/generated/uniwind-sources.css`
+
+Tailwind v4's scanner respects `.gitignore`, and the workspace symlinks live in
 gitignored paths — so a utility class used **only** inside a linked package
 would silently produce no CSS rule. The generator writes one absolute
 `@source "<real-path>";` line per package; `global.css` does
@@ -422,7 +471,7 @@ would silently produce no CSS rule. The generator writes one absolute
 checking `document.styleSheets` in DevTools for a `.your-class { ... }` rule;
 if absent, re-run `npm run packages:generate`.
 
-### D. PocketBase migrations & hooks → `server/pb_migrations/`, `server/pb_hooks/`
+### F. PocketBase migrations & hooks → `server/pb_migrations/`, `server/pb_hooks/`
 
 Each package's `pb-migrations/*.js` is **symlinked** into the shared
 `server/pb_migrations/`. Core's migrations are symlinked in via a separate
@@ -430,15 +479,31 @@ explicit pass (core has no manifest, so it doesn't flow through the per-package
 loop). Note the source-dir naming difference: siblings use `pb-migrations`
 (hyphen); core uses `pb_migrations` (underscore).
 
-### E. Go server wiring → `server/package_extensions.go` + `server/go.work`
+### G. Go server wiring → `server/package_extensions.go` + `server/go.work`
 
 See [the Go server section](#the-go-pocketbase-server-side).
 
-### F. node_modules shim
+What the generator **no longer** emits: `package-collections.ts`,
+`package-registry.ts`, `package-sidebars.ts`, `package-providers.ts`,
+`package-settings.ts`, and `package-seeds.ts`. Those are all derived at runtime
+from `tinycld.config.ts` / `tinycld.seeds.ts` — see below. It also no longer
+maintains a `node_modules/@tinycld/*` shim: npm's workspace install owns those
+symlinks.
 
-The generator recreates `node_modules/@tinycld/<pkg>` symlinks so TypeScript's
-bundler resolution can find each package's `exports` map (an `npm install` can
-wipe these).
+### Config & runtime derivations
+
+`tinycld.config.ts` is consumed by helpers under `core/lib/packages/`, each of
+which replaces a file the old generator used to write:
+
+| Runtime helper (`core/lib/packages/…`) | Exports | Replaces (old generated file) |
+|---|---|---|
+| `derive-stores.ts` | `buildPackageStores` | `package-collections.ts`'s `packageStores` |
+| `static-registry.ts` | `packageRegistry`, `toStaticRegistry` | `package-registry.ts` |
+| `derive-components.ts` | `deriveSidebars` / `deriveProviders` / `deriveSettings` + the `packageSidebars` / `packageProviders` / `packageSettings` consts | `package-sidebars.ts`, `package-providers.ts`, `package-settings.ts` |
+| `derive-seeds.ts` | `deriveSeeds` (ports the `dependencies` topo-sort) | `package-seeds.ts` |
+
+`usePackages()` still merges the static set (`packageRegistry`) with
+runtime-installed DB packages, exactly as before.
 
 ### Validation
 
@@ -451,29 +516,26 @@ The generator fails fast on:
 
 ## Bundler & test resolution
 
-Siblings have **no `node_modules` of their own** by design. Three tools
-coordinate to make the symlink tree resolve to a *single* copy of every shared
-library.
+The npm workspace does the heavy lifting now — a single copy of each shared
+library is hoisted (singletons like `zustand`/`yjs` resolve to one copy through
+the workspace), and the `node_modules/@tinycld/*` symlinks make every member
+resolvable by name. The bundler and test configs are correspondingly much
+smaller.
 
 ### Metro (`metro.config.cjs`)
 
-Scans `packages/` (recursing into `@scope` dirs, accepting symlink-or-realdir),
-then:
+Down to **~25 lines** (from 388). It is essentially:
 
-- Adds each sibling's real path to `watchFolders` so Metro bundles source
-  living outside the app repo.
-- Sets `nodeModulesPaths` to the **app shell only** — core's `node_modules` is
-  deliberately *excluded* as a backstop so a stray sibling install can't feed
-  duplicate copies into the graph.
-- Installs a custom `resolveRequest` that maps `@tinycld/<pkg>/<subpath>`
-  through the sibling's `exports` patterns to an on-disk file, probing
-  extensions itself so the resolved path stays the *in-tree symlink path*
-  (keeps lazy-chunk URLs inside the project root).
-- Pins stateful singletons (`zustand`, `yjs`, `y-protocols`,
-  `fractional-indexing`) to the app shell's single copy — these use
-  `instanceof` / module-singleton patterns that break with duplicates.
-- Canonicalizes module IDs by realpath so the symlink-view and realpath-view
-  of one file share one ID (otherwise lazy `__r(<id>)` lookups miss).
+- `getDefaultConfig` + `withUniwindConfig`,
+- a single `watchFolders: [workspaceRoot]` entry so Metro bundles sibling source
+  living outside the app repo,
+- the `@tinycld/app-generated/*` alias.
+
+There is **no** custom `@tinycld/*` `resolveRequest`, **no**
+`unstable_enableSymlinks`, and **no** singleton pins — those are unnecessary now
+that the workspace hoists one copy of each dep. Metro's **default** resolver
+follows the workspace symlinks and resolves each package's `.ts` / `.tsx` /
+directory-index mix natively.
 
 `~/*` is **not** handled in Metro — siblings' tsconfig maps `~/*` onto
 `@tinycld/core/*`, and Metro resolves the resulting `@tinycld/core/*`
@@ -481,17 +543,18 @@ specifier.
 
 ### Vitest (`vitest.config.ts`)
 
-Discovers sibling unit tests via `packages/*/tests/**` and
-`packages/@*/*/tests/**` (Vitest's globber follows symlinks). Aliases
-`@tinycld/core`, `@tinycld/app-generated`, `~/*`, and pins react / yjs /
-y-protocols for the same dedup reason as Metro. Environment is `node`; setup is
-`tests/unit-setup.ts`.
+Vitest still needs explicit `@tinycld/core/*` path aliases: unlike Metro,
+Vite's `exports` resolution lacks the directory-index fallback that core's
+subpaths rely on. It also keeps the dedup pins (`react`, `yjs`, `y-protocols`,
+`hyperformula`). Sibling unit tests are discovered via `../<sibling>/tests/**`
+globs. Environment is `node`; setup is `tests/unit-setup.ts`.
 
 ### Playwright (`playwright.config.ts`)
 
-Playwright's globber can't follow symlinks, so it generates **one project per
-linked sibling** (project name = `@tinycld/mail`, etc.) with `testDir` pointing
-at that sibling's `tests/`. Run one package's specs with:
+Playwright generates **one project per workspace member**, derived from the
+`node_modules/@tinycld/*` workspace symlinks (project name = `@tinycld/mail`,
+etc.), with `testDir` pointing at that member's `tests/`. Run one package's
+specs with:
 
 ```sh
 npm run test:e2e --project=@tinycld/mail
@@ -603,11 +666,11 @@ orders seed execution.
 ## Development loop & where to edit
 
 ```sh
-cd ~/code/tinycld/tinycld           # ALL commands run from the app shell
-npm install
-npm run packages:install <git-url>  # clone + link a feature
-# or: npm run packages:link <slug>  # link an already-cloned sibling
+# Clone the feature siblings you want next to the app shell, then:
+cd ~/code/tinycld                   # workspace root
+npm install                         # links members + runs the generator
 
+cd ~/code/tinycld/tinycld           # other commands run from the app shell
 npm run dev                         # packages:generate, then Expo + PocketBase
 npm run checks                      # biome + tsc (lints app + all linked siblings)
 npm run test:unit                   # vitest (includes sibling tests)
@@ -627,15 +690,16 @@ Where changes go:
 **Never commit generator output.** These paths are gitignored and regenerate
 on every `packages:generate`:
 
-- `tinycld/packages/` (the whole symlink tree)
 - `tinycld/lib/generated/`
+- `tinycld/tinycld.config.ts` and `tinycld/tinycld.seeds.ts`
 - generated routes under `tinycld/app/a/[orgSlug]/*/` and `tinycld/app/share/`
 - `tinycld/server/pb_migrations/` (symlinks), `server/package_extensions.go`,
   `server/go.work`, `server/bundled-packages.json`
 
-(The app-owned files `app/a/[orgSlug]/_layout.tsx` and
-`app/a/[orgSlug]/settings/*` are force-added to git despite living under a
-gitignored tree.)
+(The npm workspace symlinks under `node_modules/@tinycld/` are also local-only
+state, owned by npm — never `git add` them. The app-owned files
+`app/a/[orgSlug]/_layout.tsx` and `app/a/[orgSlug]/settings/*` are force-added
+to git despite living under a gitignored tree.)
 
 ---
 
