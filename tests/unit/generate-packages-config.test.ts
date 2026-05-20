@@ -57,29 +57,10 @@ describe('generate-packages env overrides', () => {
             stdio: 'pipe',
         })
 
-        const registry = path.join(tmp, 'lib/generated/package-registry.ts')
-        expect(fs.existsSync(registry)).toBe(true)
-    })
-
-    it('honors TINYCLD_CORE_IMPORT_ALIAS in generated file contents', () => {
-        execFileSync('npx', ['tsx', GEN_SCRIPT], {
-            env: {
-                ...process.env,
-                TINYCLD_APP_ROOT: tmp,
-                TINYCLD_GENERATED_DIR: path.join(tmp, 'lib/generated'),
-                TINYCLD_APP_DIR: path.join(tmp, 'app'),
-                TINYCLD_SERVER_DIR: path.join(tmp, 'server'),
-                TINYCLD_CORE_IMPORT_ALIAS: '@tinycld/core',
-            },
-            stdio: 'pipe',
-        })
-
-        const registry = fs.readFileSync(
-            path.join(tmp, 'lib/generated/package-registry.ts'),
-            'utf8'
-        )
-        expect(registry).toContain("from '@tinycld/core/lib/packages/types'")
-        expect(registry).not.toContain('~/tinycld/core')
+        // package-help.ts is always written by the generator (survives the
+        // Phase 3 teardown; collections/registry are now runtime-derived).
+        const help = path.join(tmp, 'lib/generated/package-help.ts')
+        expect(fs.existsSync(help)).toBe(true)
     })
 
     it('writes lib/generated/uniwind-sources.css with @source per linked package', () => {
