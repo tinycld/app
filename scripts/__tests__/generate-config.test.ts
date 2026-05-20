@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildConfigSource } from '../generate-config'
+import { buildConfigSource, buildSeedsSource } from '../generate-config'
 
 describe('buildConfigSource', () => {
     it('emits a typed entry per package with its contributions', () => {
@@ -27,8 +27,9 @@ describe('buildConfigSource', () => {
         )
         // schema type import
         expect(src).toContain("import type { ContactsSchema } from '@tinycld/contacts/types'")
-        // default seed import
-        expect(src).toContain("import contactsSeed from '@tinycld/contacts/seed'")
+        // seeds are NOT in the bundled config (they live in tinycld.seeds.ts)
+        expect(src).not.toContain("from '@tinycld/contacts/seed'")
+        expect(src).not.toContain('seed:')
         // lazy sidebar
         expect(src).toContain("lazy(() => import('@tinycld/contacts/sidebar'))")
         // the typed entry constructor with the schema type param
@@ -96,5 +97,52 @@ describe('buildConfigSource', () => {
         // settings literals are emitted JSON-style (double-quoted) pre-format
         expect(src).toContain('slug: "google-takeout"')
         expect(src).toContain('label: "Import from Google"')
+    })
+})
+
+describe('buildSeedsSource', () => {
+    it('emits seed imports + ordering metadata for packages with a seed', () => {
+        const src = buildSeedsSource([
+            {
+                packageName: '@tinycld/calc',
+                slug: 'calc',
+                schemaType: 'CalcSchema',
+                hasRegister: true,
+                hasSidebar: false,
+                hasProvider: true,
+                hasSeed: true,
+                settings: [],
+                manifest: {
+                    name: 'Calc',
+                    slug: 'calc',
+                    version: '0',
+                    description: 'x',
+                    dependencies: ['drive'],
+                },
+            },
+            {
+                packageName: '@tinycld/google-takeout-import',
+                slug: 'google-takeout-import',
+                schemaType: '',
+                hasRegister: false,
+                hasSidebar: false,
+                hasProvider: false,
+                hasSeed: false,
+                settings: [],
+                manifest: {
+                    name: 'GTI',
+                    slug: 'google-takeout-import',
+                    version: '0',
+                    description: 'x',
+                },
+            },
+        ])
+        expect(src).toContain("import calcSeed from '@tinycld/calc/seed'")
+        expect(src).toContain('export const tinycldSeeds = [')
+        expect(src).toContain('seed: calcSeed')
+        // dependencies carried through for deriveSeeds ordering
+        expect(src).toContain('dependencies: ["drive"]')
+        // package with no seed is omitted
+        expect(src).not.toContain('googleTakeoutImportSeed')
     })
 })
