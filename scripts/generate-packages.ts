@@ -810,8 +810,15 @@ export interface RunningBuild {
 // resolve from $PATH or trigger an interactive download, which we want to
 // avoid. The app shell always has tsx installed locally.
 function tsxBinary(): string {
-    const local = path.join(ROOT, 'node_modules/.bin/tsx')
-    if (fs.existsSync(local)) return local
+    // tsx's bin can be in the app shell's node_modules OR hoisted to the
+    // workspace-root node_modules (one level up) — npm decides based on the
+    // workspace layout. Probe both before falling back to PATH.
+    for (const candidate of [
+        path.join(ROOT, 'node_modules/.bin/tsx'),
+        path.join(ROOT, '..', 'node_modules/.bin/tsx'),
+    ]) {
+        if (fs.existsSync(candidate)) return candidate
+    }
     // Fallback for unusual install layouts (pnpm/yarn worktrees, etc.).
     return 'tsx'
 }

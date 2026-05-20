@@ -1,5 +1,23 @@
+import fs from 'node:fs'
 import path from 'node:path'
 import { defineConfig } from 'vitest/config'
+
+// Locate a dependency's installed directory regardless of where npm hoisted it:
+// the app shell's node_modules OR the workspace-root node_modules one level up
+// (in CI the workspace root is the parent of the app shell, so deps hoist
+// there). A direct filesystem probe avoids Node's exports-map restrictions on
+// ./package.json (ERR_PACKAGE_PATH_NOT_EXPORTED for e.g. react). Falls back to
+// the app-shell path so the alias string is always defined.
+const pkgDir = (pkg: string): string => {
+    for (const root of [
+        path.resolve(__dirname, 'node_modules'),
+        path.resolve(__dirname, '..', 'node_modules'),
+    ]) {
+        const candidate = path.join(root, pkg)
+        if (fs.existsSync(candidate)) return candidate
+    }
+    return path.resolve(__dirname, 'node_modules', pkg)
+}
 
 export default defineConfig({
     resolve: {
@@ -8,29 +26,29 @@ export default defineConfig({
             //     a test proves the workspace dedupes these on its own) ---
             {
                 find: /^react$/,
-                replacement: path.resolve(__dirname, 'node_modules/react/index.js'),
+                replacement: path.join(pkgDir('react'), 'index.js'),
             },
             {
                 find: /^react\/jsx-runtime$/,
-                replacement: path.resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
+                replacement: path.join(pkgDir('react'), 'jsx-runtime.js'),
             },
             {
                 find: /^react\/jsx-dev-runtime$/,
-                replacement: path.resolve(__dirname, 'node_modules/react/jsx-dev-runtime.js'),
+                replacement: path.join(pkgDir('react'), 'jsx-dev-runtime.js'),
             },
             // yjs/y-protocols use instanceof checks; a duplicate copy reached
             // through a member symlink breaks nested Y.Map.set ("Unexpected
-            // content type"). Pin to the app shell's single install.
-            { find: /^yjs$/, replacement: path.resolve(__dirname, 'node_modules/yjs') },
+            // content type"). Pin to the single install.
+            { find: /^yjs$/, replacement: pkgDir('yjs') },
             {
                 find: /^y-protocols\/(.+)$/,
-                replacement: path.resolve(__dirname, 'node_modules/y-protocols/$1'),
+                replacement: `${pkgDir('y-protocols')}/$1`,
             },
             // hyperformula's ESM build has broken relative imports under Vite
             // SSR; pin to the self-consistent commonjs entry.
             {
                 find: /^hyperformula$/,
-                replacement: path.resolve(__dirname, 'node_modules/hyperformula/commonjs/index.js'),
+                replacement: path.join(pkgDir('hyperformula'), 'commonjs/index.js'),
             },
             // --- @tinycld/core path remaps. Unlike Metro, Vite's exports-map
             //     resolution does NOT do directory-index fallback, so
