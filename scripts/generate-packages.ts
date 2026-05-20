@@ -224,19 +224,18 @@ function resolveExportPath(packageDir: string, subpath: string): string {
 }
 
 export function resolvePackageDir(packageName: string): string {
-    // Primary: packages/<name>, which is a symlink to the sibling repo.
-    // Scoped packages live at packages/@scope/name (mirroring node_modules
-    // layout). Unscoped packages live flat at packages/<name>.
-    // Use realpathSync so downstream path operations produce stable absolute
-    // paths and don't rely on the link.
-    const packagesPath = path.join(ROOT, 'packages', packageName)
-    if (fs.existsSync(packagesPath)) {
-        return fs.realpathSync(packagesPath)
-    }
-    // Fallback for packages installed via npm into node_modules.
+    // Primary: node_modules/<name>, the npm workspace symlink (feature members
+    // resolve here; core too). Use realpathSync so downstream path operations
+    // produce stable absolute paths and don't rely on the link.
     const nodeModulesPath = path.join(ROOT, 'node_modules', packageName)
     if (fs.existsSync(nodeModulesPath)) {
         return fs.realpathSync(nodeModulesPath)
+    }
+    // Fallback: bundled core lives at packages/@tinycld/core (a real dir, not a
+    // workspace symlink target under node_modules in every layout).
+    const packagesPath = path.join(ROOT, 'packages', packageName)
+    if (fs.existsSync(packagesPath)) {
+        return fs.realpathSync(packagesPath)
     }
     throw new Error(`Cannot resolve package directory for ${packageName}`)
 }
@@ -1254,38 +1253,9 @@ async function main() {
     fs.mkdirSync(ROUTES_BASE, { recursive: true })
     fs.mkdirSync(MIGRATIONS_DIR, { recursive: true })
 
-    // Ensure node_modules/@tinycld symlinks exist so TypeScript's bundler
-    // resolution can find package.json exports for linked sibling packages.
-    // These may be wiped by `npm install`, so we recreate them on every generate.
-    const NODE_MODULES_SCOPE = path.join(ROOT, 'node_modules/@tinycld')
-    fs.mkdirSync(NODE_MODULES_SCOPE, { recursive: true })
-    if (fs.existsSync(path.join(ROOT, 'packages/@tinycld'))) {
-        for (const entry of fs.readdirSync(path.join(ROOT, 'packages/@tinycld'), {
-            withFileTypes: true,
-        })) {
-            if (!entry.isSymbolicLink() && !entry.isDirectory()) continue
-            const nmLink = path.join(NODE_MODULES_SCOPE, entry.name)
-            const target = path.join('..', '..', 'packages', '@tinycld', entry.name)
-            // npm may materialize a real directory at this path under
-            // certain install modes, so we can't assume a symlink. lstat
-            // to tell what's there and replace whatever it
-            // is with our symlink.
-            try {
-                const stat = fs.lstatSync(nmLink)
-                if (stat.isSymbolicLink()) {
-                    if (fs.readlinkSync(nmLink) === target) continue
-                    fs.unlinkSync(nmLink)
-                } else if (stat.isDirectory()) {
-                    fs.rmSync(nmLink, { recursive: true, force: true })
-                } else {
-                    fs.unlinkSync(nmLink)
-                }
-            } catch {
-                // doesn't exist yet
-            }
-            fs.symlinkSync(target, nmLink)
-        }
-    }
+    // NOTE: the node_modules/@tinycld/* symlinks are now owned by the npm
+    // workspace install — the generator no longer recreates them (doing so
+    // would clobber npm's correct member symlinks).
 
     const allSymlinks: string[] = []
     const allGenerated: string[] = []

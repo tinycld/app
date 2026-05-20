@@ -85,6 +85,8 @@ export default defineConfig({
         include: [
             'tests/**/*.test.ts',
             'tests/**/*.test.tsx',
+            // generator + script tests
+            'scripts/**/*.test.ts',
             // app shell's bundled core
             'packages/@tinycld/core/**/__tests__/**/*.test.ts',
             'packages/@tinycld/core/**/__tests__/**/*.test.tsx',
