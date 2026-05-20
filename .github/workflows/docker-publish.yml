@@ -75,7 +75,7 @@ jobs:
           # box. TODO: pin each entry to a tagged ref once the sibling
           # repos start cutting versioned tags.
           build-args: |
-            LINKED_PACKAGES=https://github.com/tinycld/mail.git https://github.com/tinycld/calendar.git https://github.com/tinycld/contacts.git https://github.com/tinycld/drive.git https://github.com/tinycld/google-takeout-import.git
+            LINKED_PACKAGES=https://github.com/tinycld/mail.git https://github.com/tinycld/calendar.git https://github.com/tinycld/contacts.git https://github.com/tinycld/drive.git https://github.com/tinycld/calc.git https://github.com/tinycld/text.git https://github.com/tinycld/google-takeout-import.git
 
       - name: Export digest
         run: |
