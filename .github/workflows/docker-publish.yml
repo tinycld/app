@@ -5,7 +5,7 @@ name: Build and publish Docker image
 #   - app (this repo) is checked out at the triggering tag into ws/app,
 #   - the release's manifest.json + package-lock.json assets are downloaded,
 #   - each sibling listed in the manifest is cloned at its pinned SHA,
-#   - bootstrap --tooling writes the workspace-root scaffolding (members
+#   - bootstrap --assemble-only writes the workspace-root scaffolding (members
 #     are already present, so it doesn't re-clone them),
 #   - the pinned package-lock.json is dropped into ws/ for npm ci.
 #
@@ -111,7 +111,7 @@ jobs:
           done
           # bootstrap sees every member already cloned and just writes the
           # workspace-root scaffolding (package.json + .npmrc + tinycld.packages.ts).
-          TINYCLD_REPO_BASE=https://github.com/tinycld npx @tinycld/bootstrap@latest --tooling \
+          TINYCLD_REPO_BASE=https://github.com/tinycld npx @tinycld/bootstrap@latest --assemble-only \
             --with contacts --with mail --with calendar --with drive \
             --with calc --with text --with google-takeout-import
           # Drop the pinned lockfile into the workspace root so npm ci uses it.

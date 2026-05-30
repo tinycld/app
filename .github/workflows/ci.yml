@@ -33,7 +33,7 @@ jobs:
       - name: Assemble workspace (generate root + all members)
         working-directory: ws
         run: >
-          TINYCLD_REPO_BASE=https://github.com/tinycld npx @tinycld/bootstrap@latest --tooling
+          TINYCLD_REPO_BASE=https://github.com/tinycld npx @tinycld/bootstrap@latest --assemble-only
           --with contacts --with mail --with calendar --with drive
           --with calc --with text --with google-takeout-import
       # Go toolchain after assembly: .go-version is bootstrap-generated into ws/.
@@ -67,7 +67,7 @@ jobs:
       - name: Assemble workspace (generate root + all members)
         working-directory: ws
         run: >
-          TINYCLD_REPO_BASE=https://github.com/tinycld npx @tinycld/bootstrap@latest --tooling
+          TINYCLD_REPO_BASE=https://github.com/tinycld npx @tinycld/bootstrap@latest --assemble-only
           --with contacts --with mail --with calendar --with drive
           --with calc --with text --with google-takeout-import
       # Go toolchain after assembly: .go-version is bootstrap-generated into ws/.
