@@ -28,9 +28,47 @@ export async function login(page: Page) {
     await page.waitForURL(/\/a\//, { timeout: 15_000 })
 }
 
+// Navigate to a package's org-scoped route via the rail link in the app
+// shell. Two intentional differences from a naive `page.goto`:
+//
+// 1. We click the rail link rather than calling page.goto(). goto is a
+//    hard browser navigation that cancels every in-flight fetch,
+//    including any lazy chunk the previous route had already started
+//    loading. On CI that cancellation triggers a 5+ second retry/recompile
+//    cycle inside Metro, and the package's sidebar chunk (lazy() in
+//    tinycld.config.ts) doesn't settle until after the test's first
+//    assertion has already timed out. Clicking does SPA navigation
+//    through expo-router: previously-loaded chunks stay loaded, the new
+//    package's chunk downloads cleanly without contention, and the page
+//    never tears down + remounts.
+//
+// 2. We wait for the package-sidebar-mounted testID to attach before
+//    returning. The package's contributed sidebar is React.lazy-imported,
+//    so even after the URL changes, the Suspense fallback (SkeletonSidebar)
+//    is on screen until the chunk arrives. The testID is set inside the
+//    Suspense boundary in core's PackageSidebar so it only attaches once
+//    Suspense unsuspends — proving the real sidebar component has mounted.
+//    Returning before that means the next assertion runs against a
+//    half-rendered page, which is the kind of "element not found" flake
+//    we keep hitting on CI.
+//
+// `pkg` is the lowercase slug (mail, calendar, drive, ...).
 export async function navigateToPackage(page: Page, pkg: string) {
-    await page.goto(`/a/${ORG_SLUG}/${pkg}`)
-    await page.waitForLoadState('domcontentloaded')
+    // Match by URL prefix rather than exact href: some packages (calc,
+    // text, …) rewrite their rail link to deep-link the user's last
+    // visited file (e.g. /a/<org>/calc/<id>), so the rail anchor no
+    // longer matches the bare /a/<org>/<pkg> URL. Prefix match keeps
+    // this working regardless of whether the rail item is bare or
+    // deep-linked.
+    const railLink = page.locator(`a[href^="/a/${ORG_SLUG}/${pkg}"]`).first()
+    await railLink.waitFor({ state: 'visible' })
+    await railLink.click()
+    await page.waitForURL(new RegExp(`/a/${ORG_SLUG}/${pkg}(/|$|\\?)`))
+    // Wait for the lazy-loaded sidebar to mount. The testID is set
+    // inside the Suspense boundary in core's PackageSidebar, so it
+    // only attaches once Suspense unsuspends — i.e. once the package's
+    // sidebar chunk has actually downloaded and rendered.
+    await page.getByTestId('package-sidebar-mounted').waitFor({ state: 'attached' })
 }
 
 export async function clickSidebarItem(page: Page, label: string) {
