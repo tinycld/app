@@ -39,12 +39,32 @@ function resolveExportDir(packageDir: string, subpath: string): string | null {
     return exp.replace(/^\.\//, '').replace(/\/\*\.[^.]+$/, '')
 }
 
+// Slugs come from trusted manifests, but any code path that joins a slug into
+// a path before rmSync gets this guard as defense-in-depth against a hostile
+// or typo'd manifest escaping the intended base dir.
+function assertSafeSlug(slug: string) {
+    if (slug.includes('/') || slug.includes('..') || path.isAbsolute(slug)) {
+        throw new Error(`[generate] invalid package slug '${slug}' — refusing to clean`)
+    }
+}
+
 function cleanDir(dir: string) {
-    // Safety: only ever rm -rf a routes dir under app/a/, app/p/, or app/server/.
-    // Guards against a misconfigured APP_DIR turning this into a destructive
-    // rm of the wrong tree.
-    const allowed = [path.join('app', 'a'), path.join('app', 'p'), path.join('app', 'server')]
-    if (!allowed.some(prefix => dir.includes(prefix))) {
+    // Safety: only ever rm -rf inside APP_DIR, and only under app/a/, app/p/,
+    // or server/. Resolve first so a relative dir or one with '..' segments
+    // can't smuggle the check, then require the resolved path to start with
+    // APP_DIR and live under one of the allowed subtrees by path segment
+    // (not substring — substring matches like .../app/personal/foo).
+    const resolved = path.resolve(dir)
+    const appPrefix = APP_DIR + path.sep
+    if (!resolved.startsWith(appPrefix)) {
+        throw new Error(`cleanDir refused: ${dir} is not under APP_DIR`)
+    }
+    const relSegments = path.relative(APP_DIR, resolved).split(path.sep)
+    const allowedRoots = [['app', 'a'], ['app', 'p'], ['server']]
+    const underAllowedRoot = allowedRoots.some(root =>
+        root.every((seg, i) => relSegments[i] === seg)
+    )
+    if (!underAllowedRoot) {
         throw new Error(`cleanDir refused: ${dir} is not under app/a/, app/p/, or app/server/`)
     }
     if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true })
@@ -71,12 +91,7 @@ function emitFeatureRoutes(features: Feature[]) {
 
 function emitOrgRoutes(f: Feature) {
     const slug = f.manifest.slug
-    // Guard: slug must be a plain segment (no traversal) so the rmSync below
-    // can't escape ROUTES_BASE. Slugs come from trusted manifests, but this
-    // matches cleanDir's defensive posture for a destructive op.
-    if (slug.includes('/') || slug.includes('..') || path.isAbsolute(slug)) {
-        throw new Error(`[generate] invalid package slug '${slug}' — refusing to clean`)
-    }
+    assertSafeSlug(slug)
     const slugDir = path.join(ROUTES_BASE, slug)
     if (fs.existsSync(slugDir)) fs.rmSync(slugDir, { recursive: true, force: true })
     const routesDir = resolveExportDir(f.dir, f.manifest.routes!.directory)
@@ -98,9 +113,7 @@ function emitOrgRoutes(f: Feature) {
 
 function emitFeaturePublicRoutes(f: Feature) {
     const slug = f.manifest.slug
-    if (slug.includes('/') || slug.includes('..') || path.isAbsolute(slug)) {
-        throw new Error(`[generate] invalid package slug '${slug}' — refusing to clean`)
-    }
+    assertSafeSlug(slug)
     const slugDir = path.join(PUBLIC_ROUTES_BASE, slug)
     if (fs.existsSync(slugDir)) fs.rmSync(slugDir, { recursive: true, force: true })
     const pubDir = resolveExportDir(f.dir, f.manifest.publicRoutes!.directory)

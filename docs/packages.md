@@ -512,7 +512,6 @@ runtime-installed DB packages, exactly as before.
 The generator fails fast on:
 
 - **Duplicate `nav.shortcut`** letters across packages.
-- **Public route conflicts** (two packages declaring the same `app/<path>`).
 
 ---
 
