@@ -13,13 +13,14 @@ test.describe('Offline overlay', () => {
         // both CI (where only the stub is installed) and local dev (where
         // it lands alongside real packages). The stub is provisioned by
         // app/tests/scripts/scaffold-shortcut-stub.ts.
-        // (2) waitFor: 'Shortcut stub landing' makes the helper wait
-        // until the stub's screen has rendered, guaranteeing no chunk
-        // fetches are in flight when we toggle offline below —
-        // otherwise React.lazy's mid-flight fetch fails when the network
-        // drops, surfacing a "Failed to fetch" dev overlay that covers
-        // the actual offline-overlay.
-        await navigateToPackage(page, 'shortcut-stub', { waitFor: 'Shortcut stub landing' })
+        // (2) the explicit waitFor on the landing text guarantees the
+        // stub's lazy chunk has settled before we toggle offline below
+        // — otherwise React.lazy's mid-flight fetch fails when the
+        // network drops, surfacing a "Failed to fetch" dev overlay
+        // that covers the actual offline-overlay.
+        await navigateToPackage(page, 'shortcut-stub', {
+            waitFor: page.getByText('Shortcut stub landing', { exact: true }),
+        })
 
         await expect(page.getByTestId('offline-overlay')).toBeHidden()
 

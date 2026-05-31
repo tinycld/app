@@ -25,7 +25,9 @@ test.describe('Keyboard shortcuts', () => {
         // helper's default sidebar gate would hang. Waiting on the
         // landing text also confirms the stub's lazy chunk has
         // mounted before we start typing shortcuts.
-        await navigateToPackage(page, STUB_SLUG, { waitFor: 'Shortcut stub landing' })
+        await navigateToPackage(page, STUB_SLUG, {
+            waitFor: page.getByText('Shortcut stub landing', { exact: true }),
+        })
         await expect(page.getByRole('link', { name: STUB_NAV_LABEL, exact: true })).toBeVisible({
             timeout: 10_000,
         })
