@@ -70,6 +70,14 @@ jobs:
       - name: Install (workspace root)
         working-directory: ws
         run: npm install
+      # go mod download populates go.sum entries the committed go.sum is
+      # missing — specifically the `/go.mod h1:` hashes for transitive
+      # deps resolved through go.work's `use ../../core/server`. Without
+      # this, go build errors on "missing go.sum entry for go.mod file"
+      # the first time a sibling module is reached.
+      - name: Go mod download
+        working-directory: ws/app/server
+        run: go mod download
       - name: Go build
         working-directory: ws/app/server
         run: go build -o tinycld .
@@ -103,6 +111,14 @@ jobs:
       - name: Install (workspace root)
         working-directory: ws
         run: npm install
+      # go mod download before E2E so the webServer (which builds PB
+      # via npm run expo:test → reset-dev-db) doesn't fail on a missing
+      # go.sum entry. Same fix as the Go job above; both need it
+      # because the committed go.sum lacks the `/go.mod h1:` hashes for
+      # transitive deps resolved through go.work's `use ../../core/server`.
+      - name: Go mod download
+        working-directory: ws/app/server
+        run: go mod download
       - name: Scaffold shortcut-stub package
         working-directory: ws
         run: npx tsx app/tests/scripts/scaffold-shortcut-stub.ts

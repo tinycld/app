@@ -25,9 +25,9 @@ test.describe('Keyboard shortcuts', () => {
         // Wait for the rail's stub entry to render so the shortcut
         // provider has mounted and tinykeys has bound its listeners
         // before we start typing.
-        await expect(
-            page.getByRole('link', { name: STUB_NAV_LABEL, exact: true })
-        ).toBeVisible({ timeout: 10_000 })
+        await expect(page.getByRole('link', { name: STUB_NAV_LABEL, exact: true })).toBeVisible({
+            timeout: 10_000,
+        })
 
         // Ensure focus is on body, not an input that would suppress
         // shortcuts.
