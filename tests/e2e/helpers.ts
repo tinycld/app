@@ -57,11 +57,7 @@ export async function login(page: Page) {
 // shell (e.g. `waitFor: 'Compose'` for mail).
 //
 // `pkg` is the lowercase slug (mail, calendar, drive, ...).
-export async function navigateToPackage(
-    page: Page,
-    pkg: string,
-    options?: { waitFor?: string }
-) {
+export async function navigateToPackage(page: Page, pkg: string, options?: { waitFor?: string }) {
     // Match by URL prefix rather than exact href: some packages (calc,
     // text, …) rewrite their rail link to deep-link the user's last
     // visited file (e.g. /a/<org>/calc/<id>), so the rail anchor no
@@ -73,10 +69,7 @@ export async function navigateToPackage(
     await railLink.click()
     await page.waitForURL(new RegExp(`/a/${ORG_SLUG}/${pkg}(/|$|\\?)`))
     if (options?.waitFor) {
-        await page
-            .getByText(options.waitFor, { exact: true })
-            .first()
-            .waitFor({ state: 'visible' })
+        await page.getByText(options.waitFor, { exact: true }).first().waitFor({ state: 'visible' })
     } else {
         await page.getByTestId('package-sidebar-mounted').waitFor({ state: 'visible' })
     }
